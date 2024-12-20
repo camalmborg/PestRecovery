@@ -1,19 +1,19 @@
 # This is the script for cleaning Harvard Forest field data from Summer 2022
 # Clean up: data organized, demographic calculations for running mortality analyses
 
-### ----- Load libraries: ----- ###
+#### ----- Load libraries: ----- ####
 #install.packages("librarian")
 librarian::shelf(tidyverse, googledrive)
 
-### ----- Load data: ----- ###
-trees <- read.csv("Data/HF_Field_Data/Tree_data.csv")
-seedlings <- read.csv("Data/HF_Field_Data/Seedlings_long.csv")
-understory <- read.csv("Data/HF_Field_Data/Und_ground_survey.csv")
-plots <- read.csv("Data/HF_Field_Data/Plot_data.csv")
+#### ----- Load data: ----- ####
+trees_raw <- read.csv("Data/HF_Field_Data/Tree_data.csv")
+seedlings_raw <- read.csv("Data/HF_Field_Data/Seedlings_long.csv")
+understory_raw <- read.csv("Data/HF_Field_Data/Und_ground_survey.csv")
+plots_raw <- read.csv("Data/HF_Field_Data/Plot_data.csv")
 
-### ----- Clean and prep data: ----- ###
+#### ----- Clean and prep data: ----- ####
 ## Plot data:
-plots <- plots %>%
+plots <- plots_raw %>%
   mutate(plot = str_replace(plot, " ", "-")) %>%  # remove space between plot number
   mutate(hotspot = as.numeric(substr(plot, 1, 1))) %>%  # add hot spot identifier column
   mutate(latitude = str_replace(latitude, " N", "")) %>%  # clean lat/long columns
@@ -25,7 +25,7 @@ plots <- plots %>%
 
 ## Trees data:
 BAF = 10  # basal area factor from variable radius plots
-trees <- trees %>%
+trees <- trees_raw %>%
   mutate(plot = str_replace(plot, " ", "-")) %>%  # clean plot names
   mutate(hotspot = as.numeric(substr(plot, 1, 1))) %>%  # add hotspot column
   mutate(ba = (dbh^2) * 0.005454) %>% # basal area calculation from dbh
@@ -36,12 +36,13 @@ trees <- trees %>%
   group_by(hotspot) %>% mutate(TPA = sum(exp_fac))
 
 ## Oak-specific data:
-oaks <- c("BO", "RO", "WO") # oak species for subsetting
+oaks <- c("BO", "RO", "WO", "CO") # oak species for subsetting
 
 percent <- function(x, count){  # percentage function for calculating ba and dead tree percentages
   (x / count)*100
 }
 
+# make prep oak tree data
 oaktrees <- subset(trees, spp %in% oaks)
 oaktrees <- oaktrees %>% 
   group_by(plot) %>% mutate(tot_oak = n(),  # number of oaks
@@ -59,7 +60,22 @@ oaktrees <- oaktrees %>%
                                pdo_hot = percent(deadoak,tot_oak),  # percent dead oak in hotspot
                                dba_hot = sum(dba),  # total dead basal area in hot spot
                                pdba_hot = percent(dba_hot,sum(tba))) # percent dead basal area in hotspot
-                            
+
+
+## Understory data prep:
+understory <- understory_raw %>%
+  mutate(plot = str_replace(plot, " ", "-")) %>% 
+  mutate(hotspot = as.numeric(substr(plot, 1, 1)))
+
+undground <- understory[understory$type == "g",]
+undund <- understory[understory$type == "u",]
+
+## Seedlings data prep:
+seedlings <- seedlings_raw %>%
+  mutate(plot = str_replace(plot, " ", "-")) %>% 
+  mutate(hotspot = as.numeric(substr(plot, 1, 1))) %>%
+  mutate(all_seed = rowSums(seedlings[,oaks]))
 
 # Update timeline:
-# 2022-12-19
+# 2024-12-20 seedling and understory begin cleaning up
+# 2024-12-19 cleaned and prepped plot, tree, and oak tree data
