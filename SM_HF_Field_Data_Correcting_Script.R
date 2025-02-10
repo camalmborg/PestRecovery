@@ -19,4 +19,4 @@ colnames(sites) <- c("point", "latitude", "longitude")
 sites$site <- 1:nrow(plots_2022) # add site number column
 
 # save sites table as csv for GEE asset upload
-write.csv(sites, "Data/hf_field_data/hf_2022_sites.csv")
+write.csv(sites, "Data/hf_field_data/hf_2022_sites.csv", row.names = FALSE)
