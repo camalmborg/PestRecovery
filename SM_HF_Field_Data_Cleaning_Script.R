@@ -83,7 +83,7 @@ oak_codes <- c("BO", "RO", "WO", "CO") # oak species for subsetting
 seedlings <- seedlings_raw %>%
   mutate(plot = paste(hotspot, point, sep = "-"), .after = point) %>%  # add column for plot number
   mutate(all_seed = rowSums(seedlings_raw[,oak_codes])) %>%
-  group_by(plot) %>% mutate(plot_seed = sum(all_seed))
+  group_by(plot,loc) %>% mutate(plot_seed = sum(all_seed))
 
 # Update timeline:
 # 2024-12-20 seedling and understory begin cleaning up
