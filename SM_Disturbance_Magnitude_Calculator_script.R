@@ -6,7 +6,20 @@
 librarian::shelf(tidyverse, dplyr, googledrive)
 
 #### ----- Load and set up data ----- ####
+# if not already in environment:
+hf_scores <- read.csv("Data/hf_plot_scores_clean.csv")
+hf_tcg <- read.csv("Data/hf_plot_tcg_clean.csv")
 
+# make the calculator function:
+#'@param ts = time series data for detecting disturbance in canopy greenness
+#'@param distyr = onset year of disturbance
+dist_mag_calc <- function(ts, distyr){
+  # separate columns with just the canopy observation data:
+  series <- ts[,grep("^2", names(ts))]
+  # get disturbance column:
+  dist <- 
+  # calculate a pre-disturbance steady state to compare disturbance condition:
+}
 
 # Update timeline
 # 2025-02-20 created script
