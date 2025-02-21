@@ -57,13 +57,47 @@ years <- names(scores) %>%
   #str_replace_all(., "(?<=6).*", "")  #replaces everything after 6
 dates <- paste0("June ", years)
 
+
 #### ----- Plots ----- ####
 # time series plots
 # just get the time series from the scores and tcg:
 scores_ts <- scores[, c(grep("^2", names(scores)))]
 tcg_ts <- tcg[,c(grep("^2", names(scores)))]
 
-# make a time series
+# get means from hotspots:
+hotspot_means <- scores %>%
+  pivot_longer(cols = c(grep("^2", names(scores)))) %>%
+  group_by(name, hotspot) %>% summarise(mean = mean(value, na.rm = T), 
+                                        lower = quantile(value, 0.05, na.rm = T),
+                                        upper = quantile(value, 0.95, na.rm = T),
+                                        .groups = "drop") %>%  #this one works
+  arrange(hotspot) #%>%
+  # pivot_wider(
+  #   names_from = name,
+  #   values_from = c(mean, lower, upper)
+# )
+
+#alternative for including all data long format:
+hotspot_means_full <- scores %>%
+  pivot_longer(cols = c(grep("^2", names(scores)))) %>%
+  group_by(name, hotspot) %>% mutate(mean = mean(value, na.rm = T),
+                                     lower = quantile(value, 0.05, na.rm = T),
+                                     upper = quantile(value, 0.95, na.rm = T))
+
+# make a time series for plot mean values:
+hsm <- hotspot_means %>%
+  mutate(date = as.Date(name)) #%>%
+
+# for jus
+
+### Time series plot for mean condition scores by hotspot ###
+# plot theme:
+ts_theme <- theme_bw() + 
+  theme(panel.border = element_blank(), 
+        panel.grid = element_blank(),
+        axis.text = element_text(size = 13),
+        axis.line = element_line(colour = "black"))
+
 time_series <- ggplot()
 
 # Update timeline
