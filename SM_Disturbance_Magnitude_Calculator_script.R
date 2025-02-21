@@ -16,9 +16,12 @@ hf_tcg <- read.csv("Data/hf_plot_tcg_clean.csv")
 dist_mag_calc <- function(ts, distyr){
   # separate columns with just the canopy observation data:
   series <- ts[,grep("^2", names(ts))]
-  # get disturbance column:
-  dist <- 
+  # get disturbance onset column:
+  dist <- grep(as.character(distyr), colnames(series))
   # calculate a pre-disturbance steady state to compare disturbance condition:
+  steady <- apply(series[,(dist-6):(dist-1)], 1, mean, na.rm = T)
+  # calculate disturbance magnitude:
+  
 }
 
 # Update timeline
