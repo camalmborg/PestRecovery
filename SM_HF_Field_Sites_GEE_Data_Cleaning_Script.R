@@ -39,7 +39,7 @@ scores <- scores_raw %>%
 tcg <- tcg_raw %>%
   arrange(site) %>%
   select(starts_with("X")) %>%
-  rename_with(~ str_replace_all(., c("X|_score_mean" = "","\\." = "-"))) %>%
+  rename_with(~ str_replace_all(., c("X|_tcg_mean" = "","\\." = "-"))) %>%
   mutate(hotspot = plots$hotspot, .before = 1) %>%
   mutate(point = plots$point, .before = 2) %>%
   mutate(plot = plots$plot, .before = 3) %>%
@@ -109,6 +109,7 @@ time_series <- ggplot(data = hotspot_means, aes(x = date, y = mean, color = hots
 
 
 # Update timeline
+# 2025-02-20 started making time series plots of hot spot mean values (set up for cs or tcg)
 # 2025-02-20 starting to clean and prepare HF GEE data - updating file grabbing and csvs
 # 2024-12-20 created; adding GEE data
 
