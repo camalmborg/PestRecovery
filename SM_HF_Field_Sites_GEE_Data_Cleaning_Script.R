@@ -2,8 +2,7 @@
 # forest condition score and tasseled cap greenness data 
 
 #### ----- Libraries ----- ####
-#install.packages("librarian")
-librarian::shelf(tidyverse, googledrive, ggplot2)
+librarian::shelf(tidyverse, googledrive, ggplot2, RColorBrewer)
 
 #### ----- Load Data ----- ####
 # function for loading things from different places:
@@ -71,34 +70,43 @@ hotspot_means <- scores %>%
                                         lower = quantile(value, 0.05, na.rm = T),
                                         upper = quantile(value, 0.95, na.rm = T),
                                         .groups = "drop") %>%  #this one works
-  arrange(hotspot) #%>%
+  mutate(date = as.Date(name)) %>%
+  mutate(hotspot = as.factor(hotspot)) %>%
+  arrange(hotspot) %>%
+  select(hotspot, mean, lower, upper, date)
   # pivot_wider(
   #   names_from = name,
   #   values_from = c(mean, lower, upper)
 # )
 
-#alternative for including all data long format:
+# alternative for including all data long format:
 hotspot_means_full <- scores %>%
   pivot_longer(cols = c(grep("^2", names(scores)))) %>%
   group_by(name, hotspot) %>% mutate(mean = mean(value, na.rm = T),
                                      lower = quantile(value, 0.05, na.rm = T),
                                      upper = quantile(value, 0.95, na.rm = T))
 
-# make a time series for plot mean values:
-hsm <- hotspot_means %>%
-  mutate(date = as.Date(name)) #%>%
-
-# for jus
 
 ### Time series plot for mean condition scores by hotspot ###
-# plot theme:
+# make plot themes
+# color palette:
+colors <- brewer.pal(n = 6, name = "Set2")
+# theme:
 ts_theme <- theme_bw() + 
   theme(panel.border = element_blank(), 
         panel.grid = element_blank(),
         axis.text = element_text(size = 13),
         axis.line = element_line(colour = "black"))
 
-time_series <- ggplot()
+# make the plot:
+time_series <- ggplot(data = hotspot_means, aes(x = date, y = mean, color = hotspot)) +
+  geom_line(aes(group = hotspot), linewidth = 0.5, show.legend = FALSE,
+            position = position_dodge(width = 0.2)) +
+  scale_color_manual(values = colors) 
+                      #+
+                        # geom_line(aes(group = hotspot), linewidth = 0.5, show.legend = F,
+                        #           position = position_dodge(width = 0.2)))
+
 
 # Update timeline
 # 2025-02-20 starting to clean and prepare HF GEE data - updating file grabbing and csvs
