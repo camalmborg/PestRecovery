@@ -47,6 +47,9 @@ tcg <- tcg_raw %>%
   mutate(latitude = plots$latitude) %>%
   mutate(longitude = plots$longitude)
 
+# make these their own things to define from 5000 sample points:
+hf_scores <- scores
+hf_tcg <- tcg
 
 #### ----- Plots ----- ####
 # time series plots
