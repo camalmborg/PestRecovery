@@ -3,34 +3,51 @@
 #### ----- Libraries ----- ####
 #install.packages("librarian")
 #install.packages("daymetr")
-librarian::shelf(tidyverse, dplyr, googledrive, daymetr, lubridate)
+librarian::shelf(tidyverse, dplyr, googledrive, daymetr, lubridate, data.table)
 
 ####---- Load Data ----####
 # load clean data if not in environment:
-# coords <- read.csv("sites_5k_samp_coords.csv)
-# plots <- read.csv("plots_clean.csv)
-
+coords <- read.csv("Data/sites_5k_samp_coords.csv")
 # add sites IDs to coords:
 coords <- coords %>%
+  select(c(lat, lon)) %>%
   mutate(site = 1:nrow(coords), .before = 1)
 
-####---- Daymet Download ----####
-# start with a 5 point sample:
-samp <- coords[1:10,c("site", "lat", "lon")]
-write.table(samp, "dm_samp.csv",
+plots <- read.csv("Data/plots_clean.csv")
+hf_coords <- data.frame(site = 1:nrow(plots), 
+                        lat = plots$latitude, 
+                        lon = plots$longitude)
+
+# write tables for bulk daymet downloads:
+# 5k sample:
+write.table(coords, "coords_5k_samp.csv",
+            sep = ",",
+            col.names = TRUE,
+            row.names = FALSE)
+# harvard forest sites:
+write.table(hf_coords, "coords_hf_samp.csv",
             sep = ",",
             col.names = TRUE,
             row.names = FALSE)
 
+
+####---- Daymet Download ----####
 # daymetr package bulk download call:
-test <- download_daymet_batch(
-  file_location = paste0(getwd(),"/dm_samp.csv"),
-  start = 2010,
-  end = 2024
+# set start and end dates:
+start = 2014  # time period for data grab
+end = 2017
+#file = paste0(getwd(),"/coords_hf_samp.csv")  # site coordinates
+file = paste0(getwd(), "/coords_5k_samp.csv")
+
+data <- download_daymet_batch(
+  file_location = file,
+  start = start,
+  end = end
 )
-# ^ this works
 
 # aggregate into monthly means:
+#'@param data = daymet data from download (list)
+#'@param vars = daymet variables you want (character vector)
 agg_daymet <- function(data, vars){
   agg <- list()
   for (i in 1:length(data)){
@@ -39,22 +56,31 @@ agg_daymet <- function(data, vars){
       select(c(year, yday, vars)) %>%  # remote unnecessary data
       mutate(date = as.Date(paste(year, yday, sep = "-"), "%Y-%j"), .before = 3) %>%  # get dates for month
       mutate(month = month(date), .before = 4) %>%  # add month 
-      group_by(month) %>% summarise(across(-c(year, yday, date), mean))  # compute monthly means for each variable
+      group_by(year,month) %>% summarise(across(-c(yday, date), mean)) %>% # compute monthly means for each variable
+      mutate(site = i, .before = 1)  # add site ID
     agg[[i]] <- dm
   }
   return(agg)
 }
 
-# testing...
+# identify variables and run:
 vars <- c("prcp..mm.day.", "tmax..deg.c.", "tmin..deg.c.","vp..Pa.")  # variables I want
-agg <- agg_daymet(test, vars)
+agg <- agg_daymet(data, vars)
 
-# unlist the daymet variables for matching to sites:
-unlist_daymet <- function(agg){
-  for (i in length(agg)){
-    dm <- agg[[i]]
-  }
-}
+# unlist daymet variables for matching to sites:
+dm_data <- as.data.frame(do.call(rbind, agg))
+
+
 
 ### Update timeline:
-# 2025-03-01 created script
+# 2025-03-01 created script, wrote functions, tested functions
+# 2025-03-01 saved HF daymet data
+
+
+####---- ARCHIVE ----####
+# # start with a 10 point sample:
+# samp <- coords[1:10,c("site", "lat", "lon")]
+# write.table(samp, "dm_samp.csv",
+#             sep = ",",
+#             col.names = TRUE,
+#             row.names = FALSE)
