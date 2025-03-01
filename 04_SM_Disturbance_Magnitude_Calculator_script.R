@@ -3,7 +3,7 @@
 
 #### ----- Libraries ----- ####
 #install.packages("librarian")
-librarian::shelf(tidyverse, dplyr, googledrive)
+librarian::shelf(tidyverse, dplyr, googledrive, ggplot2)
 
 #### ----- Load and set up data ----- ####
 # if not already in environment:
@@ -13,7 +13,7 @@ librarian::shelf(tidyverse, dplyr, googledrive)
 # make the calculator function:
 #'@param ts = time series data for detecting disturbance in canopy greenness
 #'@param distyr = onset year of disturbance
-dist_mag_calc <- function(ts, distyr, scrs){
+dist_mag_calc <- function(ts, distyr){
   # separate columns with just the canopy observation data:
   series <- ts[,grep("^2", names(ts))]
   series$site <- 1:nrow(series)
@@ -24,14 +24,20 @@ dist_mag_calc <- function(ts, distyr, scrs){
   # calculate disturbance magnitudes:
   dmagy1 <- steady - series[,dist]      # onset year
   dmagy2 <- steady - series[,dist+1]    # following year
-  # disturbance magnitudes being > 0 is defol:
+  # disturbance magnitudes being > 0:
   def1 <- dmagy1 > 0
   def2 <- dmagy2 > 0
   # combine dataset for output
-  dmag_data <- cbind(series[,'site'], series[,dist], series[,dist+1], steady, dmagy1, dmagy2, def1, def2)
+  dmag_data <- cbind.data.frame(series[,'site'], series[,dist], series[,dist+1], steady, dmagy1, dmagy2, def1, def2)
   colnames(dmag_data) <- c("site", names(series[dist]), names(series[dist+1]), "steady", "dmag1", "dmag2", "dm_gt_0_y1", "dm_gt_0_y2")
   return(dmag_data)
 }
+
+# testing...
+dmag_data <- dist_mag_calc(tcg, 2016)
+
+####---- Plots ----####
+
 
 # Update timeline
 # 2025-02-20 created script
