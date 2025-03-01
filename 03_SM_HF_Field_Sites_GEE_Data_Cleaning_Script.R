@@ -19,8 +19,10 @@ gee <- "gee_data/"         # Google Earth Engine data
 plots <- read.csv(paste0(home,"plots_clean.csv"))
 
 # load Google Earth Engine samples from field sites:
-scores_raw <- loader(home, gee, "2025_02_18_hf_sites_sample_score_mean.csv")
-tcg_raw <- loader(home, gee, "2025_02_18_hf_sites_sample_tcg_mean.csv")
+#scores_raw <- loader(home, gee, "2025_02_18_hf_sites_sample_score_mean.csv")
+#tcg_raw <- loader(home, gee, "2025_02_18_hf_sites_sample_tcg_mean.csv")
+scores_raw <- loader(home, gee, "2025_02_28_growing_season_hf_sample_score_mean.csv")
+tcg_raw <- loader(home, gee, "2025_02_28_growing_season_hf_sample_score_mean.csv")
 
 #### ----- Cleaning and Prepping ----- ####
 # cleaning up the data!

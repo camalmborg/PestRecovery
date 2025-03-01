@@ -17,8 +17,10 @@ gee <- "gee_data/"         # Google Earth Engine data
 
 
 # load Google Earth Engine samples 5000 points:
-scores_raw <- loader(home, gee, "2025_02_18_5000_points_sample_score_mean.csv")
-tcg_raw <- loader(home, gee, "2025_02_18_5000_points_sample_tcg_mean.csv")
+#scores_raw <- loader(home, gee, "2025_02_18_5000_points_sample_score_mean.csv")
+#tcg_raw <- loader(home, gee, "2025_02_18_5000_points_sample_tcg_mean.csv")
+scores_raw <- loader(home, gee, "2025_02_28_growing_season_sample_score_mean.csv")
+tcg_raw <- loader(home, gee, "2025_02_28_growing_season_sample_tcg_mean.csv")
 
 # extract the coordinates from the .geo column:
 get_lat_lon <- function(data){
