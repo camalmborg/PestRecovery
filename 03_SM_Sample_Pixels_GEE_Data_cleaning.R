@@ -49,13 +49,15 @@ coords <- get_lat_lon(scores_raw)
 scores <- scores_raw %>%
   select(starts_with("X")) %>%  #select columns with score data
   rename_with(~ str_replace_all(., c("X|_score_mean" = "", "\\." = "-"))) %>%  #name columns with just dates
-  mutate(longitude = coords$lon, .before = 1) %>%  # add coordinates
-  mutate(latitude = coords$lat, .before = 2)
+  mutate(site = 1:nrow(scores_raw), .before = 1) %>%
+  mutate(longitude = coords$lon, .before = 2) %>%  # add coordinates
+  mutate(latitude = coords$lat, .before = 3)
 
 coords <- get_lat_lon(tcg_raw)
 tcg <- tcg_raw %>%
   select(starts_with("X")) %>%
   rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
-  mutate(longitude = coords$lon, .before = 1) %>%
-  mutate(latitude = coords$lat, .before = 2)
+  mutate(site = 1:nrow(tcg_raw), .before = 1) %>%
+  mutate(longitude = coords$lon, .before = 2) %>%
+  mutate(latitude = coords$lat, .before = 3)
 
