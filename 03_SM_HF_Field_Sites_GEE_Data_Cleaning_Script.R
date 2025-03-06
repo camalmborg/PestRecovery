@@ -22,7 +22,7 @@ plots <- read.csv(paste0(home,"plots_clean.csv"))
 #scores_raw <- loader(home, gee, "2025_02_18_hf_sites_sample_score_mean.csv")
 #tcg_raw <- loader(home, gee, "2025_02_18_hf_sites_sample_tcg_mean.csv")
 scores_raw <- loader(home, gee, "2025_02_28_growing_season_hf_sample_score_mean.csv")
-tcg_raw <- loader(home, gee, "2025_02_28_growing_season_hf_sample_score_mean.csv")
+tcg_raw <- loader(home, gee, "2025_02_28_growing_season_hf_sample_tcg_mean.csv")
 
 #### ----- Cleaning and Prepping ----- ####
 # cleaning up the data!
@@ -52,6 +52,9 @@ tcg <- tcg_raw %>%
 # make these their own things to define from 5000 sample points:
 hf_scores <- scores
 hf_tcg <- tcg
+
+# clean environment:
+rm("scores", "scores_raw", "tcg", "tcg_raw")
 
 #### ----- Plots ----- ####
 # time series plots
