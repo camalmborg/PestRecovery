@@ -22,4 +22,4 @@ sites$site <- 1:nrow(plots_2022) # add site number column
 #write.csv(sites, "Data/hf_field_data/hf_2022_sites.csv", row.names = FALSE)
 
 # clean up environment:
-rm(list=ls())
+rm(list=setdiff(ls(), "plots_cor"))
