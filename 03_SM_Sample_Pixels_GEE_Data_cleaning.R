@@ -61,3 +61,5 @@ tcg <- tcg_raw %>%
   mutate(longitude = coords$lon, .before = 2) %>%
   mutate(latitude = coords$lat, .before = 3)
 
+# clean environment:
+rm("scores_raw", "tcg_raw", "coords")
