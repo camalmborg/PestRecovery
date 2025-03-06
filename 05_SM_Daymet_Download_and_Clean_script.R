@@ -31,51 +31,61 @@ write.table(hf_coords, "coords_hf_samp.csv",
             row.names = FALSE)
 
 
-####---- Daymet Download ----####
-# daymetr package bulk download call:
-# set start and end dates:
-start = 2014  # time period for data grab
-end = 2017
-#file = paste0(getwd(),"/coords_hf_samp.csv")  # site coordinates
-file = paste0(getwd(), "/coords_5k_samp.csv")
-
-data <- download_daymet_batch(
-  file_location = file,
-  start = start,
-  end = end
-)
-
-# aggregate into monthly means:
+####---- Daymet Download function ----####
+#'@param start = starting year of data you want
+#'@param end = end year of data you want
+#'@param points = csv file where lat/lons are for bulk download
 #'@param data = daymet data from download (list)
 #'@param vars = daymet variables you want (character vector)
-agg_daymet <- function(data, vars){
-  agg <- list()
-  for (i in 1:length(data)){
-    dm <- data[[i]]$data
-    dm <- dm %>%
-      select(c(year, yday, vars)) %>%  # remote unnecessary data
-      mutate(date = as.Date(paste(year, yday, sep = "-"), "%Y-%j"), .before = 3) %>%  # get dates for month
-      mutate(month = month(date), .before = 4) %>%  # add month 
-      group_by(year,month) %>% summarise(across(-c(yday, date), mean)) %>% # compute monthly means for each variable
-      mutate(site = i, .before = 1)  # add site ID
-    agg[[i]] <- dm
+daymet_grab_n_agg <- function(start, end, points, vars){
+  # set up conditions for download, years of data and csv file with lat/lon points:
+  start = start
+  end = end
+  file = paste0(getwd(), points)
+  
+  # download:
+  data <- download_daymet_batch(
+    file_location = file,
+    start = start,
+    end = end
+  )
+  
+  # aggregate into monthly means:
+  agg_daymet <- function(data, vars){
+    agg <- list()
+    for (i in 1:length(data)){
+      dm <- data[[i]]$data
+      dm <- dm %>%
+        select(c(year, yday, vars)) %>%  # remote unnecessary data
+        mutate(date = as.Date(paste(year, yday, sep = "-"), "%Y-%j"), .before = 3) %>%  # get dates for month
+        mutate(month = month(date), .before = 4) %>%  # add month 
+        group_by(year,month) %>% summarise(across(-c(yday, date), mean)) %>% # compute monthly means for each variable
+        mutate(site = i, .before = 1)  # add site ID
+      agg[[i]] <- dm
+    }
+    return(agg)
   }
-  return(agg)
+  
+  # identify variables and run:
+  vars <- vars # variables I want
+  agg <- agg_daymet(data, vars)
+  
+  # unlist daymet variables for matching to sites:
+  dm_data <- as.data.frame(do.call(rbind, agg))
+  return(dm_data)
 }
 
-# identify variables and run:
-vars <- c("prcp..mm.day.", "tmax..deg.c.", "tmin..deg.c.","vp..Pa.")  # variables I want
-agg <- agg_daymet(data, vars)
+vars <- c("prcp..mm.day.", "tmax..deg.c.", "tmin..deg.c.","vp..Pa.")
+hf_daym <- daymet_grab_n_agg(2014, 2017, "/coords_hf_samp.csv", vars)
+samp_daym <- daymet_grab_n_agg(2014, 2017, "/coords_5k_samp.csv", vars)
 
-# unlist daymet variables for matching to sites:
-dm_data <- as.data.frame(do.call(rbind, agg))
-
-
+# clean up environment:
+rm(coords, hf_coords)
 
 ### Update timeline:
 # 2025-03-01 created script, wrote functions, tested functions
 # 2025-03-01 saved HF daymet data
-
+# 2025-03-06 turned into one function to run automatically
 
 ####---- ARCHIVE ----####
 # # start with a 10 point sample:
@@ -84,3 +94,36 @@ dm_data <- as.data.frame(do.call(rbind, agg))
 #             sep = ",",
 #             col.names = TRUE,
 #             row.names = FALSE)
+
+# # daymetr package bulk download call:
+# # set start and end dates:
+# start = 2014  # time period for data grab
+# end = 2017
+# #file = paste0(getwd(),"/coords_hf_samp.csv")  # site coordinates
+# file = paste0(getwd(), "/coords_5k_samp.csv")
+
+#' # aggregate into monthly means:
+#' #'@param data = daymet data from download (list)
+#' #'@param vars = daymet variables you want (character vector)
+#' agg_daymet <- function(data, vars){
+#'   agg <- list()
+#'   for (i in 1:length(data)){
+#'     dm <- data[[i]]$data
+#'     dm <- dm %>%
+#'       select(c(year, yday, vars)) %>%  # remote unnecessary data
+#'       mutate(date = as.Date(paste(year, yday, sep = "-"), "%Y-%j"), .before = 3) %>%  # get dates for month
+#'       mutate(month = month(date), .before = 4) %>%  # add month 
+#'       group_by(year,month) %>% summarise(across(-c(yday, date), mean)) %>% # compute monthly means for each variable
+#'       mutate(site = i, .before = 1)  # add site ID
+#'     agg[[i]] <- dm
+#'   }
+#'   return(agg)
+#' }
+#' 
+#' # identify variables and run:
+#' vars <- c("prcp..mm.day.", "tmax..deg.c.", "tmin..deg.c.","vp..Pa.")  # variables I want
+#' agg <- agg_daymet(data, vars)
+#' 
+#' # unlist daymet variables for matching to sites:
+#' dm_data <- as.data.frame(do.call(rbind, agg))
+
