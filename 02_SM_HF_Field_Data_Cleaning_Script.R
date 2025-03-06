@@ -85,6 +85,10 @@ seedlings <- seedlings_raw %>%
   mutate(all_seed = rowSums(seedlings_raw[,oak_codes])) %>%
   group_by(plot,loc) %>% mutate(plot_seed = sum(all_seed))
 
+## clean up environment:
+rm(list=setdiff(ls(), c("plots", "seedlings", "trees", "understory", "oaktrees", "oaks")))
+
+
 # Update timeline:
 # 2024-12-20 seedling and understory begin cleaning up
 # 2024-12-19 cleaned and prepped plot, tree, and oak tree data
