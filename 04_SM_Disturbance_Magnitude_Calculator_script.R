@@ -33,8 +33,9 @@ dist_mag_calc <- function(ts, distyr){
   return(dmag_data)
 }
 
-# testing...
+# run for 5000 sample points, hf data:
 dmag_data <- dist_mag_calc(tcg, 2016)
+hf_dmag <- dist_mag_calc(hf_tcg, 2016)
 
 ####---- Plots ----####
 
