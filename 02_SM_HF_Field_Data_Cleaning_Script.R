@@ -14,7 +14,7 @@ plots_raw <- read.csv("Data/hf_field_data/2022_hf_plot_data.csv")
 #### ----- Clean and prep data: ----- ####
 ## Plot data:
 # select plots that are from 2022 data collection:
-plots <- plots_raw[which(!is.na(plots_cor$latitude_2022)),]  # grab just the 2022 field sites
+plots <- plots_raw[which(!is.na(plots_raw$latitude_2022)),]  # grab just the 2022 field sites
 # clean up for analyses:
 plots <- plots %>%
   mutate(plot = paste(hotspot, point, sep = "-"), .after = point) %>%  # add column for plot number
@@ -26,7 +26,13 @@ plots <- plots %>%
   mutate(harv_since_2017 = ifelse(harv_since_2017_GIS == "no", 0, 1)) %>%
   select(-c(meas_2017, date_2017, observ_2017, recent_harv_plot, harv_since_2017_GIS))
 
+
 ## Trees data:
+
+percent <- function(x, count){  # percentage function for calculating ba and dead tree percentages
+  (x / count)*100
+}
+
 # select plots from 2022:
 trees <- trees_raw[which(trees_raw$year == 2022),]
 BAF = 10  # basal area factor from variable radius plots
@@ -38,14 +44,15 @@ trees <- trees %>%
   group_by(hotspot) %>% mutate(hotcount = length(unique(plot))) %>%  # number of plots per hotspot
   group_by(plot) %>% mutate(tba_m2 = sum(ba_m2)) %>%
   mutate(exp_fac = BAF / ba_m2 / hotcount) %>% # expansion factor, BAF/BA/number of plots
-  group_by(hotspot) %>% mutate(TPA = sum(exp_fac))
+  group_by(hotspot) %>% mutate(TPA = sum(exp_fac)) %>%
+  group_by(plot) %>% mutate(tot_tree = n(),
+                            dead = ifelse(cond_2022 == "L", 0, 1),
+                            pdead = percent(dead, treeper)) %>%
+  group_by(plot, cond_2022) %>% mutate(dba = sum(ba_m2)*dead,
+                                       pdba = percent(dba, tba_m2))
 
 ## Oak-specific data:
 oaks <- unique(trees$genusp)[grep("^QUER", unique(trees$genusp))]  # all oak species
-
-percent <- function(x, count){  # percentage function for calculating ba and dead tree percentages
-  (x / count)*100
-}
 
 # make prep oak tree data
 oaktrees_raw <- subset(trees, genusp %in% oaks)
