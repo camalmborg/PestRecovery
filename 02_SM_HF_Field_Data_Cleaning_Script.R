@@ -40,7 +40,6 @@ trees <- trees %>%
   mutate(plot = paste(hotspot, point, sep = "-"), .after = point) %>%  # add column for plot number
   select(-c(ref_clss_2017, conf_2017)) %>%
   mutate(ba_m2 = ((dbh_cm/100)^2) * 3.14, .after = dbh_cm) %>% # basal area calculation (m^2) from dbh in cm
-  group_by(hotspot,plot) %>% mutate(treeper  = n()) %>%  # number of trees per plot
   group_by(hotspot) %>% mutate(hotcount = length(unique(plot))) %>%  # number of plots per hotspot
   group_by(plot) %>% mutate(tba_m2 = sum(ba_m2)) %>%
   mutate(exp_fac = BAF / ba_m2 / hotcount) %>% # expansion factor, BAF/BA/number of plots
