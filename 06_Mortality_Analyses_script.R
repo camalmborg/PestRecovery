@@ -4,6 +4,21 @@
 
 #### ----- Libraries ----- ####
 #install.packages("librarian")
-librarian::shelf(tidyverse, dplyr, googledrive, ggplot2)
+librarian::shelf(tidyverse, dplyr, ggplot2, mgcv)
 
 #### ----- Load Data (if not in environment) ----- ####
+# disturbance magnitude data
+# harvard forest plot data
+
+#### ----- prepping data to run models ----- ####
+# preparing plot-level information from tree data:
+tree_to_plot <- trees %>%
+  select(hotspot, point, plot, tot_tree, tot_dead, pdead, tot_dba, pdba) %>%
+  group_by(plot) %>% summarise(across(everything(), first, .groups = "keep"))
+
+notree <- setdiff(plots$plot, tree_to_plot$plot)
+
+#### ----- running models ----- ####
+# using beta regression in mgcv package
+# function example: gam(y ~ s(x), family = betar(link = "logit), data = data)
+
