@@ -44,12 +44,15 @@ trees <- trees %>%
   group_by(hotspot) %>% mutate(hotcount = length(unique(plot))) %>%  # number of plots per hotspot
   group_by(plot) %>% mutate(tba_m2 = sum(ba_m2)) %>%
   mutate(exp_fac = BAF / ba_m2 / hotcount) %>% # expansion factor, BAF/BA/number of plots
-  group_by(hotspot) %>% mutate(TPA = sum(exp_fac)) %>%
-  group_by(plot) %>% mutate(tot_tree = n(),
-                            dead = ifelse(cond_2022 == "L", 0, 1),
-                            pdead = percent(dead, treeper)) %>%
-  group_by(plot, cond_2022) %>% mutate(dba = sum(ba_m2)*dead,
-                                       pdba = percent(dba, tba_m2))
+  group_by(hotspot) %>% mutate(TPA = sum(exp_fac)) %>%  # trees per acre, summing expansion factor
+  mutate(dead = ifelse(cond_2022 == "L", 0, 1)) %>%   # make dead/alive boolean
+  mutate(dba = ba_m2 * dead) %>%  # column for summing dead basal area
+  group_by(plot) %>% mutate(tot_tree = n(),  # total trees in plot
+                            tot_dead = sum(dead),   # dead trees in plot
+                            mort = ifelse(tot_dead > 0, 1, 0),  # whether mortality occurred in plot
+                            pdead = percent(tot_dead, treeper),  # percent dead trees
+                            tot_dba = sum(dba),   # total dead basal area in plot
+                            pdba = percent(tot_dba, tba_m2))   # percent dead basal area in plot
 
 ## Oak-specific data:
 oaks <- unique(trees$genusp)[grep("^QUER", unique(trees$genusp))]  # all oak species
@@ -58,14 +61,13 @@ oaks <- unique(trees$genusp)[grep("^QUER", unique(trees$genusp))]  # all oak spe
 oaktrees_raw <- subset(trees, genusp %in% oaks)
 oaktrees <- oaktrees_raw %>% 
   group_by(plot) %>% mutate(tot_oak = n(),  # number of oaks
-                            dead = ifelse(cond_2022 == "L", 0, 1),
                             tba_oak = sum(ba_m2),  # total pak basal area per plot
                             pba = percent(tba_oak,tba_m2),  # percent oak basal area in plot
-                            deadoak = length(which(cond_2022 == "D")),  # total dead oaks
+                            deadoak = sum(dead),  # total dead oaks
                             pdead = percent(deadoak,treeper),  # percent dead oak of all trees in plot
-                            pdo = percent(deadoak,tot_oak)) %>%  # percent dead oak of all oaks in plot
-  group_by(plot,cond_2022) %>% mutate(dba = sum(ba_m2)*dead,
-                                 pdba = percent(dba,tba_m2)) %>%
+                            pdo = percent(deadoak,tot_oak),
+                            o_dba = sum(dba),
+                            o_pdba = percent(o_dba, tba_oak)) %>%  # percent dead oak of all oaks in plot
   group_by(hotspot) %>% mutate(tba_oak_hot = sum(ba_m2),  # total oak basal area in hotspot
                                pba_hot = percent(tba_oak,tba_m2),  # percent oak basal area in hotspot
                                deadoak_hot = sum(deadoak),  # sum dead oak in hotspot
