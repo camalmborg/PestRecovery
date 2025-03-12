@@ -49,7 +49,7 @@ trees <- trees %>%
   group_by(plot) %>% mutate(tot_tree = n(),  # total trees in plot
                             tot_dead = sum(dead),   # dead trees in plot
                             mort = ifelse(tot_dead > 0, 1, 0),  # whether mortality occurred in plot
-                            pdead = percent(tot_dead, treeper),  # percent dead trees
+                            pdead = percent(tot_dead, tot_tree),  # percent dead trees
                             tot_dba = sum(dba),   # total dead basal area in plot
                             pdba = percent(tot_dba, tba_m2))   # percent dead basal area in plot
 
