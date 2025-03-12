@@ -37,6 +37,9 @@ dist_mag_calc <- function(ts, distyr){
 dmag_data <- dist_mag_calc(tcg, 2016)
 hf_dmag <- dist_mag_calc(hf_tcg, 2016)
 
+dmag_data_cs <- dist_mag_calc(scores, 2016)
+hf_dmag_cs <- dist_mag_calc(hf_scores, 2016)
+
 ####---- Plots ----####
 
 
