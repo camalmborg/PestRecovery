@@ -93,5 +93,8 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
 
 #### ----- running models ----- ####
 # using beta regression in mgcv package
-# function example: gam(y ~ s(x), family = betar(link = "logit), data = data)
+# function example: gam(y ~ s(x), family = betar(link = "logit"), data = data)
+
+test_data <- cbind.data.frame(y = resp$pdead, x = pred$tcg_y1)
+test <- gam(y ~ s(x), family = betar(link = "logit"), data = test_data)
 
