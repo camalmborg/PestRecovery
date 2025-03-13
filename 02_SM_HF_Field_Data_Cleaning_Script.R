@@ -63,7 +63,7 @@ oaktrees <- oaktrees_raw %>%
                             tba_oak = sum(ba_m2),  # total pak basal area per plot
                             pba = percent(tba_oak,tba_m2),  # percent oak basal area in plot
                             deadoak = sum(dead),  # total dead oaks
-                            pdead = percent(deadoak,treeper),  # percent dead oak of all trees in plot
+                            pdead = percent(deadoak,tot_tree),  # percent dead oak of all trees in plot
                             pdo = percent(deadoak,tot_oak),
                             o_dba = sum(dba),
                             o_pdba = percent(o_dba, tba_oak)) %>%  # percent dead oak of all oaks in plot
