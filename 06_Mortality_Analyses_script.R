@@ -4,7 +4,8 @@
 
 #### ----- Libraries ----- ####
 #install.packages("librarian")
-librarian::shelf(tidyverse, dplyr, ggplot2, mgcv)
+#install.packages("censReg")
+librarian::shelf(tidyverse, dplyr, ggplot2, mgcv, censReg)
 
 #### ----- Load Data (if not in environment) ----- ####
 # disturbance magnitude data
@@ -86,6 +87,7 @@ pred <- cbind(dmags,                           # disturbance magnitude and distu
 
 ## make response variable data set:
 resp <- cbind.data.frame(plot = tree_to_plot$plot, 
+                         hotspot = tree_to_plot$hotspot,
                          dead = tree_to_plot$tot_dead > 0,
                          pdead = tree_to_plot$pdead, 
                          pdba = tree_to_plot$pdba) %>%
