@@ -6,7 +6,9 @@
 #install.packages("librarian")
 #install.packages("censReg")
 #install.packages("AER")
-librarian::shelf(tidyverse, dplyr, ggplot2, AER, nlme, censReg, VGAM, plm)  # removed: mgcv, censReg, nlme, VGAM
+#install.packages("remotes")
+librarian::shelf(tidyverse, dplyr, ggplot2,censReg, plm, remotes, VGAM)  # removed: mgcv, AER, nlme, VGAM, lme4
+#remotes::install_github("USGS-R/smwrQW")
 
 #### ----- Load Data (if not in environment) ----- ####
 # disturbance magnitude data
@@ -97,17 +99,21 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
 #### ----- running models ----- ####
 # using censReg package
 # run a test first
-# example function: model <- tobit(resp$pdead ~ predictor1 + predictor2 + predictor3, 
-# data = your_data, lower = lower_limit, upper = upper_limit, 
-# link = "logit")
-test_data <- cbind.data.frame(y = resp$pdead/100, x = pred$tcg_y1, hs = resp$hotspot)
-test_data <- pdata.frame(test_data, index = "hs")
+test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
+#test_data <- pdata.frame(test_data, index = "hs")
 
-#test_model <- lme(y ~ x, random = ~1|hs, data = test_data, family = binomial(link = "logit"))
-#test_model <- lmer(y ~ x + (1|hs), data = test_data, family = binomial(link = "logit"))
-test_model <- censReg(y ~ x, left = 0, right = 1, method = "BHHH", data = test_data)
-# test_model <- vglm(y ~ x, family = tobit(Lower = 0, Upper = 1), data = test_data)
-summary(test_model)
+# try with VGAM:
+test_model <- vglm(y ~ x1, 
+                   family = tobit(Lower = 0, Upper = 1, lmu = "logitlink", type.fitted = c("censored")),
+                   data = test_data)
+fit <- fitted.values(test_model)
+
+# test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)
+# summary(test_model)
+# 
+# test_model_2 <- censReg(y ~ x1 + x1* x2, left = 0, right = 1, method = "BHHH", data = test_data)
+# summary(test_model)
+# AIC(test_model)
 
 
 #### Archive ####-----------------------------------------------------------------------####
@@ -124,6 +130,7 @@ summary(test_model)
 
 # vglm(formula = apt ~ read + math + prog, family = tobit(Upper = 800), 
 #      ##     data = dat)
+# test_model <- vglm(y ~ x, family = tobit(Lower = 0, Upper = 1), data = test_data)
 
 
 # # Install packages if not already installed
@@ -135,10 +142,14 @@ summary(test_model)
 # # 'y' is the dependent variable, 'x1', 'x2' are independent variables, and 'group' is the grouping variable
 # # 'left' is the censoring threshold (if applicable)
 
+
 # # Fit the Tobit model with a logit link and random effects
-# model <- lmer(y ~ x1 + x2 + (1|group), data = my_data, family = binomial(link = "logit"))
+#model <- lmer(y ~ x1 + x2 + (1|group), data = my_data, family = binomial(link = "logit"))
 # # Or with nlme
-# # model <- lme(y ~ x1 + x2, random = ~1|group, data = my_data, family = binomial(link = "logit"))
+#model <- lme(y ~ x1 + x2, random = ~1|group, data = my_data, family = binomial(link = "logit"))
+
+#test_model <- lme(y ~ x, random = ~1|hs, data = test_data, family = binomial(link = "logit"))
+#test_model <- lmer(y ~ x + (1|hs), data = test_data, family = binomial(link = "logit"))
 # 
 # # Print the model summary
 # #summary(model)
