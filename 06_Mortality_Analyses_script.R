@@ -105,13 +105,13 @@ test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2
 # try with VGAM:
 test_model <- vglm(y ~ x1, 
                    family = tobit(Lower = 0, Upper = 1, lmu = "logitlink", type.fitted = c("censored")),
-                   data = test_data)
+                   data = test_data)   # works but does not include random effects
 fit <- fitted.values(test_model)
 
-test_model <- tobit(y ~ x1 + (1|hs),
-                    left = 0, right = 1,
-                    dist = "gaussian",
-                    data = test_data)
+# test_model <- tobit(y ~ x1 + (1|hs),    # works but does not work with random effect added
+#                     left = 0, right = 1,
+#                     dist = "gaussian",
+#                     data = test_data)
 
 # test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)
 # summary(test_model)
