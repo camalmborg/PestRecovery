@@ -108,6 +108,11 @@ test_model <- vglm(y ~ x1,
                    data = test_data)
 fit <- fitted.values(test_model)
 
+test_model <- tobit(y ~ x1 + (1|hs),
+                    left = 0, right = 1,
+                    dist = "gaussian",
+                    data = test_data)
+
 # test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)
 # summary(test_model)
 # 
