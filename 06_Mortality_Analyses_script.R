@@ -5,7 +5,8 @@
 #### ----- Libraries ----- ####
 #install.packages("librarian")
 #install.packages("censReg")
-librarian::shelf(tidyverse, dplyr, ggplot2, mgcv, censReg)
+#install.packages("AER")
+librarian::shelf(tidyverse, dplyr, ggplot2, AER, nlme, censReg, VGAM, plm)  # removed: mgcv, censReg, nlme, VGAM
 
 #### ----- Load Data (if not in environment) ----- ####
 # disturbance magnitude data
@@ -89,14 +90,55 @@ pred <- cbind(dmags,                           # disturbance magnitude and distu
 resp <- cbind.data.frame(plot = tree_to_plot$plot, 
                          hotspot = tree_to_plot$hotspot,
                          dead = tree_to_plot$tot_dead > 0,
-                         pdead = tree_to_plot$pdead, 
-                         pdba = tree_to_plot$pdba) %>%
+                         pdead = (tree_to_plot$pdead/100),      # make a percentage (btw 0-1 instead of 0-100)
+                         pdba = (tree_to_plot$pdba/100)) %>%    # make a percentage 
   mutate(dead_bin = ifelse(dead == TRUE, 1, 0), .after = 2)
 
 #### ----- running models ----- ####
+# using censReg package
+# run a test first
+# example function: model <- tobit(resp$pdead ~ predictor1 + predictor2 + predictor3, 
+# data = your_data, lower = lower_limit, upper = upper_limit, 
+# link = "logit")
+test_data <- cbind.data.frame(y = resp$pdead/100, x = pred$tcg_y1, hs = resp$hotspot)
+test_data <- pdata.frame(test_data, index = "hs")
+
+#test_model <- lme(y ~ x, random = ~1|hs, data = test_data, family = binomial(link = "logit"))
+#test_model <- lmer(y ~ x + (1|hs), data = test_data, family = binomial(link = "logit"))
+test_model <- censReg(y ~ x, left = 0, right = 1, method = "BHHH", data = test_data)
+# test_model <- vglm(y ~ x, family = tobit(Lower = 0, Upper = 1), data = test_data)
+summary(test_model)
+
+
+#### Archive ####-----------------------------------------------------------------------####
 # using beta regression in mgcv package
 # function example: gam(y ~ s(x), family = betar(link = "logit"), data = data)
+#test <- gam(y ~ s(x), family = betar(link = "logit"), data = test_data)
 
-test_data <- cbind.data.frame(y = resp$pdead, x = pred$tcg_y1)
-test <- gam(y ~ s(x), family = betar(link = "logit"), data = test_data)
 
+# library(VGAM)
+# model <- vgam(y_censored ~ x + vgam(1 | group), family = tobit(), data = data.frame(y_censored, x, group))
+# 
+# # Print the model summary
+# summary(model)
+
+# vglm(formula = apt ~ read + math + prog, family = tobit(Upper = 800), 
+#      ##     data = dat)
+
+
+# # Install packages if not already installed
+# # install.packages(c("AER", "lme4"))  # Or "nlme" depending on preference
+# library(AER)
+# library(lme4) # Or library(nlme)
+# # Example with lme4
+# # Assuming your data frame is called 'my_data'
+# # 'y' is the dependent variable, 'x1', 'x2' are independent variables, and 'group' is the grouping variable
+# # 'left' is the censoring threshold (if applicable)
+
+# # Fit the Tobit model with a logit link and random effects
+# model <- lmer(y ~ x1 + x2 + (1|group), data = my_data, family = binomial(link = "logit"))
+# # Or with nlme
+# # model <- lme(y ~ x1 + x2, random = ~1|group, data = my_data, family = binomial(link = "logit"))
+# 
+# # Print the model summary
+# #summary(model)
