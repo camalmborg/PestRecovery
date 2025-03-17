@@ -113,7 +113,7 @@ fit <- fitted.values(test_model)
 #                     dist = "gaussian",
 #                     data = test_data)
 
-# test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)
+# test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)   # works but does not easily have fitted values estimation
 # summary(test_model)
 # 
 # test_model_2 <- censReg(y ~ x1 + x1* x2, left = 0, right = 1, method = "BHHH", data = test_data)
