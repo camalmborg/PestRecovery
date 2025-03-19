@@ -7,8 +7,8 @@
 #install.packages("censReg")
 #install.packages("AER")
 #install.packages("remotes")
-librarian::shelf(tidyverse, dplyr, ggplot2,censReg, plm, remotes, VGAM)  # removed: mgcv, AER, nlme, VGAM, lme4
-#remotes::install_github("USGS-R/smwrQW")
+#install.packages("rjags")
+librarian::shelf(tidyverse, dplyr, rjags, ggplot2)  # removed: mgcv, AER, nlme, VGAM, lme4, remotes, plm, censReg
 
 #### ----- Load Data (if not in environment) ----- ####
 # disturbance magnitude data
@@ -97,28 +97,12 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
   mutate(dead_bin = ifelse(dead == TRUE, 1, 0), .after = 2)
 
 #### ----- running models ----- ####
-# using censReg package
 # run a test first
 test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
-#test_data <- pdata.frame(test_data, index = "hs")
+test_data <- pdata.frame(test_data, index = "hs")
 
-# try with VGAM:
-test_model <- vglm(y ~ x1, 
-                   family = tobit(Lower = 0, Upper = 1, lmu = "logitlink", type.fitted = c("censored")),
-                   data = test_data)   # works but does not include random effects
-fit <- fitted.values(test_model)
+# using jags:
 
-# test_model <- tobit(y ~ x1 + (1|hs),    # works but does not work with random effect added
-#                     left = 0, right = 1,
-#                     dist = "gaussian",
-#                     data = test_data)
-
-# test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)   # works but does not easily have fitted values estimation
-# summary(test_model)
-# 
-# test_model_2 <- censReg(y ~ x1 + x1* x2, left = 0, right = 1, method = "BHHH", data = test_data)
-# summary(test_model)
-# AIC(test_model)
 
 
 #### Archive ####-----------------------------------------------------------------------####
@@ -158,3 +142,21 @@ fit <- fitted.values(test_model)
 # 
 # # Print the model summary
 # #summary(model)
+
+# try with VGAM:
+# test_model <- vglm(y ~ x1, 
+#                    family = tobit(Lower = 0, Upper = 1, lmu = "logitlink", type.fitted = c("censored")),
+#                    data = test_data)   # works but does not include random effects
+# fit <- fitted.values(test_model)
+
+# test_model <- tobit(y ~ x1 + (1|hs),    # works but does not work with random effect added
+#                     left = 0, right = 1,
+#                     dist = "gaussian",
+#                     data = test_data)
+# 
+# test_model_1 <- censReg(y ~ x1, left = 0, right = 1, method = "BHHH", data = test_data)   # works but does not easily have fitted values estimation
+# summary(test_model_1)
+# 
+# test_model_2 <- censReg(y ~ x1 + x1* x2, left = 0, right = 1, method = "BHHH", data = test_data)
+# summary(test_model)
+# AIC(test_model)
