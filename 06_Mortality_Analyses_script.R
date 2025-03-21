@@ -102,6 +102,31 @@ test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2
 test_data <- pdata.frame(test_data, index = "hs")
 
 # using jags:
+test_model <- "
+## Jags code for mortality analyses
+model{
+
+### Loop over individual sites
+for (s in 1:sites) {
+	
+	### Data Model:
+	y[s] ~ dnorm(mu[s], p)
+
+	### Process Model:
+	mu[s] ~ b[1] + b[2]*x[s] + alpha[hot[s]]
+}
+
+
+### Random effect for hotspot:
+for (h in 1:hs) {
+	alpha[h] ~ dnorm(0, tau)
+	}
+
+### Priors:
+b ~ dmnorm(b0, Vb)
+p ~ dgamma(p0, pb)
+tau ~ dgamma(0.001, 1)
+}"
 
 
 
