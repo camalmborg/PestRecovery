@@ -98,8 +98,8 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
 
 #### ----- running models ----- ####
 # run a test first
-test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
-test_data <- pdata.frame(test_data, index = "hs")
+# test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
+# test_data <- pdata.frame(test_data, index = "hs")
 
 # using jags:
 test_model <- "
@@ -113,7 +113,7 @@ for (s in 1:sites) {
 	y[s] ~ dnorm(mu[s], p)
 
 	### Process Model:
-	mu[s] ~ b[1] + b[2]*x[s] + alpha[hot[s]]
+	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
 }
 
 
@@ -128,7 +128,27 @@ p ~ dgamma(p0, pb)
 tau ~ dgamma(0.001, 1)
 }"
 
+# data for the model:
+data <- list(x = pred$tcg_y1, y = resp$pdead, 
+             hot = resp$hotspot, sites = nrow(resp),
+             hs = length(unique(resp$hotspot)),
+             b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)),
+             p0 = 0.1, pb = 0.1)
 
+# run the test model:
+jags_test <- jags.model(file = textConnection(test_model),
+                        data = data,
+                        n.chains = 3)
+jags_out <- coda.samples(model = jags_test, 
+                         variable.names = c("b", "p", "alpha"),
+                         n.iter = 10000)
+plot(jags_out)
+
+out <- as.matrix(jags_out)
+pairs(out)
+cor(out)
+gelman.diag(jags_out)
+gelman.plot(jags_out)
 
 #### Archive ####-----------------------------------------------------------------------####
 # using beta regression in mgcv package
