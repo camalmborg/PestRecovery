@@ -149,6 +149,7 @@ pairs(out)
 cor(out)
 gelman.diag(jags_out)
 gelman.plot(jags_out)
+effectiveSize(jags_out)
 
 #### Archive ####-----------------------------------------------------------------------####
 # using beta regression in mgcv package
