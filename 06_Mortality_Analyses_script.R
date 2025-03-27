@@ -151,6 +151,92 @@ gelman.diag(jags_out)
 gelman.plot(jags_out)
 effectiveSize(jags_out)
 
+
+
+# testing the other model
+
+# test data:
+# sorting criteria:
+c <- vector()
+for (i in 1:nrow(test_data)){
+  if (test_data$y[i] == 0){
+    c[i] <- "l"   
+  } else if (test_data$y[i] > 0 & test_data$y[i] < 1) {
+    c[i] <- "ld"
+  } else if (test_data$y[i] == 1) {
+    c[i] <- "d"
+  }
+}
+# add to data frame:
+test_data$c <- c
+# sort by y:
+test_data_sort <- test_data[order(test_data$y),]
+
+model <- "model{
+### Loop over individual sites
+
+	### Data Model:
+	## left (0) censored:
+	for (i in  1:c){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- pnorm(0, mu[i], tau)  
+	}
+	
+		## between 0-1:
+	for (i in (c+1):d){
+		y[i] ~ dnorm(mu[i], p)
+	}
+
+	## right (1) censored:
+	for (i in (d+1):e){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- 1 - pnorm(1, mu[i], tau)
+	}
+
+	### Process Model:
+	for (s in 1:sites) {
+	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
+	}
+
+  ### Random effect for hotspot:
+  for (h in 1:hs) {
+  	alpha[h] ~ dnorm(0, q)
+	}
+
+### Priors:
+b ~ dmnorm(b0, Vb)
+p ~ dgamma(p0, pb)
+q ~ dgamma(q0, qb)
+tau ~ dgamma(0.001, 1)
+}"
+
+# inputs:
+data <- list(x = test_data_sort$x1, y = test_data_sort$y, hot = test_data_sort$hs, 
+             sites = nrow(test_data_sort), hs = length(unique(test_data_sort$hs)),
+             b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)), 
+             p0 = 0.01, pb = 0.001,  
+             q0 = 0.01, qb = 0.001, 
+             c = length(which(test_data_sort$c == "l")), 
+             d = length(which(test_data_sort$c == "l")) + length(which(test_data_sort$c == "ld")), 
+             e = nrow(test_data_sort))
+
+# run the test model:
+jags_test <- jags.model(file = textConnection(model),
+                        data = data,
+                        n.chains = 3)
+jags_out <- coda.samples(model = jags_test, 
+                         variable.names = c("b", "p", "alpha"),
+                         n.iter = 10000)
+#plot(jags_out)
+
+out <- as.matrix(jags_out)
+pairs(out)
+cor(out)
+gelman.diag(jags_out)
+gelman.plot(jags_out)
+effectiveSize(jags_out)
+
+
 #### Archive ####-----------------------------------------------------------------------####
 # using beta regression in mgcv package
 # function example: gam(y ~ s(x), family = betar(link = "logit"), data = data)
