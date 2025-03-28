@@ -4,9 +4,6 @@
 
 #### ----- Libraries ----- ####
 #install.packages("librarian")
-#install.packages("censReg")
-#install.packages("AER")
-#install.packages("remotes")
 #install.packages("rjags")
 librarian::shelf(tidyverse, dplyr, rjags, ggplot2)  # removed: mgcv, AER, nlme, VGAM, lme4, remotes, plm, censReg
 
@@ -42,51 +39,10 @@ oak_dat <- tree_to_plot %>%
   left_join(., oak_to_plot, by = 'plot', na_matches = "na") %>%
   replace(is.na(.), 0)
 
-## daymet data:
-# making seasonal values:
-spring = c(3,4,5)
-summer = c(6,7,8)
-# spring seasonal aggregates:
-spr_daym <- hf_daym %>%
-  rename(spr_precip = prcp..mm.day., spr_tmax = tmax..deg.c., spr_tmin = tmin..deg.c., spr_vpd = vp..Pa.) %>%
-  group_by(site, year) %>% filter(month %in% spring) %>%
-  summarise(across(c(spr_precip, spr_tmax, spr_tmin, spr_vpd), mean))
-# summer seasonal aggregates:
-summ_daym <- hf_daym %>%
-  rename(summ_precip = prcp..mm.day., summ_tmax = tmax..deg.c., summ_tmin = tmin..deg.c., summ_vpd = vp..Pa.) %>%
-  group_by(site, year) %>% filter(month %in% summer) %>%
-  summarise(across(c(summ_precip, summ_tmax, summ_tmin, summ_vpd), mean))
-# spring/summer monthly means for 2016:
-daym16 <- hf_daym %>%
-  filter(., month %in% c(spring, summer) & year == 2016) %>%
-  rename(precip = prcp..mm.day., tmax = tmax..deg.c., tmin = tmin..deg.c., vpd = vp..Pa.) %>%
-  mutate(date = month.abb[month]) %>% 
-  pivot_wider(names_from = date, 
-              values_from = c(precip, tmax, tmin, vpd)) %>%
-  group_by(site) %>% summarise(across(everything(), sum, na.rm = T)) %>%
-  ungroup()%>%
-  rename_at(vars(-c(site, year, month)), ~paste0("2016_", .))
-  
-# combine data for seasonal 2014-2015:  
-daym <- cbind(spr_daym[which(spr_daym$year == 2014), grep("^spr", names(spr_daym))], 
-              summ_daym[which(summ_daym$year == 2014), grep("^summ", names(summ_daym))]) %>%
-                rename_with(~paste0("2014_", .x)) %>%
-  bind_cols(spr_daym[which(spr_daym$year == 2015), grep("^spr", names(spr_daym))],
-            summ_daym[which(summ_daym$year == 2015), grep("^summ", names(summ_daym))]) %>%
-  rename_at(vars(starts_with('s')), ~paste0('2015_', .)) %>%
-  bind_cols(spr_daym[which(spr_daym$year == 2016), grep("^spr", names(spr_daym))],
-            summ_daym[which(summ_daym$year == 2016), grep("summ", names(summ_daym))]) %>%
-  rename_at(vars(starts_with('s')), ~paste0('2016_', .))
-
-# combine daymet data:
-dayms <- cbind(daym, daym16[,grep("^2", names(daym16))])[-which(plots$plot == notree),]
-# clean up:
-rm(daym, daym16, spr_daym, summ_daym)
-
 ## make predictor variable data set:
 pred <- cbind(dmags,                           # disturbance magnitude and disturbance year tcg/scores data
-              oak_dat$tba_oak, oak_dat$pba,    # oak tree density data
-              dayms)                           # daymet data
+              oak_dat$tba_oak, oak_dat$pba)#,    # oak tree density data
+              #dayms)                           # daymet data
 
 ## make response variable data set:
 resp <- cbind.data.frame(plot = tree_to_plot$plot, 
@@ -238,10 +194,59 @@ effectiveSize(jags_out)
 
 
 #### Archive ####-----------------------------------------------------------------------####
+
+#### Daymet Code: 
+# ## daymet data:
+# # making seasonal values:
+# spring = c(3,4,5)
+# summer = c(6,7,8)
+# # spring seasonal aggregates:
+# spr_daym <- hf_daym %>%
+#   rename(spr_precip = prcp..mm.day., spr_tmax = tmax..deg.c., spr_tmin = tmin..deg.c., spr_vpd = vp..Pa.) %>%
+#   group_by(site, year) %>% filter(month %in% spring) %>%
+#   summarise(across(c(spr_precip, spr_tmax, spr_tmin, spr_vpd), mean))
+# # summer seasonal aggregates:
+# summ_daym <- hf_daym %>%
+#   rename(summ_precip = prcp..mm.day., summ_tmax = tmax..deg.c., summ_tmin = tmin..deg.c., summ_vpd = vp..Pa.) %>%
+#   group_by(site, year) %>% filter(month %in% summer) %>%
+#   summarise(across(c(summ_precip, summ_tmax, summ_tmin, summ_vpd), mean))
+# # spring/summer monthly means for 2016:
+# daym16 <- hf_daym %>%
+#   filter(., month %in% c(spring, summer) & year == 2016) %>%
+#   rename(precip = prcp..mm.day., tmax = tmax..deg.c., tmin = tmin..deg.c., vpd = vp..Pa.) %>%
+#   mutate(date = month.abb[month]) %>% 
+#   pivot_wider(names_from = date, 
+#               values_from = c(precip, tmax, tmin, vpd)) %>%
+#   group_by(site) %>% summarise(across(everything(), sum, na.rm = T)) %>%
+#   ungroup()%>%
+#   rename_at(vars(-c(site, year, month)), ~paste0("2016_", .))
+#   
+# # combine data for seasonal 2014-2015:  
+# daym <- cbind(spr_daym[which(spr_daym$year == 2014), grep("^spr", names(spr_daym))], 
+#               summ_daym[which(summ_daym$year == 2014), grep("^summ", names(summ_daym))]) %>%
+#                 rename_with(~paste0("2014_", .x)) %>%
+#   bind_cols(spr_daym[which(spr_daym$year == 2015), grep("^spr", names(spr_daym))],
+#             summ_daym[which(summ_daym$year == 2015), grep("^summ", names(summ_daym))]) %>%
+#   rename_at(vars(starts_with('s')), ~paste0('2015_', .)) %>%
+#   bind_cols(spr_daym[which(spr_daym$year == 2016), grep("^spr", names(spr_daym))],
+#             summ_daym[which(summ_daym$year == 2016), grep("summ", names(summ_daym))]) %>%
+#   rename_at(vars(starts_with('s')), ~paste0('2016_', .))
+# 
+# # combine daymet data:
+# dayms <- cbind(daym, daym16[,grep("^2", names(daym16))])[-which(plots$plot == notree),]
+# # clean up:
+# rm(daym, daym16, spr_daym, summ_daym)
+
+
+
+
+#### Model test code:
+#install.packages("censReg")
+#install.packages("AER")
+#install.packages("remotes")
 # using beta regression in mgcv package
 # function example: gam(y ~ s(x), family = betar(link = "logit"), data = data)
 #test <- gam(y ~ s(x), family = betar(link = "logit"), data = test_data)
-
 
 # library(VGAM)
 # model <- vgam(y_censored ~ x + vgam(1 | group), family = tobit(), data = data.frame(y_censored, x, group))
@@ -252,7 +257,6 @@ effectiveSize(jags_out)
 # vglm(formula = apt ~ read + math + prog, family = tobit(Upper = 800), 
 #      ##     data = dat)
 # test_model <- vglm(y ~ x, family = tobit(Lower = 0, Upper = 1), data = test_data)
-
 
 # # Install packages if not already installed
 # # install.packages(c("AER", "lme4"))  # Or "nlme" depending on preference
