@@ -141,7 +141,7 @@ jags_test <- jags.model(file = textConnection(test_model),
                         n.chains = 3)
 jags_out <- coda.samples(model = jags_test, 
                          variable.names = c("b", "p", "alpha"),
-                         n.iter = 10000)
+                         n.iter = 50000)
 plot(jags_out)
 
 out <- as.matrix(jags_out)
