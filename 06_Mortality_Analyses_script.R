@@ -140,7 +140,7 @@ model <- "model{
 	
 		## between 0-1:
 	for (i in (c+1):d){
-		y[i] ~ dnorm(mu[i], p)
+		y[i] ~ dnorm(mu[i], tau)
 	}
 
 	## right (1) censored:
@@ -161,7 +161,6 @@ model <- "model{
 
 ### Priors:
 b ~ dmnorm(b0, Vb)
-p ~ dgamma(p0, pb)
 q ~ dgamma(q0, qb)
 tau ~ dgamma(0.001, 1)
 }"
@@ -170,8 +169,7 @@ tau ~ dgamma(0.001, 1)
 data <- list(x = test_data_sort$x1, y = test_data_sort$y, hot = test_data_sort$hs, 
              sites = nrow(test_data_sort), hs = length(unique(test_data_sort$hs)),
              b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)), 
-             p0 = 0.01, pb = 0.001,  
-             q0 = 0.01, qb = 0.001, 
+             q0 = 1, qb = 1, 
              c = length(which(test_data_sort$c == "l")), 
              d = length(which(test_data_sort$c == "l")) + length(which(test_data_sort$c == "ld")), 
              e = nrow(test_data_sort))
@@ -181,7 +179,7 @@ jags_test <- jags.model(file = textConnection(model),
                         data = data,
                         n.chains = 3)
 jags_out <- coda.samples(model = jags_test, 
-                         variable.names = c("b", "p", "alpha"),
+                         variable.names = c("b", "q", "tau", "alpha"),
                          n.iter = 10000)
 #plot(jags_out)
 
