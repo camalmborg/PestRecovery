@@ -87,4 +87,4 @@ jags_out <- coda.samples(model = jags_test,
                          variable.names = c("b", "p", "alpha", "y"),
                          n.iter = 10000)
 
-# pushing changes
+# pushing changes 
