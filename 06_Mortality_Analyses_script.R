@@ -53,64 +53,6 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
   mutate(dead_bin = ifelse(dead == TRUE, 1, 0), .after = 2)
 
 #### ----- running models ----- ####
-# run a test first
-# test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
-# test_data <- pdata.frame(test_data, index = "hs")
-
-# using jags:
-test_model <- "
-## Jags code for mortality analyses
-model{
-
-### Loop over individual sites
-for (s in 1:sites) {
-	
-	### Data Model:
-	y[s] ~ dnorm(mu[s], p)
-
-	### Process Model:
-	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
-}
-
-
-### Random effect for hotspot:
-for (h in 1:hs) {
-	alpha[h] ~ dnorm(0, tau)
-	}
-
-### Priors:
-b ~ dmnorm(b0, Vb)
-p ~ dgamma(p0, pb)
-tau ~ dgamma(0.001, 1)
-}"
-
-# data for the model:
-data <- list(x = pred$tcg_y1, y = resp$pdead, 
-             hot = resp$hotspot, sites = nrow(resp),
-             hs = length(unique(resp$hotspot)),
-             b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)),
-             p0 = 0.1, pb = 0.1)
-
-# run the test model:
-jags_test <- jags.model(file = textConnection(test_model),
-                        data = data,
-                        n.chains = 3)
-jags_out <- coda.samples(model = jags_test, 
-                         variable.names = c("b", "p", "alpha"),
-                         n.iter = 50000)
-plot(jags_out)
-
-out <- as.matrix(jags_out)
-pairs(out)
-cor(out)
-gelman.diag(jags_out)
-gelman.plot(jags_out)
-effectiveSize(jags_out)
-
-
-
-# testing the other model
-
 # test data:
 # sorting criteria:
 c <- vector()
@@ -239,6 +181,62 @@ effectiveSize(jags_out)
 
 
 #### Model test code:
+# run a test first
+# test_data <- cbind.data.frame(y = resp$pdead, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
+# test_data <- pdata.frame(test_data, index = "hs")
+
+# # using jags:
+# test_model <- "
+# ## Jags code for mortality analyses
+# model{
+# 
+# ### Loop over individual sites
+# for (s in 1:sites) {
+# 	
+# 	### Data Model:
+# 	y[s] ~ dnorm(mu[s], p)
+# 
+# 	### Process Model:
+# 	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
+# }
+# 
+# 
+# ### Random effect for hotspot:
+# for (h in 1:hs) {
+# 	alpha[h] ~ dnorm(0, tau)
+# 	}
+# 
+# ### Priors:
+# b ~ dmnorm(b0, Vb)
+# p ~ dgamma(p0, pb)
+# tau ~ dgamma(0.001, 1)
+# }"
+# 
+# # data for the model:
+# data <- list(x = pred$tcg_y1, y = resp$pdead, 
+#              hot = resp$hotspot, sites = nrow(resp),
+#              hs = length(unique(resp$hotspot)),
+#              b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)),
+#              p0 = 0.1, pb = 0.1)
+# 
+# # run the test model:
+# jags_test <- jags.model(file = textConnection(test_model),
+#                         data = data,
+#                         n.chains = 3)
+# jags_out <- coda.samples(model = jags_test, 
+#                          variable.names = c("b", "p", "alpha"),
+#                          n.iter = 50000)
+# plot(jags_out)
+# 
+# out <- as.matrix(jags_out)
+# pairs(out)
+# cor(out)
+# gelman.diag(jags_out)
+# gelman.plot(jags_out)
+# effectiveSize(jags_out)
+
+
+
 #install.packages("censReg")
 #install.packages("AER")
 #install.packages("remotes")
