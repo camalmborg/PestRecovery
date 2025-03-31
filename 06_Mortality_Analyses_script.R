@@ -15,7 +15,7 @@ librarian::shelf(tidyverse, dplyr, rjags, ggplot2)  # removed: mgcv, AER, nlme, 
 ### preparing plot-level information from tree data:
 tree_to_plot <- trees %>%
   select(hotspot, point, plot, tot_tree, tot_dead, pdead, tot_dba, pdba) %>%
-  group_by(plot) %>% summarise(across(everything(), first)) %>%
+  group_by(plot) %>% summarise(across(everything(), first)) 
 
 notree <- setdiff(plots$plot, tree_to_plot$plot)
 plot_out <- which(plots$plot == notree)
@@ -54,25 +54,16 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
                          pdba = (tree_to_plot$pdba/100)) %>%    # make a percentage 
   mutate(dead_bin = ifelse(dead == TRUE, 1, 0), .after = 2)
 
-#### ----- running models ----- ####
-# test data:
-# sorting criteria:
-c <- vector()
-for (i in 1:nrow(test_data)){
-  if (test_data$y[i] == 0){
-    c[i] <- "l"   
-  } else if (test_data$y[i] > 0 & test_data$y[i] < 1) {
-    c[i] <- "ld"
-  } else if (test_data$y[i] == 1) {
-    c[i] <- "d"
-  }
-}
-# add to data frame:
-test_data$c <- c
-# sort by y:
-test_data_sort <- test_data[order(test_data$y),]
+## remove salvage logged sites:
+resp <- resp[tree_to_plot$harv == 0,]
+pred <- pred[tree_to_plot$harv == 0,]
 
-model <- "model{
+
+#### ----- running models----- ####
+# sort by 0-1 mortality percentages before running
+
+# model with logit link:
+model_log <- "model{
 ### Loop over individual sites
 
 	### Data Model:
@@ -109,6 +100,63 @@ q ~ dgamma(q0, qb)
 tau ~ dgamma(0.001, 1)
 }"
 
+# model without logit link:
+model_nolog <- "model{
+### Loop over individual sites
+
+	### Data Model:
+	## left (0) censored:
+	for (i in  1:c){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- pnorm(0, mu[i], tau)  
+	}
+	
+		## between 0-1:
+	for (i in (c+1):d){
+		y[i] ~ dnorm(mu[i], tau)
+	}
+
+	## right (1) censored:
+	for (i in (d+1):e){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- 1 - pnorm(1, mu[i], tau)
+	}
+
+	### Process Model:
+	for (s in 1:sites) {
+	mu[s] <- b[1] + b[2]*x[s] + alpha[hot[s]]
+	}
+
+  ### Random effect for hotspot:
+  for (h in 1:hs) {
+  	alpha[h] ~ dnorm(0, q)
+	}
+
+### Priors:
+b ~ dmnorm(b0, Vb)
+q ~ dgamma(q0, qb)
+tau ~ dgamma(0.001, 1)
+}"
+
+# make test data:
+test_data <- cbind.data.frame(y = resp$pdba, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
+
+# sorting criteria:
+c <- vector()
+for (i in 1:nrow(test_data)){
+  if (test_data$y[i] == 0){
+    c[i] <- "l"   
+  } else if (test_data$y[i] > 0 & test_data$y[i] < 1) {
+    c[i] <- "ld"
+  } else if (test_data$y[i] == 1) {
+    c[i] <- "d"
+  }
+}
+# add to data frame:
+test_data$c <- c
+# sort by y:
+test_data_sort <- test_data[order(test_data$y),]
+
 # inputs:
 data <- list(x = test_data_sort$x1, y = test_data_sort$y, hot = test_data_sort$hs, 
              sites = nrow(test_data_sort), hs = length(unique(test_data_sort$hs)),
@@ -119,11 +167,11 @@ data <- list(x = test_data_sort$x1, y = test_data_sort$y, hot = test_data_sort$h
              e = nrow(test_data_sort))
 
 # run the test model:
-jags_test <- jags.model(file = textConnection(model),
+jags_test <- jags.model(file = textConnection(model_log),
                         data = data,
                         n.chains = 3)
 jags_out <- coda.samples(model = jags_test, 
-                         variable.names = c("b", "q", "tau", "alpha"),
+                         variable.names = c("b", "q", "tau", "alpha", "y"),
                          n.iter = 10000)
 #plot(jags_out)
 
@@ -134,6 +182,12 @@ gelman.diag(jags_out)
 gelman.plot(jags_out)
 effectiveSize(jags_out)
 
+# make y data for comparison plots
+ymeans <- apply(out[,grep("y", colnames(out))], 2, mean)
+plot(ymeans, resp$pdba)
+
+# model DICs:
+dic <- dic.samples(jags_test, n.iter = 20000)
 
 #### Archive ####-----------------------------------------------------------------------####
 
