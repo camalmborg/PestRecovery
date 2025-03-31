@@ -15,10 +15,12 @@ librarian::shelf(tidyverse, dplyr, rjags, ggplot2)  # removed: mgcv, AER, nlme, 
 ### preparing plot-level information from tree data:
 tree_to_plot <- trees %>%
   select(hotspot, point, plot, tot_tree, tot_dead, pdead, tot_dba, pdba) %>%
-  group_by(plot) %>% summarise(across(everything(), first))
+  group_by(plot) %>% summarise(across(everything(), first)) %>%
 
 notree <- setdiff(plots$plot, tree_to_plot$plot)
-#plot_out <- which(plots$plot == notree)
+plot_out <- which(plots$plot == notree)
+tree_to_plot$harv = plots$recent_timber_harvest[-plot_out]
+tree_to_plot$invas = plots$invasives[-plot_out]
 
 ### making the matrix for predictors variables:
 ## disturbance magnitude and tcg/scores during disturbance:
