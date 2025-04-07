@@ -211,6 +211,8 @@ for (i in 1:ncol(pred)){
   model_save(out_path, run_path, mort_model)
 }
 
+### Run Log:
+# first model run - no inits, ran 4/7/25
 
 #### Archive ####-----------------------------------------------------------------------####
 
