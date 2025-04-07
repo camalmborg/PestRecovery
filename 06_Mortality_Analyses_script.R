@@ -59,7 +59,7 @@ resp <- resp[tree_to_plot$harv == 0,]
 pred <- pred[tree_to_plot$harv == 0,]
 
 
-#### ----- running models----- ####
+#### ----- running univariate models----- ####
 # model with logit link:
 model_log <- read_file("Models/2025_03_31_mort_model_with_logit.txt")
 # model without logit link:
@@ -152,7 +152,27 @@ model_save <- function(out_path, run_path, jags_model){
   save(model_info, file = filename_runs)
 }
 
-# Loop for running models:
+
+# Loops for running models:
+# for logit:
+for (i in 1:ncol(pred)){
+  # prepare model inputs:
+  model_data <- cbind.data.frame(y = resp$pdba, 
+                                 x = pred[,i],
+                                 hs = resp$hotspot)
+  # additional inputs to model run functions:
+  model = model_log
+  niter = 100000
+  diter = 30000
+  run = i
+  # model save function inputs:
+  out_path = "Mortality_Model_Runs/model_outputs/"
+  run_path = "Mortality_Model_Runs/model_runs/"
+  
+  # run the model:
+  mort_model <- run_mort_model(model_data, model, niter, diter, run)
+  model_save(out_path, run_path, mort_model)
+}
 
 
 #### Archive ####-----------------------------------------------------------------------####
