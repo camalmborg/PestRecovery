@@ -2,16 +2,15 @@
 ### It is for the first set of analyses, using harvard forest field plot data
 ### Assessing drivers of plot-level mortality, using remote sensing and field observations
 
-# set working directory:
-dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
-setwd(dir)
-
 #### ----- Libraries ----- ####
 #install.packages("librarian")
 #install.packages("rjags")
 librarian::shelf(tidyverse, dplyr, rjags, ggplot2)  # removed: mgcv, AER, nlme, VGAM, lme4, remotes, plm, censReg
 
 #### ----- Load Data (if not in environment) ----- ####
+# set working directory:
+dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
+setwd(dir)
 load("Environments/2025_04_07_environment.RData")
 
 #### ----- prepping data to run models ----- ####
@@ -166,11 +165,12 @@ model_save <- function(out_path, run_path, jags_model){
   filename_outputs <- paste0(filepath_outputs, 
                              date, 
                              "_modelrun_", as.character(jags_model$metadata$run),
-                             "_", mod,
+                             "_", jags_model$metadata$mod,
                              "_output",".csv")
   filename_runs <- paste0(filepath_runs,
                           date,
                           "_modelrun_", as.character(jags_model$metadata$run),
+                          "_", jags_model$metadata$mod,
                           "_data",".RData")
   
   # save outputs to folder
