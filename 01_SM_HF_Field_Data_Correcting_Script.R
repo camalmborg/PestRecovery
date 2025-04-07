@@ -27,4 +27,3 @@ sites$site <- 1:nrow(plots_2022) # add site number column
 
 # clean up environment:
 rm(list=setdiff(ls(), "plots_cor"))
-
