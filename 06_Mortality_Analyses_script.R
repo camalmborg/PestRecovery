@@ -63,80 +63,9 @@ pred <- pred[tree_to_plot$harv == 0,]
 # sort by 0-1 mortality percentages before running
 
 # model with logit link:
-model_log <- "model{
-### Loop over individual sites
-
-	### Data Model:
-	## left (0) censored:
-	for (i in  1:c){
-		y[i] ~ dbern(theta[i])
-		theta[i] <- pnorm(0, mu[i], tau)  
-	}
-	
-		## between 0-1:
-	for (i in (c+1):d){
-		y[i] ~ dnorm(mu[i], tau)
-	}
-
-	## right (1) censored:
-	for (i in (d+1):e){
-		y[i] ~ dbern(theta[i])
-		theta[i] <- 1 - pnorm(1, mu[i], tau)
-	}
-
-	### Process Model:
-	for (s in 1:sites) {
-	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
-	}
-
-  ### Random effect for hotspot:
-  for (h in 1:hs) {
-  	alpha[h] ~ dnorm(0, q)
-	}
-
-### Priors:
-b ~ dmnorm(b0, Vb)
-q ~ dgamma(q0, qb)
-tau ~ dgamma(0.001, 1)
-}"
-
+model_log <- read_file("Models/2025_03_31_mort_model_with_logit.txt")
 # model without logit link:
-model_nolog <- "model{
-### Loop over individual sites
-
-	### Data Model:
-	## left (0) censored:
-	for (i in  1:c){
-		y[i] ~ dbern(theta[i])
-		theta[i] <- pnorm(0, mu[i], tau)  
-	}
-	
-		## between 0-1:
-	for (i in (c+1):d){
-		y[i] ~ dnorm(mu[i], tau)
-	}
-
-	## right (1) censored:
-	for (i in (d+1):e){
-		y[i] ~ dbern(theta[i])
-		theta[i] <- 1 - pnorm(1, mu[i], tau)
-	}
-
-	### Process Model:
-	for (s in 1:sites) {
-	mu[s] <- b[1] + b[2]*x[s] + alpha[hot[s]]
-	}
-
-  ### Random effect for hotspot:
-  for (h in 1:hs) {
-  	alpha[h] ~ dnorm(0, q)
-	}
-
-### Priors:
-b ~ dmnorm(b0, Vb)
-q ~ dgamma(q0, qb)
-tau ~ dgamma(0.001, 1)
-}"
+model_nolog <- read_file("Models/2025_03_31_mort_model_no_logit.txt")
 
 # make test data:
 test_data <- cbind.data.frame(y = resp$pdba, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
@@ -348,3 +277,81 @@ dic <- dic.samples(jags_test, n.iter = 20000)
 # test_model_2 <- censReg(y ~ x1 + x1* x2, left = 0, right = 1, method = "BHHH", data = test_data)
 # summary(test_model)
 # AIC(test_model)
+
+
+
+# # model with logit link:
+# model_log <- "model{
+# ### Loop over individual sites
+# 
+# 	### Data Model:
+# 	## left (0) censored:
+# 	for (i in  1:c){
+# 		y[i] ~ dbern(theta[i])
+# 		theta[i] <- pnorm(0, mu[i], tau)  
+# 	}
+# 	
+# 		## between 0-1:
+# 	for (i in (c+1):d){
+# 		y[i] ~ dnorm(mu[i], tau)
+# 	}
+# 
+# 	## right (1) censored:
+# 	for (i in (d+1):e){
+# 		y[i] ~ dbern(theta[i])
+# 		theta[i] <- 1 - pnorm(1, mu[i], tau)
+# 	}
+# 
+# 	### Process Model:
+# 	for (s in 1:sites) {
+# 	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
+# 	}
+# 
+#   ### Random effect for hotspot:
+#   for (h in 1:hs) {
+#   	alpha[h] ~ dnorm(0, q)
+# 	}
+# 
+# ### Priors:
+# b ~ dmnorm(b0, Vb)
+# q ~ dgamma(q0, qb)
+# tau ~ dgamma(0.001, 1)
+# }"
+# 
+# # model without logit link:
+# model_nolog <- "model{
+# ### Loop over individual sites
+# 
+# 	### Data Model:
+# 	## left (0) censored:
+# 	for (i in  1:c){
+# 		y[i] ~ dbern(theta[i])
+# 		theta[i] <- pnorm(0, mu[i], tau)  
+# 	}
+# 	
+# 		## between 0-1:
+# 	for (i in (c+1):d){
+# 		y[i] ~ dnorm(mu[i], tau)
+# 	}
+# 
+# 	## right (1) censored:
+# 	for (i in (d+1):e){
+# 		y[i] ~ dbern(theta[i])
+# 		theta[i] <- 1 - pnorm(1, mu[i], tau)
+# 	}
+# 
+# 	### Process Model:
+# 	for (s in 1:sites) {
+# 	mu[s] <- b[1] + b[2]*x[s] + alpha[hot[s]]
+# 	}
+# 
+#   ### Random effect for hotspot:
+#   for (h in 1:hs) {
+#   	alpha[h] ~ dnorm(0, q)
+# 	}
+# 
+# ### Priors:
+# b ~ dmnorm(b0, Vb)
+# q ~ dgamma(q0, qb)
+# tau ~ dgamma(0.001, 1)
+# }"
