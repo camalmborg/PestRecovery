@@ -7,6 +7,10 @@
 library(dplyr)
 library(tidyverse)
 
+# Getting Data
+# for SCC: set working directory
+dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery"
+setwd(dir)
 # open plot file:
 file <- "Data/hf_field_data/2022_hf_plot_data.csv"
 plots_cor <- read.csv(file)
@@ -23,3 +27,4 @@ sites$site <- 1:nrow(plots_2022) # add site number column
 
 # clean up environment:
 rm(list=setdiff(ls(), "plots_cor"))
+
