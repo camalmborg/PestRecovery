@@ -174,6 +174,26 @@ for (i in 1:ncol(pred)){
   model_save(out_path, run_path, mort_model)
 }
 
+# for no logit:
+for (i in 1:ncol(pred)){
+  # prepare model inputs:
+  model_data <- cbind.data.frame(y = resp$pdba, 
+                                 x = pred[,i],
+                                 hs = resp$hotspot)
+  # additional inputs to model run functions:
+  model = model_nolog
+  niter = 100000
+  diter = 30000
+  run = i
+  # model save function inputs:
+  out_path = "Mortality_Model_Runs/model_outputs/"
+  run_path = "Mortality_Model_Runs/model_runs/"
+  
+  # run the model:
+  mort_model <- run_mort_model(model_data, model, niter, diter, run)
+  model_save(out_path, run_path, mort_model)
+}
+
 
 #### Archive ####-----------------------------------------------------------------------####
 
