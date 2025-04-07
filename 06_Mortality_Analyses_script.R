@@ -41,7 +41,7 @@ oak_dat <- tree_to_plot %>%
   replace(is.na(.), 0)
 
 ## make predictor variable data set:
-pred <- cbind(dmags,                           # disturbance magnitude and disturbance year tcg/scores data
+preds <- cbind(dmags,                           # disturbance magnitude and disturbance year tcg/scores data
               tba_oak = oak_dat$tba_oak, 
               pba_oak = oak_dat$pba)#,    # oak tree density data
               #dayms)                           # daymet data
@@ -56,8 +56,25 @@ resp <- cbind.data.frame(plot = tree_to_plot$plot,
 
 ## remove salvage logged sites:
 resp <- resp[tree_to_plot$harv == 0,]
-pred <- pred[tree_to_plot$harv == 0,]
+preds <- preds[tree_to_plot$harv == 0,]
 
+## normalizing pred data:
+pred_norm <- function(predictors){
+  new_preds <- matrix(NA, nrow = nrow(predictors), ncol = ncol(predictors))
+  preds <- predictors
+  means <- apply(preds, 2, mean)
+  sds <- apply(preds, 2, sd)
+  for (i in 1:ncol(preds)){
+    for (j in 1:nrow(preds)){
+      new_preds[j, i] <- (preds[j, i] - means[i])/sds[i]
+    }
+  }
+  return(new_preds)
+}
+# normalize predictors:
+pred <- as.data.frame(pred_norm(preds))
+# column names:
+colnames(pred) <- colnames(preds)
 
 #### ----- running univariate models----- ####
 # model with logit link:
