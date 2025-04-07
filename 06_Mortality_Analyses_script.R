@@ -8,8 +8,7 @@
 librarian::shelf(tidyverse, dplyr, rjags, ggplot2)  # removed: mgcv, AER, nlme, VGAM, lme4, remotes, plm, censReg
 
 #### ----- Load Data (if not in environment) ----- ####
-# disturbance magnitude data
-# harvard forest plot data
+load("Environments/2025_04_07_environment.RData")
 
 #### ----- prepping data to run models ----- ####
 ### preparing plot-level information from tree data:
@@ -61,8 +60,6 @@ pred <- pred[tree_to_plot$harv == 0,]
 
 
 #### ----- running models----- ####
-# sort by 0-1 mortality percentages before running
-
 # model with logit link:
 model_log <- read_file("Models/2025_03_31_mort_model_with_logit.txt")
 # model without logit link:
@@ -73,22 +70,25 @@ model_nolog <- read_file("Models/2025_03_31_mort_model_no_logit.txt")
 #'@param model = model character vector object from .txt file
 #'@param niter = number of model iterations to run
 #'@param diter = number of DIC iterations to run
-run_mort_model <- function(data, model, niter, diter){
+run_mort_model <- function(model_data, model, niter, diter, run){
+  # identifier:
+  model_run = run
+  # sort by 0-1 mortality percentages before running
   # sort data by y:
   c <- vector()
-  for (i in 1:nrow(test_data)){
+  for (i in 1:nrow(model_data)){
     if (data$y[i] == 0){
       c[i] <- "l"   
-    } else if (data$y[i] > 0 & test_data$y[i] < 1) {
+    } else if (model_data$y[i] > 0 & model_data$y[i] < 1) {
       c[i] <- "ld"
-    } else if (data$y[i] == 1) {
+    } else if (model_data$y[i] == 1) {
       c[i] <- "d"
     }
   }
   # add to data frame:
-  data$c <- c
+  model_data$c <- c
   # sort by y:
-  data_sort <- data[order(data$y),]
+  data_sort <- model_data[order(model_data$y),]
   
   # inputs:
   data <- list(x = data_sort$x, y = data_sort$y, hot = data_sort$hs, 
@@ -104,7 +104,7 @@ run_mort_model <- function(data, model, niter, diter){
                           data = data,
                           n.chains = 3)
   jags_out <- coda.samples(model = mort_jags, 
-                           variable.names = c("b", "q", "tau", "alpha", "y"),
+                           variable.names = c("b", "q", "tau", "alpha", "y", "mu"),
                            n.iter = niter)
   
   # run DIC
@@ -113,7 +113,7 @@ run_mort_model <- function(data, model, niter, diter){
   
   ### Make output list
   # track metadata
-  metadata <- tibble::lst(model, data, init)
+  metadata <- tibble::lst(model, data, run)#, init)
   # model selection
   dic <- list(DIC, sum)
   # model output
@@ -124,57 +124,36 @@ run_mort_model <- function(data, model, niter, diter){
   return(output)
 }
 
-
-# make test data:
-test_data <- cbind.data.frame(y = resp$pdba, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
-
-# sorting criteria:
-c <- vector()
-for (i in 1:nrow(test_data)){
-  if (test_data$y[i] == 0){
-    c[i] <- "l"   
-  } else if (test_data$y[i] > 0 & test_data$y[i] < 1) {
-    c[i] <- "ld"
-  } else if (test_data$y[i] == 1) {
-    c[i] <- "d"
-  }
+# function for saving models:
+### Function for saving model output:
+##' @param out_path model outputs save file path
+##' @param run_path model runs save file path
+##' @param jags_model output from model run function
+model_save <- function(out_path, run_path, jags_model){
+  # choose file path
+  filepath_outputs <- out_path
+  filepath_runs <- run_path
+  # date
+  date <- as.character(Sys.Date())
+  # make file name
+  filename_outputs <- paste0(filepath_outputs, 
+                             date, 
+                             "_modelrun_", as.character(metadata$run),
+                             "_output",".csv")
+  filename_runs <- paste0(filepath_runs,
+                          date,
+                          "_modelrun_", as.character(metadata$run),
+                          "_data",".RData")
+  
+  # save outputs to folder
+  write.csv(jags_model$out, file = filename_outputs)
+  # save model selection and metadata to folder
+  model_info <- jags_model[c('jags_out','dic','metadata')]
+  save(model_info, file = filename_runs)
 }
-# add to data frame:
-test_data$c <- c
-# sort by y:
-test_data_sort <- test_data[order(test_data$y),]
 
-# inputs:
-data <- list(x = test_data_sort$x1, y = test_data_sort$y, hot = test_data_sort$hs, 
-             sites = nrow(test_data_sort), hs = length(unique(test_data_sort$hs)),
-             b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)), 
-             q0 = 1, qb = 1, 
-             c = length(which(test_data_sort$c == "l")), 
-             d = length(which(test_data_sort$c == "l")) + length(which(test_data_sort$c == "ld")), 
-             e = nrow(test_data_sort))
+# Loop for running models:
 
-# run the test model:
-jags_test <- jags.model(file = textConnection(model_log),
-                        data = data,
-                        n.chains = 3)
-jags_out <- coda.samples(model = jags_test, 
-                         variable.names = c("b", "q", "tau", "alpha", "y"),
-                         n.iter = 10000)
-#plot(jags_out)
-
-out <- as.matrix(jags_out)
-pairs(out)
-cor(out)
-gelman.diag(jags_out)
-gelman.plot(jags_out)
-effectiveSize(jags_out)
-
-# make y data for comparison plots
-ymeans <- apply(out[,grep("y", colnames(out))], 2, mean)
-plot(ymeans, resp$pdba)
-
-# model DICs:
-dic <- dic.samples(jags_test, n.iter = 20000)
 
 #### Archive ####-----------------------------------------------------------------------####
 
@@ -413,3 +392,44 @@ dic <- dic.samples(jags_test, n.iter = 20000)
 # q ~ dgamma(q0, qb)
 # tau ~ dgamma(0.001, 1)
 # }"
+
+# # model DICs:
+# dic <- dic.samples(jags_test, n.iter = 20000)
+
+
+# # make test data:
+# test_data <- cbind.data.frame(y = resp$pdba, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
+# 
+# # sorting criteria:
+# c <- vector()
+# for (i in 1:nrow(test_data)){
+#   if (test_data$y[i] == 0){
+#     c[i] <- "l"   
+#   } else if (test_data$y[i] > 0 & test_data$y[i] < 1) {
+#     c[i] <- "ld"
+#   } else if (test_data$y[i] == 1) {
+#     c[i] <- "d"
+#   }
+# }
+# # add to data frame:
+# test_data$c <- c
+# # sort by y:
+# test_data_sort <- test_data[order(test_data$y),]
+# 
+# # inputs:
+# data <- list(x = test_data_sort$x1, y = test_data_sort$y, hot = test_data_sort$hs, 
+#              sites = nrow(test_data_sort), hs = length(unique(test_data_sort$hs)),
+#              b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)), 
+#              q0 = 1, qb = 1, 
+#              c = length(which(test_data_sort$c == "l")), 
+#              d = length(which(test_data_sort$c == "l")) + length(which(test_data_sort$c == "ld")), 
+#              e = nrow(test_data_sort))
+# 
+# # run the test model:
+# jags_test <- jags.model(file = textConnection(model_log),
+#                         data = data,
+#                         n.chains = 3)
+# jags_out <- coda.samples(model = jags_test, 
+#                          variable.names = c("b", "q", "tau", "alpha", "y"),
+#                          n.iter = 10000)
+# #plot(jags_out)
