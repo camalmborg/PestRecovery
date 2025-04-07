@@ -2,6 +2,10 @@
 ### It is for the first set of analyses, using harvard forest field plot data
 ### Assessing drivers of plot-level mortality, using remote sensing and field observations
 
+# set working directory:
+dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
+setwd(dir)
+
 #### ----- Libraries ----- ####
 #install.packages("librarian")
 #install.packages("rjags")
