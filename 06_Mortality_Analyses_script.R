@@ -43,7 +43,8 @@ oak_dat <- tree_to_plot %>%
 
 ## make predictor variable data set:
 pred <- cbind(dmags,                           # disturbance magnitude and disturbance year tcg/scores data
-              oak_dat$tba_oak, oak_dat$pba)#,    # oak tree density data
+              tba_oak = oak_dat$tba_oak, 
+              pba_oak = oak_dat$pba)#,    # oak tree density data
               #dayms)                           # daymet data
 
 ## make response variable data set:
@@ -66,6 +67,63 @@ pred <- pred[tree_to_plot$harv == 0,]
 model_log <- read_file("Models/2025_03_31_mort_model_with_logit.txt")
 # model without logit link:
 model_nolog <- read_file("Models/2025_03_31_mort_model_no_logit.txt")
+
+# univariate mortality model run function:
+#'@param data = pred/resp dataframe object
+#'@param model = model character vector object from .txt file
+#'@param niter = number of model iterations to run
+#'@param diter = number of DIC iterations to run
+run_mort_model <- function(data, model, niter, diter){
+  # sort data by y:
+  c <- vector()
+  for (i in 1:nrow(test_data)){
+    if (data$y[i] == 0){
+      c[i] <- "l"   
+    } else if (data$y[i] > 0 & test_data$y[i] < 1) {
+      c[i] <- "ld"
+    } else if (data$y[i] == 1) {
+      c[i] <- "d"
+    }
+  }
+  # add to data frame:
+  data$c <- c
+  # sort by y:
+  data_sort <- data[order(data$y),]
+  
+  # inputs:
+  data <- list(x = data_sort$x, y = data_sort$y, hot = data_sort$hs, 
+               sites = nrow(data_sort), hs = length(unique(data_sort$hs)),
+               b0 = as.vector(c(0,0)), Vb = solve(diag(10000, 2)), 
+               q0 = 1, qb = 1, 
+               c = length(which(data_sort$c == "l")), 
+               d = length(which(data_sort$c == "l")) + length(which(data_sort$c == "ld")), 
+               e = nrow(data_sort))
+  
+  # run the test model:
+  mort_jags <- jags.model(file = textConnection(model),
+                          data = data,
+                          n.chains = 3)
+  jags_out <- coda.samples(model = mort_jags, 
+                           variable.names = c("b", "q", "tau", "alpha", "y"),
+                           n.iter = niter)
+  
+  # run DIC
+  DIC <- dic.samples(mort_jags, n.iter = diter)
+  sum <- sum(DIC$deviance, DIC$penalty)
+  
+  ### Make output list
+  # track metadata
+  metadata <- tibble::lst(model, data, init)
+  # model selection
+  dic <- list(DIC, sum)
+  # model output
+  out <- as.matrix(jags_out)
+  # combine output
+  output <- tibble::lst(metadata, dic, jags_out, out)
+  
+  return(output)
+}
+
 
 # make test data:
 test_data <- cbind.data.frame(y = resp$pdba, x1 = pred$tcg_y1, x2 = pred$tcg_y2, hs = resp$hotspot)
