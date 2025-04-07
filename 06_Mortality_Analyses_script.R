@@ -91,9 +91,12 @@ model_nolog <- read_file("Models/2025_03_31_mort_model_no_logit.txt")
 #'@param model = model character vector object from .txt file
 #'@param niter = number of model iterations to run
 #'@param diter = number of DIC iterations to run
-run_mort_model <- function(model_data, model, niter, diter, run){
+#'@param run = loop number for model run for id
+#'@param log = if TRUE = logit, if FALSE = no logit
+run_mort_model <- function(model_data, model, niter, diter, run, log){
   # identifier:
   model_run = run
+  log = log
   # sort by 0-1 mortality percentages before running
   # sort data by y:
   c <- vector()
@@ -133,8 +136,11 @@ run_mort_model <- function(model_data, model, niter, diter, run){
   sum <- sum(DIC$deviance, DIC$penalty)
   
   ### Make output list
+  if (log == TRUE){mod <- "log"} else {
+    mod <- "nolog"
+  }
   # track metadata
-  metadata <- tibble::lst(model, data, run)#, init)
+  metadata <- tibble::lst(model, data, run, mod)#, init)
   # model selection
   dic <- list(DIC, sum)
   # model output
@@ -160,6 +166,7 @@ model_save <- function(out_path, run_path, jags_model){
   filename_outputs <- paste0(filepath_outputs, 
                              date, 
                              "_modelrun_", as.character(jags_model$metadata$run),
+                             "_", mod,
                              "_output",".csv")
   filename_runs <- paste0(filepath_runs,
                           date,
@@ -186,12 +193,13 @@ for (i in 1:ncol(pred)){
   niter = 100000
   diter = 30000
   run = i
+  log = TRUE
   # model save function inputs:
   out_path = "Mortality_Model_Runs/model_outputs/"
   run_path = "Mortality_Model_Runs/model_runs/"
   
   # run the model:
-  mort_model <- run_mort_model(model_data, model, niter, diter, run)
+  mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
   model_save(out_path, run_path, mort_model)
 }
 
@@ -206,12 +214,13 @@ for (i in 1:ncol(pred)){
   niter = 100000
   diter = 30000
   run = i
+  log = FALSE
   # model save function inputs:
   out_path = "Mortality_Model_Runs/model_outputs/"
   run_path = "Mortality_Model_Runs/model_runs/"
   
   # run the model:
-  mort_model <- run_mort_model(model_data, model, niter, diter, run)
+  mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
   model_save(out_path, run_path, mort_model)
 }
 
