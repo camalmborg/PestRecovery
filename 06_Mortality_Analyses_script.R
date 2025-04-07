@@ -155,11 +155,11 @@ model_save <- function(out_path, run_path, jags_model){
   # make file name
   filename_outputs <- paste0(filepath_outputs, 
                              date, 
-                             "_modelrun_", as.character(metadata$run),
+                             "_modelrun_", as.character(jags_model$metadata$run),
                              "_output",".csv")
   filename_runs <- paste0(filepath_runs,
                           date,
-                          "_modelrun_", as.character(metadata$run),
+                          "_modelrun_", as.character(jags_model$metadata$run),
                           "_data",".RData")
   
   # save outputs to folder
@@ -178,7 +178,7 @@ for (i in 1:ncol(pred)){
                                  x = pred[,i],
                                  hs = resp$hotspot)
   # additional inputs to model run functions:
-  model = model_log
+  model <- model_log
   niter = 100000
   diter = 30000
   run = i
