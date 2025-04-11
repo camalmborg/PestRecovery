@@ -1,5 +1,8 @@
 # Script for visualizing, parsing, and plotting model outputs from mortality models
 
+# load libraries
+librarian::shelf(tidyverse, dplyr, rjags, coda)
+
 # navigate to folder:
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/"
 setwd(dir)
@@ -32,7 +35,7 @@ mort_data <- function(dir, modelnum, log){
   return(model_info)
 }
 
-### Visualizations
+### Visualizations and parsing outputs:
 dir = dir
 modelnum = 1
 log = TRUE
