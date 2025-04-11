@@ -176,7 +176,7 @@ model_save <- function(out_path, run_path, jags_model){
   # save outputs to folder
   write.csv(jags_model$out, file = filename_outputs)
   # save model selection and metadata to folder
-  model_info <- jags_model[c('jags_out','dic','metadata')]
+  model_info <- jags_model[c('jags_out', 'dic', 'metadata')]
   save(model_info, file = filename_runs)
 }
 
