@@ -227,7 +227,7 @@ for (i in 1:ncol(pred)){
 ### Run Log:
 # first model run - no inits, ran 4/8/25
 
-<<<<<<< HEAD
+
 ### Running 2 individual models for testing other results - 4/11/2025
 # intercept-only model with no covariates:
 # prepare model inputs:
