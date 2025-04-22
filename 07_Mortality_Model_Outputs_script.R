@@ -75,8 +75,8 @@ pred_obs_plot <- function(output, model){
 ### loop for making pred-obs plots and recording dics
 # number of models:
 model_count <- length(list.files(paste0(dir, "model_outputs")))
-model_numbers <- rep(1:10, 2)
-log_types <- c(rep(TRUE, 10), rep(FALSE, 10))
+model_numbers <- rep(1:(model_count/2), 2)
+log_types <- c(rep(TRUE, model_count/2), rep(FALSE, model_count/2))
 # make empty list for filling in dics:
 mort_dics <- matrix(NA, nrow = model_count, ncol = 3)
 colnames(mort_dics) <- c("model", "log T/F", "DIC")
@@ -88,7 +88,7 @@ for (i in 1:model_count){
   log = log_types[i]
   # load model and output:
   model <- mort_data(dir, modelnum, log)
-  output <- mort_out(dir, modelnum, log)
+  #output <- mort_out(dir, modelnum, log)
   # collect dic and model identity:
   mort_dics[i,1] <- modelnum
   mort_dics[i, 2] <- log
