@@ -227,6 +227,41 @@ for (i in 1:ncol(pred)){
 ### Run Log:
 # first model run - no inits, ran 4/8/25
 
+### Running 2 individual models for testing other results - 4/11/2025
+# intercept-only model with no covariates:
+# prepare model inputs:
+model_data <- cbind.data.frame(y = resp$pdba, 
+                               x = rep(0,nrow(resp)),
+                               hs = resp$hotspot)
+# additional inputs to model run functions:
+model <- model_log
+niter = 100000
+diter = 30000
+run = 11
+log = TRUE
+# model save function inputs:
+out_path = "Mortality_Model_Runs/model_outputs/"
+run_path = "Mortality_Model_Runs/model_runs/"
+int_mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
+model_save(out_path, run_path, int_mort_model)
+
+# one with dmag_y1 and dmag_y2 summed
+# prepare model inputs:
+model_data <- cbind.data.frame(y = resp$pdba, 
+                               x = sum(pred$dmag_y1,pred$dmag_y2),
+                               hs = resp$hotspot)
+# additional inputs to model run functions:
+model <- model_log
+niter = 100000
+diter = 30000
+run = 12
+log = TRUE
+# model save function inputs:
+out_path = "Mortality_Model_Runs/model_outputs/"
+run_path = "Mortality_Model_Runs/model_runs/"
+dmag_sum_mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
+model_save(out_path, run_path, dmag_sum_mort_model)
+
 #### Archive ####-----------------------------------------------------------------------####
 
 #### Daymet Code: 

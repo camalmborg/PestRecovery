@@ -39,12 +39,12 @@ mort_data <- function(dir, modelnum, log){
 
 # ### Visualizations and parsing outputs:
 # # selecting model:
-# dir = dir
-# modelnum = 1
-# log = TRUE
+dir = dir
+modelnum = 12
+log = TRUE
 # # load model and output:
-# model <- mort_data(dir, modelnum, log)
-# output <- mort_out(dir, modelnum, log)
+model <- mort_data(dir, modelnum, log)
+output <- mort_out(dir, modelnum, log)
 # 
 # # visual inspections:
 # jags_out <- model$jags_out
@@ -59,11 +59,11 @@ mort_data <- function(dir, modelnum, log){
 # # model 2-log:
 # 
 # # making pred/obs plots:
-# pred_obs_plot <- function(output, model){
-#   predict <- apply(output[,grep("y", colnames(output))], 2, mean)
-#   obs <- model$metadata$data$y
-#   plot(predict, obs)
-# }
+pred_obs_plot <- function(output, model){
+  predict <- apply(output[,grep("y", colnames(output))], 2, mean)
+  obs <- model$metadata$data$y
+  plot(predict, obs)
+}
 # 
 # # predict <- apply(output[,grep("y", colnames(output))], 2, mean)
 # # obs <- model$metadata$data$y
@@ -79,6 +79,7 @@ model_numbers <- rep(1:10, 2)
 log_types <- c(rep(TRUE, 10), rep(FALSE, 10))
 # make empty list for filling in dics:
 mort_dics <- matrix(NA, nrow = model_count, ncol = 3)
+colnames(mort_dics) <- c("model", "log T/F", "DIC")
 # the loop:
 for (i in 1:model_count){
   # selecting model:
@@ -93,9 +94,13 @@ for (i in 1:model_count){
   mort_dics[i, 2] <- log
   mort_dics[i, 3] <- model$dic[[2]]
   # do a pred/obs plot:
-  pred_obs_plot(output, model)
-  print(i)
+  #pred_obs_plot(output, model)
+  #print(i)
 }
+mort_dic <- as.data.frame(mort_dics)
+mort_dic$delDIC <- mort_dic$DIC - min(mort_dic$DIC)
+mort_dic <- mort_dic[order(mort_dic$delDIC),]
+#write.csv(mort_dic, file = "2025_04_07_mortality_models_dic_table.csv")
 
 # make y data for comparison plots
 # ymeans <- apply(out[,grep("y", colnames(out))], 2, mean)
