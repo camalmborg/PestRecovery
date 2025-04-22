@@ -262,8 +262,7 @@ out_path = "Mortality_Model_Runs/model_outputs/"
 run_path = "Mortality_Model_Runs/model_runs/"
 dmag_sum_mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
 model_save(out_path, run_path, dmag_sum_mort_model)
-=======
->>>>>>> 98658d17f4213e66d102424c75e8b58cb93d6842
+
 
 #### Archive ####-----------------------------------------------------------------------####
 
