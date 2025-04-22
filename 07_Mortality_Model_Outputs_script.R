@@ -37,6 +37,10 @@ mort_data <- function(dir, modelnum, log){
   return(model_info)
 }
 
+mort_data_load <- function(dir, model){
+  load(paste0(dir, "model_runs/", model))
+  return(model_info)
+}
 # ### Visualizations and parsing outputs:
 # # selecting model:
 dir = dir
@@ -74,33 +78,40 @@ pred_obs_plot <- function(output, model){
 
 ### loop for making pred-obs plots and recording dics
 # number of models:
-model_count <- length(list.files(paste0(dir, "model_outputs")))
-model_numbers <- rep(1:(model_count/2), 2)
-log_types <- c(rep(TRUE, model_count/2), rep(FALSE, model_count/2))
+#model_count <- length(list.files(paste0(dir, "model_outputs")))
+model_list <- list.files(paste0(dir, "model_runs"))
+#model_numbers <- rep(1:(model_count/2), 2)
+#log_types <- c(rep(TRUE, model_count/2), rep(FALSE, model_count/2))
 # make empty list for filling in dics:
-mort_dics <- matrix(NA, nrow = model_count, ncol = 3)
-colnames(mort_dics) <- c("model", "log T/F", "DIC")
+mort_dics <- matrix(NA, nrow = length(model_list), ncol = 4)
+#colnames(mort_dics) <- c("id", "model", "DIC")
+colnames(mort_dics) <- c("id", "model", "log T/F", "DIC")
 # the loop:
-for (i in 1:model_count){
+for (i in 1:length(model_list)){
   # selecting model:
   dir = dir
-  modelnum = model_numbers[i]
-  log = log_types[i]
+  #modelnum = model_numbers[i]
+  #log = log_types[i]
   # load model and output:
-  model <- mort_data(dir, modelnum, log)
+  #model <- mort_data(dir, modelnum, log)
+  model <- mort_data_load(dir, model_list[i])
   #output <- mort_out(dir, modelnum, log)
   # collect dic and model identity:
-  mort_dics[i,1] <- modelnum
-  mort_dics[i, 2] <- log
-  mort_dics[i, 3] <- model$dic[[2]]
+  mort_dics[i, 1] <- i
+  mort_dics[i, 2] <- model$metadata$run
+  #mort_dics[i, 2] <- modelnum
+  mort_dics[i, 3] <- model$metadata$mod
+  #mort_dics[i, 3] <- log
+  mort_dics[i, 4] <- model$dic[[2]]
   # do a pred/obs plot:
   #pred_obs_plot(output, model)
-  #print(i)
+  print(i)
 }
 mort_dic <- as.data.frame(mort_dics)
-mort_dic$delDIC <- mort_dic$DIC - min(mort_dic$DIC)
+mort_dic$delDIC <- as.numeric(mort_dic$DIC) - min(as.numeric(mort_dic$DIC))
 mort_dic <- mort_dic[order(mort_dic$delDIC),]
-#write.csv(mort_dic, file = "2025_04_07_mortality_models_dic_table.csv")
+mort_dic$perform <- 1:nrow(mort_dic)
+#write.csv(mort_dic, file = "2025_04_22_mortality_models_dic_table.csv")
 
 # make y data for comparison plots
 # ymeans <- apply(out[,grep("y", colnames(out))], 2, mean)
