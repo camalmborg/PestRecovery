@@ -181,7 +181,7 @@ model_save <- function(out_path, run_path, jags_model){
 }
 
 
-# Loops for running models:
+#### Loops for running univariate models: -----
 # for logit:
 for (i in 1:ncol(pred)){
   # prepare model inputs:
@@ -226,6 +226,7 @@ for (i in 1:ncol(pred)){
 
 ### Run Log:
 # first model run - no inits, ran 4/8/25
+
 
 #### Archive ####-----------------------------------------------------------------------####
 
