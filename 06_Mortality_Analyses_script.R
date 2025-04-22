@@ -181,7 +181,7 @@ model_save <- function(out_path, run_path, jags_model){
 }
 
 
-# Loops for running models:
+#### Loops for running univariate models: -----
 # for logit:
 for (i in 1:ncol(pred)){
   # prepare model inputs:
@@ -227,6 +227,7 @@ for (i in 1:ncol(pred)){
 ### Run Log:
 # first model run - no inits, ran 4/8/25
 
+<<<<<<< HEAD
 ### Running 2 individual models for testing other results - 4/11/2025
 # intercept-only model with no covariates:
 # prepare model inputs:
@@ -261,6 +262,7 @@ out_path = "Mortality_Model_Runs/model_outputs/"
 run_path = "Mortality_Model_Runs/model_runs/"
 dmag_sum_mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
 model_save(out_path, run_path, dmag_sum_mort_model)
+=======
 
 #### Archive ####-----------------------------------------------------------------------####
 
