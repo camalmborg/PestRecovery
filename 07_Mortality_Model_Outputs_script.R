@@ -111,7 +111,7 @@ mort_dic <- as.data.frame(mort_dics)
 mort_dic$delDIC <- as.numeric(mort_dic$DIC) - min(as.numeric(mort_dic$DIC))
 mort_dic <- mort_dic[order(mort_dic$delDIC),]
 mort_dic$perform <- 1:nrow(mort_dic)
-#write.csv(mort_dic, file = "2025_04_22_mortality_models_dic_table.csv")
+#write.csv(mort_dic, file = "2025_04_23_mortality_models_dic_table.csv")
 
 # make y data for comparison plots
 # ymeans <- apply(out[,grep("y", colnames(out))], 2, mean)
