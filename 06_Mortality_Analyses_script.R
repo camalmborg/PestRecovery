@@ -249,13 +249,30 @@ model_save(out_path, run_path, int_mort_model)
 # one with dmag_y1 and dmag_y2 summed
 # prepare model inputs:
 model_data <- cbind.data.frame(y = resp$pdba, 
-                               x = sum(pred$dmag_y1,pred$dmag_y2),
+                               x = pred$dmag_y1 + pred$dmag_y2,
                                hs = resp$hotspot)
 # additional inputs to model run functions:
 model <- model_log
 niter = 100000
 diter = 30000
 run = 12
+log = TRUE
+# model save function inputs:
+out_path = "Mortality_Model_Runs/model_outputs/"
+run_path = "Mortality_Model_Runs/model_runs/"
+dmag_sum_mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
+model_save(out_path, run_path, dmag_sum_mort_model)
+
+### Running 2 individual models for testing other results - 4/23/2025
+# running wuth dmag_cs_y1 and _y2 sum
+model_data <- cbind.data.frame(y = resp$pdba, 
+                               x = pred$dmag_cs_y1 + pred$dmag_cs_y2,
+                               hs = resp$hotspot)
+# additional inputs to model run functions:
+model <- model_log
+niter = 100000
+diter = 30000
+run = 13
 log = TRUE
 # model save function inputs:
 out_path = "Mortality_Model_Runs/model_outputs/"
