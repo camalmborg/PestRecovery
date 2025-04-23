@@ -1,4 +1,4 @@
-### This is the script for running mortality analyses
+### This is the script for running univariate mortality analyses
 ### It is for the first set of analyses, using harvard forest field plot data
 ### Assessing drivers of plot-level mortality, using remote sensing and field observations
 
@@ -263,6 +263,11 @@ run_path = "Mortality_Model_Runs/model_runs/"
 dmag_sum_mort_model <- run_mort_model(model_data, model, niter, diter, run, log)
 model_save(out_path, run_path, dmag_sum_mort_model)
 
+
+### Clean up 2025-04-23
+rm(hf_dmag, hf_dmag_cs, hf_scores, hf_tcg,
+   oaktrees, plots, seedlings, trees, understory,
+   cols, i)
 
 #### Archive ####-----------------------------------------------------------------------####
 
