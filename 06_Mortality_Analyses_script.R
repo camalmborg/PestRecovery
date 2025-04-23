@@ -267,7 +267,8 @@ model_save(out_path, run_path, dmag_sum_mort_model)
 ### Clean up 2025-04-23
 rm(hf_dmag, hf_dmag_cs, hf_scores, hf_tcg,
    oaktrees, plots, seedlings, trees, understory,
-   cols, i)
+   oak_to_plot, tree_to_plot, oak_dat,
+   cols, i, coords, data)
 
 #### Archive ####-----------------------------------------------------------------------####
 
