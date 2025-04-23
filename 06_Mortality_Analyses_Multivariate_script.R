@@ -16,18 +16,18 @@ load("Environments/2025_04_23_environment.RData")
 #### ----- Preparing data for models ----- ####
 ## make predictor data set:
 pred_m <- pred %>%
-  # select the top performers:
-  select(pba_oak, tba_oak, dmag_y1, dmag_y2, dmag_cs_y1, dmag_cs_y2, cs_y1) %>%
   # add the sums of dmag columns (tcg dmag, cs dmag)
   mutate(dmag_y1_y2 = dmag_y1 + dmag_y2, .after = dmag_y2) %>%
-  mutate(dmag_cs_y1_y2 = dmag_cs_y1 + dmag_cs_y2, .after = dmag_cs_y2)
+  mutate(dmag_cs_y1_y2 = dmag_cs_y1 + dmag_cs_y2, .after = dmag_cs_y2) %>%
+  # select the top performers:
+  select(pba_oak, tba_oak, dmag_cs_y1_y2, dmag_y1_y2, dmag_y1, cs_y1)
 
 ## make matrix of models using column numbers:
 # making data frame for up to 3-variable models to start
 # two variable models:
-two_var_models <- as.data.frame(t(cbind(combn(c(1, 3:9), 2),
-                                        combn(c(2, 3:9), 2),
-                                        combn(c(3, 4:9), 2)))) %>%  # combinations of variables
+two_var_models <- as.data.frame(t(cbind(combn(c(1, 3:6), 2),
+                                        combn(c(2, 3:6), 2),
+                                        combn(c(3, 4:6), 2)))) %>%  # combinations of variables
   # filter all with 1, 2, 3 as 'starting' variables
   filter(V1 %in% 1:3) %>%
   # select only distinct rows
@@ -36,8 +36,8 @@ two_var_models <- as.data.frame(t(cbind(combn(c(1, 3:9), 2),
   mutate(V3 = NA)
   
 # three variable models:
-three_var_models <- as.data.frame(t(cbind(combn(c(1, 3:9), 3),
-                                          combn(c(2, 3:9), 3)))) %>% # combinations of variables
+three_var_models <- as.data.frame(t(cbind(combn(c(1, 3:6), 3),
+                                          combn(c(2, 3:6), 3)))) %>% # combinations of variables
   # filter all with 1, 2 starting and variable 2 = 3
   filter(V1 %in% 1:2 & V2 == 3) %>%
   # select only distinct rows
