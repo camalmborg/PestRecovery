@@ -44,7 +44,8 @@ three_var_models <- as.data.frame(t(cbind(combn(c(1, 3:6), 3),
   distinct(V1, V2, V3, .keep_all = TRUE)
 
 # make one data frame with all models listed:
-mult_models <- rbind(two_var_models, three_var_models)
+mult_models <- rbind(two_var_models, three_var_models)  # combine into one dataframe
+rm(preds, two_var_models, three_var_models)  # cleaning up
 
 # make model data set:
 model_data <- cbind.data.frame(y = resp$pdba, 
@@ -56,7 +57,8 @@ model_data <- cbind.data.frame(y = resp$pdba,
 multmort_model <- read_file("Models/2025_04_22_multi_mort_model_with_logit.txt")
 
 # multivariate mortality model run function:
-#'@param data = pred/resp dataframe object
+#'@param model_data = pred/resp dataframe object
+#'@param model_list = dataframe of multivariate models 
 #'@param model = model character vector object from .txt file
 #'@param niter = number of model iterations to run
 #'@param diter = number of DIC iterations to run
@@ -121,6 +123,65 @@ run_multi_mort_model <- function(model_data, model_list, model, niter, diter, ru
   return(output)
 }
 
+# function for saving models:
+### Function for saving model output:
+##' @param out_path model outputs save file path
+##' @param run_path model runs save file path
+##' @param jags_model output from model run function
+multi_model_save <- function(out_path, run_path, jags_model){
+  # choose file path
+  filepath_outputs <- out_path
+  filepath_runs <- run_path
+  # date
+  date <- as.character(Sys.Date())
+  # make file name
+  filename_outputs <- paste0(filepath_outputs, 
+                             date, 
+                             "_multi_modelrun_", as.character(jags_model$metadata$run),
+                             "_covs_", jags_model$metadata$covars[1],
+                             "_", jags_model$metadata$covars[2],
+                             "_", jags_model$metadata$covars[3],
+                             "_output",".csv")
+  filename_runs <- paste0(filepath_runs,
+                          date,
+                          "_modelrun_", as.character(jags_model$metadata$run),
+                          "_covs_", jags_model$metadata$covars[1],
+                          "_", jags_model$metadata$covars[2],
+                          "_", jags_model$metadata$covars[3],
+                          "_data",".RData")
+  
+  # save outputs to folder
+  write.csv(jags_model$out, file = filename_outputs)
+  # save model selection and metadata to folder
+  model_info <- jags_model[c('jags_out', 'dic', 'metadata')]
+  save(model_info, file = filename_runs)
+}
+
+### Loop for running multivariate models
+# ran 4/24/2025
+for (i in 1:nrow(mult_models)){
+  # additional inputs to model run functions:
+  model <- multmort_model
+  niter = 150000
+  diter = 35000
+  run = i
+  # model save function inputs:
+  out_path = "Mortality_Model_Runs/model_outputs/"
+  run_path = "Mortality_Model_Runs/model_runs/"
+  
+  # run the model:
+  mort_model <- run_multi_mort_model(model_data, mult_models, model, niter, diter, run)
+  model_save(out_path, run_path, mort_model)
+}
+
 ##### ARCHIVE #####
-vars <- varnames(jags_out)
-params <- jags_out[,grep("^alpha|b|q|tau", vars)]
+# testing the loop
+# test <- run_multi_mort_model(model_data = model_data,
+#                              model_list = mult_models,
+#                              model = multmort_model,
+#                              niter = 1000,
+#                              diter = 1000,
+#                              run = 13)
+
+#vars <- varnames(jags_out)
+#params <- jags_out[,grep("^alpha|b|q|tau", vars)]
