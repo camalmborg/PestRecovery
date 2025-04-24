@@ -100,7 +100,7 @@ run_mort_model <- function(model_data, model, niter, diter, run, log){
   # sort data by y:
   c <- vector()
   for (i in 1:nrow(model_data)){
-    if (data$y[i] == 0){
+    if (model_data$y[i] == 0){
       c[i] <- "l"   
     } else if (model_data$y[i] > 0 & model_data$y[i] < 1) {
       c[i] <- "ld"
@@ -285,7 +285,7 @@ model_save(out_path, run_path, dmag_sum_mort_model)
 rm(hf_dmag, hf_dmag_cs, hf_scores, hf_tcg,
    oaktrees, plots, seedlings, trees, understory,
    oak_to_plot, tree_to_plot, oak_dat,
-   cols, i, coords, data)
+   cols, i, coords, data, model_log, model_nolog)
 
 #### Archive ####-----------------------------------------------------------------------####
 
