@@ -171,7 +171,7 @@ for (i in 1:nrow(mult_models)){
   
   # run the model:
   mort_model <- run_multi_mort_model(model_data, mult_models, model, niter, diter, run)
-  model_save(out_path, run_path, mort_model)
+  multi_model_save(out_path, run_path, mort_model)
 }
 
 ##### ARCHIVE #####
