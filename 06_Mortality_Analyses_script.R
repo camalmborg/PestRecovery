@@ -227,9 +227,11 @@ for (i in 1:ncol(pred)){
 
 ### Run Log:
 # first model run - no inits, ran 4/8/25
+# ran 2 additional models (11.intercept only and 12.dmag_y1+dmag_y2) on 4/11/25
+# re-ran 12 and ran one new model (13. dmag_cs_y1 + dmag_cs_y2) on 4/23/25
 
 
-### Running 2 individual models for testing other results - 4/11/2025
+### Running 2 individual models for testing other results - 4/11/2025 -----
 # intercept-only model with no covariates:
 # prepare model inputs:
 model_data <- cbind.data.frame(y = resp$pdba, 
