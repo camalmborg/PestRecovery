@@ -45,7 +45,7 @@ three_var_models <- as.data.frame(t(cbind(combn(c(1, 3:6), 3),
 
 # make one data frame with all models listed:
 mult_models <- rbind(two_var_models, three_var_models)  # combine into one dataframe
-rm(preds, two_var_models, three_var_models)  # cleaning up
+rm(pred, two_var_models, three_var_models)  # cleaning up
 
 # make model data set:
 model_data <- cbind.data.frame(y = resp$pdba, 
