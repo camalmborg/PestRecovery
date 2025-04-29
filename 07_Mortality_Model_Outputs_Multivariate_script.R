@@ -22,12 +22,11 @@ mort_out <- function(dir, modelnum){
 
 # get model result object:
 mort_data <- function(dir, modelnum){
-  load(paste0(dir, "model_runs/", file[name]))
   num <- modelnum
   file <- list.files(paste0(dir, "model_runs/"))
   multis <- file[grep("covs", file)]
   name <-  grep(paste0("modelrun_", as.character(modelnum), "_"), multis)
-  load(paste0(dir, "model_runs/", file[name]))
+  load(paste0(dir, "model_runs/", multis[name]))
   return(model_info)
 }
 
@@ -68,3 +67,44 @@ mort_dic <- mort_dic[order(mort_dic$delDIC),]
 mort_dic$perform <- 1:nrow(mort_dic)
 #write.csv(mort_dic, file = "2025_04_29_multi_mortality_models_dic_table.csv")
 
+### Comparing with univariate models
+# load univariate results:
+uni_mort_dics <- read.csv("2025_04_23_mortality_models_dic_table.csv")
+# load multivariate results:
+multi_mort_dics <- read.csv("2025_04_29_multi_mortality_models_dic_table.csv")
+# make a full dataframe with DICs from both uni and multi models:
+uni <- cbind(model = uni_mort_dics$model, 
+             type = "uni",
+             mod_info = uni_mort_dics$log.T.F,
+             DIC = uni_mort_dics$DIC)
+multi <- cbind(model = multi_mort_dics$model,
+               type = "multi",
+               mod_info = multi_mort_dics$covars,
+               DIC = multi_mort_dics$DIC)
+# combine:
+all_dic <- as.data.frame(rbind(uni, multi))
+all_dic$delDIC <- as.numeric(all_dic$DIC) - min(as.numeric(all_dic$DIC))
+all_dic <- all_dic[order(all_dic$delDIC),]
+all_dic$perform <- 1:nrow(all_dic)
+#write.csv(all_dic, file = "2024_04_29_all_mort_model_dics.csv")
+
+
+### Visualizations and parsing outputs:
+# selecting model:
+dir = dir
+modelnum = 4
+# # load model and output:
+model <- mort_data(dir, modelnum)
+#output <- mort_out(dir, modelnum)
+
+# visual inspections:
+jags_out <- model$jags_out
+vars <- varnames(jags_out)
+params <- jags_out[,grep("^alpha|b|q|tau", vars)]
+
+plot(params)
+gelman.diag(params)
+gelman.plot(params)
+effectiveSize(params)
+# visual inspect notes:
+# model 3: converges very well, burn in ~25,000?, effective sizes all look great
