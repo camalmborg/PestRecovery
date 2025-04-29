@@ -41,8 +41,8 @@ mort_data_load <- function(dir, model){
   load(paste0(dir, "model_runs/", model))
   return(model_info)
 }
-# ### Visualizations and parsing outputs:
-# # selecting model:
+### Visualizations and parsing outputs:
+# selecting model:
 dir = dir
 modelnum = 12
 log = TRUE
