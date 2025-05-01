@@ -123,8 +123,10 @@ results_extract <- function(dir, model_list){
     y_means <- apply(y_out, 2, mean, na.rm = TRUE)
     mu_sds <- apply(mu_out, 2, sd, na.rm = TRUE)
     y_sds <- apply(y_out, 2, sd, na.rm = TRUE)
-    y_res <- list(y_means, y_sds)
-    mu_res <- list(mu_means, mu_sds)
+    y_res <- list(y_means = y_means, 
+                  y_sds = y_sds)
+    mu_res <- list(mu_means = mu_means, 
+                   mu_sds = mu_sds)
     y_list[[i]] <- y_res
     mu_list[[i]] <- mu_list
     
@@ -140,11 +142,15 @@ results_extract <- function(dir, model_list){
     results[i, "q"] <- param_means["q"]
     results[i, "tau"] <- param_means["tau"]
   }
-  result_list <- list(results, param_sds_list, y_list, mu_list)
+  result_list <- list(results = results, 
+                      param_sds = param_sds_list, 
+                      model_ys = y_list, 
+                      model_mus = mu_list)
   return(result_list)
 }
 
 multi_results <- results_extract(dir, model_list)
+#save(multi_results, file = "2025_05_01_multivar_model_results_list.RData")
 
 ### Visualizations and parsing outputs:
 # selecting model:
