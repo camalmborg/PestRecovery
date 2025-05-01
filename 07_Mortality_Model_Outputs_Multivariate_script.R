@@ -92,7 +92,12 @@ all_dic$perform <- 1:nrow(all_dic)
 #'@param dir = directory where model results are found
 #'@param model_list = character vector with list of model result file names/RData objects
 results_extract <- function(dir, model_list){
-  #result_list <- list()
+  # full list to fill:
+  result_list <- list()
+  # params sds, y's, mu's, and param means table
+  param_sds_list <- list()
+  y_list <- list()
+  mu_list <- list()
   results <- matrix(NA, nrow = length(model_list), ncol = 14)
   colnames(results) <- c("Run", "Model", 
                          "alpha_1", "alpha_2", "alpha_3", "alpha_4", "alpha_5", "alpha_6",
@@ -108,15 +113,20 @@ results_extract <- function(dir, model_list){
     param_out <- as.matrix(params)
     param_means <- apply(param_out, 2, mean, na.rm = TRUE)
     param_sds <- apply(param_out, 2, sd, na.rm = TRUE)
-    # # model y's and mu's:
-    # mu <- jags_out[,grep("mu", vars)]
-    # y <- jags_out[,grep("y", vars)]
-    # mu_out <- as.matrix(mu)
-    # y_out <- as.matrix(y)
-    # mu_means <- apply(mu_out, 2, mean, na.rm = TRUE)
-    # y_means <- apply(y_out, 2, mean, na.rm = TRUE)
-    # mu_sds <- apply(mu_out, 2, sd, na.rm = TRUE)
-    # y_sds <- apply(y_out, 2, sd, na.rm = TRUE)
+    param_sds_list[[i]] <- param_sds
+    # model y's and mu's:
+    mu <- jags_out[,grep("mu", vars)]
+    y <- jags_out[,grep("y", vars)]
+    mu_out <- as.matrix(mu)
+    y_out <- as.matrix(y)
+    mu_means <- apply(mu_out, 2, mean, na.rm = TRUE)
+    y_means <- apply(y_out, 2, mean, na.rm = TRUE)
+    mu_sds <- apply(mu_out, 2, sd, na.rm = TRUE)
+    y_sds <- apply(y_out, 2, sd, na.rm = TRUE)
+    y_res <- list(y_means, y_sds)
+    mu_res <- list(mu_means, mu_sds)
+    y_list[[i]] <- y_res
+    mu_list[[i]] <- mu_list
     
     # fill in results table:
     results[i, 1] <- i
@@ -130,7 +140,8 @@ results_extract <- function(dir, model_list){
     results[i, "q"] <- param_means["q"]
     results[i, "tau"] <- param_means["tau"]
   }
- return(results) 
+  result_list <- list(results, param_sds_list, y_list, mu_list)
+  return(result_list)
 }
 
 multi_results <- results_extract(dir, model_list)
