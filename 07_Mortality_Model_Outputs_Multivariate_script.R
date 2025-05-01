@@ -69,9 +69,9 @@ mort_dic$perform <- 1:nrow(mort_dic)
 
 ### Comparing with univariate models
 # load univariate results:
-uni_mort_dics <- read.csv("2025_04_23_mortality_models_dic_table.csv")
+uni_mort_dics <- read.csv("2025_04_23_mortality_models_dic_table.csv")[-1]
 # load multivariate results:
-multi_mort_dics <- read.csv("2025_04_29_multi_mortality_models_dic_table.csv")
+multi_mort_dics <- read.csv("2025_04_29_multi_mortality_models_dic_table.csv")[-1]
 # make a full dataframe with DICs from both uni and multi models:
 uni <- cbind(model = uni_mort_dics$model, 
              type = "uni",
