@@ -88,6 +88,52 @@ all_dic <- all_dic[order(all_dic$delDIC),]
 all_dic$perform <- 1:nrow(all_dic)
 #write.csv(all_dic, file = "2024_04_29_all_mort_model_dics.csv")
 
+### Making results tables:
+#'@param dir = directory where model results are found
+#'@param model_list = character vector with list of model result file names/RData objects
+results_extract <- function(dir, model_list){
+  #result_list <- list()
+  results <- matrix(NA, nrow = length(model_list), ncol = 14)
+  colnames(results) <- c("Run", "Model", 
+                         "alpha_1", "alpha_2", "alpha_3", "alpha_4", "alpha_5", "alpha_6",
+                         "beta_int", "beta_1", "beta_2", "beta_3", "q", "tau")
+  for(i in 1:length(model_list)){
+    model <- mort_data_load(dir, model_list[i])
+    mod_name <- str_extract(model_list[i], "(?<=modelrun_).*(?=_data)")
+    jags_out <- model$jags_out
+    vars <- varnames(jags_out)
+    # split up outputs into model params and modeled y's
+    # model params:
+    params <- jags_out[,grep("^alpha|b|q|tau", vars)]
+    param_out <- as.matrix(params)
+    param_means <- apply(param_out, 2, mean, na.rm = TRUE)
+    param_sds <- apply(param_out, 2, sd, na.rm = TRUE)
+    # # model y's and mu's:
+    # mu <- jags_out[,grep("mu", vars)]
+    # y <- jags_out[,grep("y", vars)]
+    # mu_out <- as.matrix(mu)
+    # y_out <- as.matrix(y)
+    # mu_means <- apply(mu_out, 2, mean, na.rm = TRUE)
+    # y_means <- apply(y_out, 2, mean, na.rm = TRUE)
+    # mu_sds <- apply(mu_out, 2, sd, na.rm = TRUE)
+    # y_sds <- apply(y_out, 2, sd, na.rm = TRUE)
+    
+    # fill in results table:
+    results[i, 1] <- i
+    results[i, 2] <- mod_name
+    results[i, grep("^alpha", colnames(results))] <- param_means[grep("^alpha", names(param_means))]
+    if(length(grep("^b", names(param_means))) == 3) {
+      results[i, grep("^b", colnames(results))[1:3]] <- param_means[grep("^b", names(param_means))]
+      } else {
+      results[i, grep("^b", colnames(results))] <- param_means[grep("^b", names(param_means))] 
+      }
+    results[i, "q"] <- param_means["q"]
+    results[i, "tau"] <- param_means["tau"]
+  }
+ return(results) 
+}
+
+multi_results <- results_extract(dir, model_list)
 
 ### Visualizations and parsing outputs:
 # selecting model:
