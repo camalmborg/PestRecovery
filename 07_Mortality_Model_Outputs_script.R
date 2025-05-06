@@ -46,7 +46,7 @@ mort_data_load <- function(dir, model){
 ### loop for making pred-obs plots and recording dics
 # number of models:
 models <- list.files(paste0(dir, "model_runs"))
-model_list <- models[grep("log", model_list)]
+model_list <- models[grep("log", models)]
 # make empty list for filling in dics:
 mort_dics <- matrix(NA, nrow = length(model_list), ncol = 4)
 #colnames(mort_dics) <- c("id", "model", "DIC")
@@ -90,7 +90,12 @@ results_extract <- function(dir, model_list){
   for(i in 1:length(model_list)){
     model <- mort_data_load(dir, model_list[i])
     mod_name <- str_extract(model_list[i], "(?<=modelrun_).*(?=_data)")
-    jags_out <- model$jags_out
+    # extract jags results
+    out <- model$jags_out
+    # remove burn in:
+    burnin <- 25000
+    jags_out <- window(out, start = burnin)
+    # get variable names:
     vars <- varnames(jags_out)
     # split up outputs into model params and modeled y's
     # model params:
