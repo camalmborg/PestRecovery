@@ -2,13 +2,13 @@
 # and publication figures
 
 # load libraries
-librarian::shelf(tidyverse, dplyr, rjags, coda)
+librarian::shelf(tidyverse, dplyr, rjags, coda, boot)
 
 # navigate to folder:
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/"
 setwd(dir)
 # environment:
-load()
+#load()
 
 ## model_list:
 models <- list.files(paste0(dir, "model_runs"))
@@ -26,7 +26,7 @@ all_dics <- read.csv("2024_04_29_all_mort_model_dics.csv")[-1]
 ### Visualizations and parsing outputs:
 # selecting model:
 dir = dir
-num = 5
+num = 1
 model <- all_dics$model[all_dics$perform == num]
 # get the model name:
 if(all_dics[num,]$type == "multi"){
@@ -80,11 +80,21 @@ model_list_num <- if (model_name %in% uni_model_list){
 } else {
   which(multi_model_list == model_name)
 }
-# true/false if model is multivar (T) or uni var (F)
-tf_multi <- model_name %in% multi_model_list
-# get model results
-if (tf_multi == TRUE){
-  param_means <- multi_results$results[model_list_num,]
-}
+# get output:
+jags_out <- model_info$jags_out
+model_output <- as.matrix(jags_out)
+predicted <- apply(model_output, 2, mean)
+betas <- grep("^b", names(predicted))
+# data from inputs:
+covars <- model_info$metadata$data$x
+# model predictions:
+Ed <- inv.logit(as.matrix(covars) %*% as.matrix(predicted[betas]))
+
+# # true/false if model is multivar (T) or uni var (F)
+# tf_multi <- model_name %in% multi_model_list
+# # get model results
+# if (tf_multi == TRUE){
+#   param_means <- multi_results$results[model_list_num,]
+# }
 
 #model_input <- model_info$metadata$data
