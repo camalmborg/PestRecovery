@@ -133,7 +133,7 @@ results_extract <- function(dir, model_list){
     mu_res <- list(mu_means = mu_means, 
                    mu_sds = mu_sds)
     y_list[[i]] <- y_res
-    mu_list[[i]] <- mu_list
+    mu_list[[i]] <- mu_res
     
     # fill in results table:
     results[i, 1] <- i
