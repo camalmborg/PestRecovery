@@ -17,12 +17,14 @@ load("Environments/2025_04_07_environment.RData")
 ### preparing plot-level information from tree data:
 tree_to_plot <- trees %>%
   select(hotspot, point, plot, tot_tree, tot_dead, pdead, tot_dba, pdba) %>%
-  group_by(plot) %>% summarise(across(everything(), first)) 
+  group_by(plot) %>% summarise(across(everything(), first))
 
 notree <- setdiff(plots$plot, tree_to_plot$plot)
 plot_out <- which(plots$plot == notree)
 tree_to_plot$harv = plots$recent_timber_harvest[-plot_out]
 tree_to_plot$invas = plots$invasives[-plot_out]
+tree_to_plot$lat = plots$latitude[-plot_out]
+tree_to_plot$lon = plots$longitude[-plot_out]
 
 ### making the matrix for predictors variables:
 ## disturbance magnitude and tcg/scores during disturbance:
@@ -52,6 +54,8 @@ preds <- cbind(dmags,                           # disturbance magnitude and dist
 ## make response variable data set:
 resp <- cbind.data.frame(plot = tree_to_plot$plot, 
                          hotspot = tree_to_plot$hotspot,
+                         lat = tree_to_plot$lat,
+                         lon = tree_to_plot$lon,
                          dead = tree_to_plot$tot_dead > 0,
                          pdead = (tree_to_plot$pdead/100),      # make a percentage (btw 0-1 instead of 0-100)
                          pdba = (tree_to_plot$pdba/100)) %>%    # make a percentage 
@@ -285,10 +289,10 @@ model_save(out_path, run_path, dmag_sum_mort_model)
 
 
 ### Clean up 2025-04-23
-rm(hf_dmag, hf_dmag_cs, hf_scores, hf_tcg,
+rm(hf_dmag, hf_dmag_cs, hf_scores, hf_tcg, dmags,
    oaktrees, plots, seedlings, trees, understory,
    oak_to_plot, tree_to_plot, oak_dat,
-   cols, i, coords, data, model_log, model_nolog)
+   cols, i, coords, data, model_log, model_nolog, preds)
 
 #### Archive ####-----------------------------------------------------------------------####
 
