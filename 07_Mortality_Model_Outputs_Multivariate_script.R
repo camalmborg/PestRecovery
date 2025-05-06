@@ -105,7 +105,12 @@ results_extract <- function(dir, model_list){
   for(i in 1:length(model_list)){
     model <- mort_data_load(dir, model_list[i])
     mod_name <- str_extract(model_list[i], "(?<=modelrun_).*(?=_data)")
-    jags_out <- model$jags_out
+    # extract jags results
+    out <- model$jags_out
+    # remove burn in:
+    burnin <- 25000
+    jags_out <- window(out, start = burnin)
+    # get variable names:
     vars <- varnames(jags_out)
     # split up outputs into model params and modeled y's
     # model params:
