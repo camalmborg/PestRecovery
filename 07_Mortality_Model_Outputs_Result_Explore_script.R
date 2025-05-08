@@ -2,7 +2,7 @@
 # and publication figures
 
 # load libraries
-librarian::shelf(tidyverse, dplyr, rjags, coda, boot)
+librarian::shelf(tidyverse, dplyr, rjags, coda, boot, statip)
 
 # navigate to folder:
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/"
@@ -85,10 +85,33 @@ jags_out <- model_info$jags_out
 model_output <- as.matrix(jags_out)
 predicted <- apply(model_output, 2, mean)
 betas <- grep("^b", names(predicted))
+taus <- grep("^t", names(predicted))
 # data from inputs:
 covars <- model_info$metadata$data$x
 # model predictions:
-Ed <- inv.logit(as.matrix(covars) %*% as.matrix(predicted[betas]))
+mu <- inv.logit(as.matrix(covars) %*% as.matrix(predicted[betas]))
+tau <- 1/predicted[taus]
+
+c = which(data_sort$c == "l")
+d = which(data_sort$c == "ld")
+e = which(data_sort$c == "d")
+y <- vector()
+theta <- vector()
+for (i in  c){
+  theta[i] <- pnorm(0, mu[i], tau)  
+  y[i] <- rbern(1, prob = theta[i])
+}
+
+## between 0-1:
+for (i in d){
+  y[i] <- rnorm(1, mu[i], tau)
+}
+
+## right (1) censored:
+for (i in e){
+  theta[i] <- 1 - pnorm(1, mu[i], tau)
+  y[i] <- rbern(1, prob = theta[i])
+}
 
 # # true/false if model is multivar (T) or uni var (F)
 # tf_multi <- model_name %in% multi_model_list
