@@ -88,8 +88,16 @@ betas <- grep("^b", names(predicted))
 taus <- grep("^t", names(predicted))
 # data from inputs:
 covars <- model_info$metadata$data$x
-# model predictions:
-mu <- inv.logit(as.matrix(covars) %*% as.matrix(predicted[betas]))
+# getting hot spot alpha term:
+alphas <- grep("^a", names(predicted))
+hot <- model_info$metadata$data$hot
+# model predictions for mu term:
+mu <- vector() 
+for (i in 1:model_info$metadata$data$sites){
+  prod <- as.matrix(covars) %*% as.matrix(predicted[betas])
+  mu[i] <- inv.logit(prod[i] + predicted[alphas[hot[i]]])
+}
+# tau term:
 tau <- 1/predicted[taus]
 
 c = which(data_sort$c == "l")
@@ -112,6 +120,10 @@ for (i in e){
   theta[i] <- 1 - pnorm(1, mu[i], tau)
   y[i] <- rbern(1, prob = theta[i])
 }
+
+hotspots <- as.factor(data_sort$hotspot)
+plot(1:156, data_sort$pdba, pch = 20)
+points(1:156, y, pch = 20, col = hotspots)
 
 # # true/false if model is multivar (T) or uni var (F)
 # tf_multi <- model_name %in% multi_model_list
