@@ -160,7 +160,7 @@ multi_results <- results_extract(dir, model_list)
 ### Visualizations and parsing outputs:
 # selecting model:
 dir = dir
-modelnum = 4
+modelnum = 1
 # # load model and output:
 model <- mort_data(dir, modelnum)
 #output <- mort_out(dir, modelnum)
