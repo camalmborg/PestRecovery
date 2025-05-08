@@ -144,7 +144,7 @@ for (i in 1:156){
 
 ypred <- matrix(NA, nrow = 25000, ncol = 156)
 for (i in 1:25000){
-  ypred[i,] <- rnorm(1, m, tau)
+  ypred[i,] <- rnorm(156, m, tau)
 }
 ci <- apply(ypred, 2, quantile, c(0.025, 0.975))
 
