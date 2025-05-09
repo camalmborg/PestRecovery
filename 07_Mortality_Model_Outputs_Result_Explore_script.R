@@ -2,13 +2,14 @@
 # and publication figures
 
 # load libraries
-librarian::shelf(tidyverse, dplyr, rjags, coda, boot, statip)
+librarian::shelf(tidyverse, dplyr, rjags, coda, boot)
 
-# navigate to folder:
+# environment:
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_05_05_environment.RData")
+
+# navigate to folder to get model results:
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/"
 setwd(dir)
-# environment:
-#load()
 
 ## model_list:
 models <- list.files(paste0(dir, "model_runs"))
@@ -39,15 +40,15 @@ if(all_dics[num,]$type == "multi"){
 # load the model:
 load(paste0(dir, "model_runs/", model_name))  # will load in environment as "model_info"
 
-# visual inspections:
-jags_out <- model_info$jags_out
-vars <- varnames(jags_out)
-params <- jags_out[,grep("^alpha|b|q|tau", vars)]
-
-plot(params)
-gelman.diag(params)
-gelman.plot(params)
-effectiveSize(params)
+# # visual inspections:
+# jags_out <- model_info$jags_out
+# vars <- varnames(jags_out)
+# params <- jags_out[,grep("^alpha|b|q|tau", vars)]
+# 
+# plot(params)
+# gelman.diag(params)
+# gelman.plot(params)
+# effectiveSize(params)
 
 
 ### Preparing for making figures and other outputs
@@ -82,31 +83,30 @@ model_list_num <- if (model_name %in% uni_model_list){
 }
 # get output:
 jags_out <- model_info$jags_out
-model_output <- as.matrix(jags_out)
-
-
-
-predicted <- apply(model_output, 2, mean)
-betas <- grep("^b", names(predicted))
-taus <- grep("^t", names(predicted))
-mus <- grep("^mu", names(predicted))
+# predictions from model:
+predicted <- as.matrix(jags_out)
+betas <- grep("^b", colnames(predicted))
+taus <- grep("^t", colnames(predicted))
 # data from inputs:
 covars <- model_info$metadata$data$x
 # getting hot spot alpha term:
-alphas <- grep("^a", names(predicted))
+alphas <- grep("^a", colnames(predicted))
 hot <- model_info$metadata$data$hot
 # tau term:
-tau <- 1/predicted[taus]
+tau <- 1/sqrt(predicted[,taus])
 
 # predicted values:
-ypred <- matrix(NA, nrow = 50000, ncol = 156)
-for (i in 1:50000){
-  mu <- inv.logit((as.matrix(covars) %*% as.matrix(predicted[betas])) + predicted[alphas])
-  ypred[i,] <- rnorm(156, mu, tau)
+ypred <- matrix(NA, nrow = 5000, ncol = 156)
+# sample from model output:
+rows = sample(1:nrow(predicted), size = 5000)
+for (j in seq_along(rows)){
+  i = rows[j]
+  mu <- inv.logit((as.matrix(covars) %*% as.matrix(predicted[i,betas])) + predicted[i,alphas][hot])
+  ypred[j,] <- rnorm(156, mu, tau[i])
 }
 ypred[ypred > 1] <- 1
 ypred[ypred < 0] <- 0
-ci <- apply(ypred, 2, quantile, c(0.025, 0.975))
+ci <- apply(ypred, 2, quantile, c(0.025, 0.5, 0.975))
 
 
 
