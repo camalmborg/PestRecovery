@@ -95,60 +95,23 @@ covars <- model_info$metadata$data$x
 # getting hot spot alpha term:
 alphas <- grep("^a", names(predicted))
 hot <- model_info$metadata$data$hot
-# # model predictions for mu term:
-# mu <- vector() 
-# for (i in 1:model_info$metadata$data$sites){
-#   prod <- as.matrix(covars) %*% as.matrix(predicted[betas])
-#   mu[i] <- inv.logit(prod[i] + predicted[alphas[hot[i]]])
-# }
 # tau term:
 tau <- 1/predicted[taus]
 
-c = which(data_sort$c == "l")
-d = which(data_sort$c == "ld")
-e = which(data_sort$c == "d")
-y <- vector()
-theta <- vector()
-for (i in  c){
-  theta[i] <- pnorm(0, mu[i], tau)  
-  y[i] <- rbern(1, prob = theta[i])
+# predicted values:
+ypred <- matrix(NA, nrow = 50000, ncol = 156)
+for (i in 1:50000){
+  mu <- inv.logit((as.matrix(covars) %*% as.matrix(predicted[betas])) + predicted[alphas])
+  ypred[i,] <- rnorm(156, mu, tau)
 }
-
-## between 0-1:
-for (i in d){
-  y[i] <- rnorm(1, mu[i], tau)
-}
-
-## right (1) censored:
-for (i in e){
-  theta[i] <- 1 - pnorm(1, mu[i], tau)
-  y[i] <- rbern(1, prob = theta[i])
-}
-
-hotspots <- as.factor(data_sort$hotspot)
-plot(1:156, data_sort$pdba, pch = 20)
-points(1:156, y, pch = 20, col = hotspots)
-
-
-mu <- predicted[mus]
-m <- vector()
-for (i in 1:156){
-  if(mu[i] < 0){
-    m[i] <- 0
-  } else if (mu[i] > 1){
-    m[i] <- 1
-  } else {
-    m[i] <- mu[i]
-  }
-}
-
-ypred <- matrix(NA, nrow = 25000, ncol = 156)
-for (i in 1:25000){
-  ypred[i,] <- rnorm(156, m, tau)
-}
+ypred[ypred > 1] <- 1
+ypred[ypred < 0] <- 0
 ci <- apply(ypred, 2, quantile, c(0.025, 0.975))
 
 
+
+
+### ARCHIVE #####
 # # true/false if model is multivar (T) or uni var (F)
 # tf_multi <- model_name %in% multi_model_list
 # # get model results
@@ -157,3 +120,7 @@ ci <- apply(ypred, 2, quantile, c(0.025, 0.975))
 # }
 
 #model_input <- model_info$metadata$data
+# 
+# hotspots <- as.factor(data_sort$hotspot)
+# plot(1:156, data_sort$pdba, pch = 20)
+# points(1:156, y, pch = 20, col = hotspots)
