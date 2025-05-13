@@ -5,7 +5,7 @@
 librarian::shelf(tidyverse, dplyr, rjags, coda, boot)
 
 # environment:
-load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_05_05_environment.RData")
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_05_08_environment.RData")
 
 # navigate to folder to get model results:
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/"
