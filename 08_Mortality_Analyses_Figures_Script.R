@@ -3,11 +3,14 @@
 # load libraries
 #install.packages("ggplot2")
 #install.packages("hrbrthemes")
-librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes)
+#install.packages("ggridges")
+librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes, ggridges)
 
 # # navigate to folder:
 # dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
 # setwd(dir)
+load("Environments/2025_05_08_environment.RData")
+load("Environments/2025_04_07_environment.RData")
 
 ## plotting percent dead basal area observed and predicted
 # make the data set:
@@ -41,4 +44,39 @@ pred_obs_compare <- ggplot(plot_data, aes(x = y_pred, y = y_obs)) +
   theme_bw()
 pred_obs_compare
 
-### Histograms
+### Histograms and density plots
+# mortality across all plots
+hist_mort_obs <- ggplot(data_sort, aes(x = pdba)) +
+  geom_histogram(binwidth = 0.01, bins = 50,
+                 color = "dodgerblue4", fill = "dodgerblue2") +
+  xlim(0, 0.9) +
+  ylim(0, 6.5) +
+  xlab("Percent dead basal area across plots") +
+  theme_bw()
+hist_mort_obs
+
+# mortality by hotspot ridge plot:
+ridge_across_hotspots <- ggplot(data_sort, aes(x = pdba, y = fct_rev(as.factor(hotspot)), 
+                                              fill = as.factor(hotspot))) +
+  geom_density_ridges(scale = 2) +
+  scale_fill_manual(values=c("khaki1", "deeppink", "forestgreen", "darkorchid4", "sienna1", "cornflowerblue"),
+                    name = "Hotspot") +
+  scale_y_discrete(expand = expand_scale(add = c(.5, 2.5))) +
+  xlab("Percent dead basal area") +
+  ylab("Hotspot") +
+  ggtitle("Dead basal area by hotspot") +
+  xlim(0, 1) +
+  theme_bw()
+ridge_across_hotspots
+
+# mortality by hotspot density plot:
+density_across_hotspots <- ggplot(data_sort, aes(x = pdba,fill = as.factor(hotspot))) +
+  geom_density(alpha = 0.35) +
+  scale_fill_manual(values=c("sienna1", "deeppink", "forestgreen", "darkorchid4", "khaki1", "cornflowerblue"),
+                    name = "Hotspot") +
+  xlab("Percent dead basal area") +
+  ggtitle("Dead basal area by hotspot") +
+  xlim(0, 1) +
+  theme_bw()
+density_across_hotspots
+  
