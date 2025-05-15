@@ -19,13 +19,26 @@ plot_data <- data.frame(
 )
 # making plot:
 pdba_pred_obs <- ggplot(plot_data, aes(x = x, y = y_obs)) +
+  geom_ribbon(aes(ymin = ci[1,], ymax = ci[3,]), 
+              fill = "dodgerblue2", alpha = 0.50) +
   geom_point() +
   geom_point(aes(x = x, y = y_pred),
-             col = "red") +
-  geom_line(aes(x = x, y = ci[1,])) +
-  geom_line(aes(x = x, y = ci[3,]))
+             col = "dodgerblue2") +
+  ggtitle("Mortality Observed (black) and Predicted (blue)") +
+  xlab("Plots (sorted)") +
+  ylab("Percent dead basal area in plot") +
+  theme_classic()
 pdba_pred_obs
 
+# predicted vs observed plot
 pred_obs_compare <- ggplot(plot_data, aes(x = y_pred, y = y_obs)) +
-  geom_point()
+  geom_point() +
+  xlab("Predicted percent dead basal area in plot") +
+  ylab("Observed percent dead basal area in plot") +
+  xlim(0,0.87) +
+  ylim(0,0.87) +
+  geom_abline (intercept = 0, slope=1, linetype = "dashed", color = "firebrick1") +
+  theme_bw()
 pred_obs_compare
+
+### Histograms
