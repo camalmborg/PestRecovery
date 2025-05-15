@@ -9,8 +9,8 @@ librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes, ggridges)
 # # navigate to folder:
 # dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
 # setwd(dir)
-load("Environments/2025_05_08_environment.RData")
-load("Environments/2025_04_07_environment.RData")
+#load("Environments/2025_05_08_environment.RData")
+#load("Environments/2025_04_07_environment.RData")
 
 ## plotting percent dead basal area observed and predicted
 # make the data set:
@@ -23,7 +23,7 @@ plot_data <- data.frame(
 # making plot:
 pdba_pred_obs <- ggplot(plot_data, aes(x = x, y = y_obs)) +
   geom_ribbon(aes(ymin = ci[1,], ymax = ci[3,]), 
-              fill = "dodgerblue2", alpha = 0.50) +
+              fill = "dodgerblue2", alpha = 0.25) +
   geom_point() +
   geom_point(aes(x = x, y = y_pred),
              col = "dodgerblue2") +
@@ -79,4 +79,37 @@ density_across_hotspots <- ggplot(data_sort, aes(x = pdba,fill = as.factor(hotsp
   xlim(0, 1) +
   theme_bw()
 density_across_hotspots
-  
+
+### Saving the plots
+# set up directory path:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures"
+
+# predicted and observed with confidence interval:
+ggsave(plot = pdba_pred_obs,
+       filename= paste0(save_dir, "/2025_05_15_pred_obs_ci_plot.png"),
+       width=8,
+       height=6)
+
+# predicted vs observed plot:
+ggsave(plot = pred_obs_compare,
+       filename= paste0(save_dir, "/2025_05_15_pred_obs_compare_plot.png"),
+       width=6,
+       height=6)
+
+# histogram of percent dead basal area across plots:
+ggsave(plot = hist_mort_obs,
+       filename = paste0(save_dir, "/2025_05_15_hist_pdba_across_plots.png"),
+       width = 8,
+       height = 6)
+
+# ridgeline plot of mortality across hotspots:
+ggsave(plot = ridge_across_hotspots,
+       filename = paste0(save_dir, "/2025_05_15_hist_pdba_ridges_hotspots.png"),
+       width = 8,
+       height = 6)
+
+# densities of mortality across hotspots:
+ggsave(plot = density_across_hotspots,
+       filename = paste0(save_dir, "/2025_05_15_hist_pdba_density_hotspots.png"),
+       width = 8,
+       height = 6)
