@@ -11,6 +11,7 @@ librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes, ggridges)
 # setwd(dir)
 #load("Environments/2025_05_08_environment.RData")
 #load("Environments/2025_04_07_environment.RData")
+load("Envrionments/2025_05_15_environment.RData")
 
 ## plotting percent dead basal area observed and predicted
 # make the data set:
@@ -18,7 +19,10 @@ plot_data <- data.frame(
   x = 1:nrow(data_sort),
   y_obs = data_sort$pdba,
   y_pred = apply(ypred, 2, mean),
-  hot = data_sort$hotspot
+  hot = data_sort$hotspot,
+  lat = data_sort$lat,
+  lon = data_sort$lon,
+  plot = data_sort$plot
 )
 # making plot:
 pdba_pred_obs <- ggplot(plot_data, aes(x = x, y = y_obs)) +
@@ -113,3 +117,6 @@ ggsave(plot = density_across_hotspots,
        filename = paste0(save_dir, "/2025_05_15_hist_pdba_density_hotspots.png"),
        width = 8,
        height = 6)
+
+
+### Results Table and Heatmap
