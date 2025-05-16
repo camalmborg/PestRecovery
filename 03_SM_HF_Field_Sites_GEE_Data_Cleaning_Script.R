@@ -11,9 +11,14 @@ loader <- function(path, folder, name){
 }
 
 # data folders
-home <- "Data/"  # where the data lives
-field <- "hf_field_data/"  # 2022 field data
-gee <- "gee_data/"         # Google Earth Engine data
+home <- "/malmborg/Ch2_PestRecovery/Data/"
+field <- "hf_field_data/"
+gee <- "gee_data/"
+
+# home <- "Data/"  # where the data lives
+# field <- "hf_field_data/"  # 2022 field data
+# gee <- "gee_data/"         # Google Earth Engine data
+
 
 # load clean plot data if not in environment:
 plots <- read.csv(paste0(home,"plots_clean.csv"))
@@ -99,12 +104,18 @@ ts_theme <- theme_bw() +
 
 # make the plot:
 time_series <- ggplot(data = hotspot_means, aes(x = date, y = mean, color = hotspot)) +
-  geom_line(aes(group = hotspot), linewidth = 0.5, show.legend = FALSE,
-            position = position_dodge(width = 0.2)) +
-  scale_color_manual(values = colors) 
-                      #+
-                        # geom_line(aes(group = hotspot), linewidth = 0.5, show.legend = F,
-                        #           position = position_dodge(width = 0.2)))
+  geom_line(aes(group = hotspot), linewidth = 0.75, position = position_dodge(width = 0.2)) + 
+  scale_color_manual(values = colors, name = "Hotspot") +
+  xlab("Year") +
+  ylab("Mean condition score") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "navy", linewidth = 0.25) +
+  theme_classic()
+time_series
+
+ggsave(plot = time_series, 
+       filename = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2025_05_15_hotspot_mean_time_series.png",
+       width = 10,
+       height = 6)
 
 
 # Update timeline
