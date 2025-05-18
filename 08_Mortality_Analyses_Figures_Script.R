@@ -4,7 +4,10 @@
 #install.packages("ggplot2")
 #install.packages("hrbrthemes")
 #install.packages("ggridges")
-librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes, ggridges)
+#install.packages("gt")
+#install.packages("gtExtras)
+librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes, 
+                 ggridges, gt, gtExtras, webshot)
 
 # # navigate to folder:
 # dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
@@ -120,3 +123,28 @@ ggsave(plot = density_across_hotspots,
 
 
 ### Results Table and Heatmap
+# make a data frame with top model information:
+top_models <-data.frame(Rank = 1:5, 
+                        Variables = c("PBA oak, DMag Y1", "PBA oak, DMag CS Y1 + Y2", "PBA oak, DMag Y1 + Y2", "PBA oak, DMag CS Y1", "PBA oak"),
+                        deltaDIC = round(all_dics$delDIC[1:5], 3))
+best_models <- multi_results$results[c(11, 1, 10, 12),]
+best_uni <- uni_results$results[3,]
+best_results <- rbind(best_models, best_uni)
+#betas <- grep("^beta", colnames(multi_results$results))
+top_models$int <-round(as.numeric(best_results[,"beta_int"]), 3)
+top_models$b1 <- round(as.numeric(best_results[, "beta_1"]), 3)
+top_models$b2 <- round(as.numeric(best_results[, "beta_2"]), 3)
+
+# make the table:
+results_table <- gt(top_models) %>%
+  tab_spanner(
+    label = "Model Performance",
+    columns = c(Rank, Variables, deltaDIC)) %>%
+  tab_spanner(
+    label = "Parameter Estimates",
+    columns = c(int, b1, b2)) %>%
+  gt_theme_538()
+results_table
+# save table
+gtsave(results_table,
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/mortality_results_table_for_EFI.png")
