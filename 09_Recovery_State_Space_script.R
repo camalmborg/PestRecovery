@@ -19,11 +19,14 @@ for (t in 1:n){
 
 ### Process Model:
 for (t in 2:n){
-  mu[t] <- R[s] * x[t-1]
+  R[t] <- r0 #+ betar[z]  # here is where covariates of R would go?
+  mu[t] <- R[t] * x[t-1]
   x[t] ~ dnorm(mu[t], tau_add)
 }
 
-for (s in 1:sites){
-  R[s] <- 
-}
-
+### Priors:
+x[1] ~ dnorm(x_ic, t_ic)
+r0 ~ dnorm(r_ic, rprec)  # initial condition r
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+"
