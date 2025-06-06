@@ -12,16 +12,20 @@ nt = length(time)
 
 recov_state_space <- "
 model {
+for (s in sites){
+
 ### Data Model:
-for (t in 1:n){
-  y[t] ~ dnorm(x[t], tau_obs
-}
+  for (t in 1:n){
+    y[t,s] ~ dnorm(x[t,s], tau_obs
+  }
 
 ### Process Model:
 for (t in 2:n){
-  R[t] <- r0 #+ betar[z]  # here is where covariates of R would go?
-  mu[t] <- R[t] * x[t-1]
-  x[t] ~ dnorm(mu[t], tau_add)
+    R[t,s] <- r0 #+ betar[z]  # here is where covariates of R would go?
+    mu[t,s] <- R[t,s] * x[t-1,s]
+    x[t,s] ~ dnorm(mu[t,s], tau_add)
+  }
+  
 }
 
 ### Priors:
