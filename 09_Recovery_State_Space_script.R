@@ -71,4 +71,10 @@ model_data <- list(y = recov_sample,
 jags_model <- jags.model(file = textConnection(recov_state_space),
                          data = model_data, 
                          n.chains = 3)
+run_model <- coda.samples(jags_model,
+                          variable.names = c("x", "R"),
+                          n.iter = 50000)
 
+# let's see if it worked:
+out <- as.matrix(run_model)
+test_site <- out[,grep("^x\\[1,", colnames(out))]
