@@ -25,7 +25,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0
+    R[s,t] <- r0 #+ asite[s] + atime[t]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -72,9 +72,16 @@ jags_model <- jags.model(file = textConnection(recov_state_space),
                          data = model_data, 
                          n.chains = 3)
 run_model <- coda.samples(jags_model,
-                          variable.names = c("x", "R"),
+                          variable.names = c("x", "R", 
+                                             "tau_obs", "tau_add","r0"),
                           n.iter = 50000)
 
 # let's see if it worked:
+
+vars <- varnames(run_model)[c(1:3, 61:63, 100:103)]
+params <- run_model[,vars]
+plot(params)
+
+plot(run_model)
 out <- as.matrix(run_model)
 test_site <- out[,grep("^x\\[1,", colnames(out))]
