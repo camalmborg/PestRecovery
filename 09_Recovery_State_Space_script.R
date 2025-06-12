@@ -1,6 +1,9 @@
 # recovery rate state space model script
 # this script contains the code for running a jags model for estimating recovery rates
 
+# load environment if needed:
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_12_environment.RData")
+
 # libraries:
 librarian::shelf(rjags, coda)
 
@@ -25,7 +28,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 #+ asite[s] + atime[t]
+    R[s,t] <- r0 + asite[s] + atime[t-1]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -33,20 +36,20 @@ for (t in 2:nt){
 }
 
 ### Random Effects: (add later)
-# for (s in sites){
-#   asite ~ dnorm(0, tausite)
-# }
-# 
-# for (t in 1:n){
-#   atime ~ dnorm(0, tautime)
-# }
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
+}
+
+for (t in 1:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
 
 ### Priors:
 r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-#tausite ~ dgamma(0.001, 0.001)
-#tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+tautime ~ dgamma(0.001, 0.001)
 }
 "
 
@@ -61,6 +64,7 @@ x1 <- mean(tcg[,grep("^2017",names(tcg))])
 # make list object
 model_data <- list(y = recov_sample,
                    nt = length(time),
+                   #time = rep(time, length(sites)),
                    sites = sites, 
                    t_obs = 0.001, a_obs = 0.001,
                    t_add = 0.001, a_add = 0.001,
@@ -72,9 +76,10 @@ jags_model <- jags.model(file = textConnection(recov_state_space),
                          data = model_data, 
                          n.chains = 3)
 run_model <- coda.samples(jags_model,
-                          variable.names = c("x", "R", 
-                                             "tau_obs", "tau_add","r0"),
-                          n.iter = 50000)
+                          variable.names = c("x[2,1]", "R[2,1]", "atime", "asite",
+                                             "tau_obs", "tau_add", "tausite", "tautime",
+                                             "r0"),
+                          n.iter = 5000)
 
 # let's see if it worked:
 
