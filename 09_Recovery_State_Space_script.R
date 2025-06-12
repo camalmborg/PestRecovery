@@ -79,15 +79,11 @@ run_model <- coda.samples(jags_model,
                           variable.names = c("atime", "asite", "x", "R",
                                              "tau_obs", "tau_add", "tausite", "tautime",
                                              "r0"),
-                          n.iter = 5000,
+                          n.iter = 50000,
                           thin = 10)
 
 # let's see if it worked:
 
-# vars <- varnames(run_model)[c(1:3, 61:63, 100:103)]
-# params <- run_model[,vars]
-# plot(params)
-# 
-# plot(run_model)
-# out <- as.matrix(run_model)
-# test_site <- out[,grep("^x\\[1,", colnames(out))]
+vars <- varnames(run_model)[c(1:3, 61:81, 100:103)]
+params <- run_model[,vars]
+plot(params)
