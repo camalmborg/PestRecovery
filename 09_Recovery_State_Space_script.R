@@ -64,7 +64,7 @@ model_data <- list(y = recov_data,
 jags_model <- jags.model(file = textConnection(recov_state_space),
                          data = model_data, 
                          n.chains = 3)
-run_model <- coda.samples(jags_model,
+jags_out <- coda.samples(jags_model,
                           variable.names = c("x", "R",
                                              "tau_obs", "tau_add",
                                              "r0"),
@@ -72,18 +72,18 @@ run_model <- coda.samples(jags_model,
                           thin = 10)
 
 # run DIC
-DIC <- dic.samples(run_model, n.iter = 15000)
+DIC <- dic.samples(jags_model, n.iter = 15000)
 sum <- sum(DIC$deviance, DIC$penalty)
 
 # Make output list
 # track metadata:
-metadata <- tibble::lst(run_model, model_data)
+metadata <- tibble::lst(recov_state_space, model_data)
 # model selection
 dic <- list(DIC, sum)
 # model output
-out <- as.matrix(run_model)
+out <- as.matrix(jags_out)
 # combine output
-model_output <- tibble::lst(metadata, dic, run_model, out)
+model_output <- tibble::lst(metadata, dic, jags_out, out)
 
 # save base model output:
 out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
@@ -96,7 +96,7 @@ filename_runs <- paste0(run_path, date, "_base_model", "_data.RData")
 write.csv(out, file = filename_outputs)
 
 # save model selection and metadata to folder
-model_info <- model_output[c('run_model', 'dic', 'metadata')]
+model_info <- model_output[c('jags_out', 'dic', 'metadata')]
 save(model_info, file = filename_runs)
 
 
@@ -141,7 +141,7 @@ tautime ~ dgamma(0.001, 0.001)
 jags_model <- jags.model(file = textConnection(recov_state_space_re),
                          data = model_data, 
                          n.chains = 3)
-run_model <- coda.samples(jags_model,
+jags_out <- coda.samples(jags_model,
                           variable.names = c("atime", "asite", "x", "R",
                                              "tau_obs", "tau_add", 
                                              "tausite", "tautime",
@@ -150,18 +150,18 @@ run_model <- coda.samples(jags_model,
                           thin = 10)
 
 # run DIC
-DIC <- dic.samples(run_model, n.iter = 15000)
+DIC <- dic.samples(jags_model, n.iter = 15000)
 sum <- sum(DIC$deviance, DIC$penalty)
 
 # Make output list
 # track metadata:
-metadata <- tibble::lst(run_model, model_data)
+metadata <- tibble::lst(recov_state_space_re, model_data)
 # model selection
 dic <- list(DIC, sum)
 # model output
-out <- as.matrix(run_model)
+out <- as.matrix(jags_out)
 # combine output
-model_output <- tibble::lst(metadata, dic, run_model, out)
+model_output <- tibble::lst(metadata, dic, jags_out, out)
 
 # save base model output:
 out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
@@ -174,7 +174,7 @@ filename_runs <- paste0(run_path, date, "_base_RE_model", "_data.RData")
 write.csv(out, file = filename_outputs)
 
 # save model selection and metadata to folder
-model_info <- model_output[c('run_model', 'dic', 'metadata')]
+model_info <- model_output[c('jags_out', 'dic', 'metadata')]
 save(model_info, file = filename_runs)
 
 
