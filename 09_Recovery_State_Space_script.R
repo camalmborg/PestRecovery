@@ -1,4 +1,4 @@
-# recovery rate state space model script
+# recovery rate state space model script for base and random effect models
 # this script contains the code for running a jags model for estimating recovery rates
 
 # load environment if needed:
@@ -18,7 +18,91 @@ dist <- grep("^2017", names(tcg))
 post_dist <- tcg[,(dist + 1):ncol(tcg)]
 dm_post_dist <- steady_state - post_dist
 
+### "Base Model" - no covariates or random effects:
 recov_state_space <- "model {
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+}
+"
+
+# data for model:
+recov_data <- as.matrix(dm_post_dist)
+# time series length:
+time = 1:ncol(recov_data)
+sites = 1:nrow(recov_data)
+# first x:
+x1 <- mean(tcg[,grep("^2017",names(tcg))])
+
+# make list object
+model_data <- list(y = recov_data,
+                   nt = length(time),
+                   sites = sites, 
+                   t_obs = 0.001, a_obs = 0.001,
+                   t_add = 0.001, a_add = 0.001,
+                   r_ic = 1, r_prec = 0.001,
+                   x_ic = x1, t_ic = 0.01)
+
+# base model run:
+jags_model <- jags.model(file = textConnection(recov_state_space),
+                         data = model_data, 
+                         n.chains = 3)
+run_model <- coda.samples(jags_model,
+                          variable.names = c("x", "R",
+                                             "tau_obs", "tau_add",
+                                             "r0"),
+                          n.iter = 50000,
+                          thin = 10)
+
+# run DIC
+DIC <- dic.samples(run_model, n.iter = 15000)
+sum <- sum(DIC$deviance, DIC$penalty)
+
+# Make output list
+# track metadata:
+metadata <- tibble::lst(run_model, model_data)
+# model selection
+dic <- list(DIC, sum)
+# model output
+out <- as.matrix(run_model)
+# combine output
+model_output <- tibble::lst(metadata, dic, run_model, out)
+
+# save base model output:
+out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
+run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
+date <- as.character(Sys.Date())
+filename_outputs <- paste0(out_path, date, "_base_model","_output.csv")
+filename_runs <- paste0(run_path, date, "_base_model", "_data.RData")
+
+# save output
+write.csv(out, file = filename_outputs)
+
+# save model selection and metadata to folder
+model_info <- model_output[c('run_model', 'dic', 'metadata')]
+save(model_info, file = filename_runs)
+
+
+
+### "Random Effects Model" - no covariates but includes random effects for site (pixel) and time (year)
+recov_state_space_re <- "model {
 for (s in sites){
 
 ### Data Model:
@@ -53,37 +137,50 @@ tautime ~ dgamma(0.001, 0.001)
 }
 "
 
-# data for model:
-recov_sample <- as.matrix(dm_post_dist[sort(sample(1:nrow(tcg), 10)),])
-# time series length:
-time = 1:ncol(recov_sample)
-sites = 1:nrow(recov_sample)
-# first x:
-x1 <- mean(tcg[,grep("^2017",names(tcg))])
-
-# make list object
-model_data <- list(y = recov_sample,
-                   nt = length(time),
-                   #time = rep(time, length(sites)),
-                   sites = sites, 
-                   t_obs = 0.001, a_obs = 0.001,
-                   t_add = 0.001, a_add = 0.001,
-                   r_ic = 1, r_prec = 0.001,
-                   x_ic = x1, t_ic = 0.01)
-
-# attempt model run:
-jags_model <- jags.model(file = textConnection(recov_state_space),
+# base RE model run:
+jags_model <- jags.model(file = textConnection(recov_state_space_re),
                          data = model_data, 
                          n.chains = 3)
 run_model <- coda.samples(jags_model,
                           variable.names = c("atime", "asite", "x", "R",
-                                             "tau_obs", "tau_add", "tausite", "tautime",
+                                             "tau_obs", "tau_add", 
+                                             "tausite", "tautime",
                                              "r0"),
                           n.iter = 50000,
                           thin = 10)
 
-# let's see if it worked:
+# run DIC
+DIC <- dic.samples(run_model, n.iter = 15000)
+sum <- sum(DIC$deviance, DIC$penalty)
 
-vars <- varnames(run_model)[c(1:3, 61:81, 100:103)]
-params <- run_model[,vars]
-plot(params)
+# Make output list
+# track metadata:
+metadata <- tibble::lst(run_model, model_data)
+# model selection
+dic <- list(DIC, sum)
+# model output
+out <- as.matrix(run_model)
+# combine output
+model_output <- tibble::lst(metadata, dic, run_model, out)
+
+# save base model output:
+out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
+run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
+date <- as.character(Sys.Date())
+filename_outputs <- paste0(out_path, date, "_base_RE_model","_output.csv")
+filename_runs <- paste0(run_path, date, "_base_RE_model", "_data.RData")
+
+# save output
+write.csv(out, file = filename_outputs)
+
+# save model selection and metadata to folder
+model_info <- model_output[c('run_model', 'dic', 'metadata')]
+save(model_info, file = filename_runs)
+
+
+##### Archive ####
+# # data for model:
+# recov_sample <- as.matrix(dm_post_dist[sort(sample(1:nrow(tcg), 10)),])
+# # time series length:
+# time = 1:ncol(recov_sample)
+# sites = 1:nrow(recov_sample)
