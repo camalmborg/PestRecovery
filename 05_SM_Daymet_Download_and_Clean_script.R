@@ -5,6 +5,10 @@
 #install.packages("daymetr")
 librarian::shelf(tidyverse, dplyr, googledrive, daymetr, lubridate, data.table)
 
+# set wd:
+wd <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
+setwd(wd)
+
 ####---- Load Data ----####
 # load clean data if not in environment:
 coords <- read.csv("Data/sites_5k_samp_coords.csv")
@@ -76,11 +80,11 @@ daymet_grab_n_agg <- function(start, end, points, vars){
 }
 
 vars <- c("prcp..mm.day.", "tmax..deg.c.", "tmin..deg.c.","vp..Pa.")
-hf_daym <- daymet_grab_n_agg(2014, 2017, "/coords_hf_samp.csv", vars)
-samp_daym <- daymet_grab_n_agg(2014, 2017, "/coords_5k_samp.csv", vars)
+hf_daym <- daymet_grab_n_agg(2014, 2024, "/coords_hf_samp.csv", vars)
+samp_daym <- daymet_grab_n_agg(2014, 2024, "/coords_5k_samp.csv", vars)
 
 # clean up environment:
-rm(coords, hf_coords)
+#rm(coords, hf_coords)
 
 ### Update timeline:
 # 2025-03-01 created script, wrote functions, tested functions
