@@ -4,6 +4,8 @@
 #### ----- Load libraries: ----- ####
 #install.packages("librarian")
 librarian::shelf(tidyverse, googledrive)
+# set working directory
+setwd("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/")
 
 #### ----- Load data: ----- ####
 trees_raw <- read.csv("Data/hf_field_data/Tree_data.csv")
