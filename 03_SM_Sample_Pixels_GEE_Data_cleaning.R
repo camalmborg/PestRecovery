@@ -1,5 +1,8 @@
-# This is the script for HF field data sites from Earth Engine product
+# This is the script for Earth Engine product data
 # forest condition score and tasseled cap greenness data 
+
+dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
+setwd(dir)
 
 #### ----- Libraries ----- ####
 librarian::shelf(tidyverse, googledrive, ggplot2, RColorBrewer)
@@ -63,3 +66,8 @@ tcg <- tcg_raw %>%
 
 # clean environment:
 rm("scores_raw", "tcg_raw", "coords")
+
+# time series plots
+# just get the time series from the scores and tcg:
+scores_ts <- scores[, c(grep("^2", names(scores)))]
+tcg_ts <- tcg[,c(grep("^2", names(scores)))]
