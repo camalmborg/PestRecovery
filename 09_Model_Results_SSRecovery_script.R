@@ -15,7 +15,7 @@ models <- list.files(paste0(dir, "model_runs"))
 
 
 # load model
-load(paste0(dir, "model_runs/", models[2]))
+load(paste0(dir, "model_runs/", models[3]))
 
 # load jags output:
 jags_out <- model_info$jags_out
