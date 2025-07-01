@@ -253,7 +253,7 @@ jags_out <- coda.samples(jags_model,
                                             "r0"),
                          n.iter = 150000,
                          n.adapt = 50000,
-                         thin = 10)
+                         thin = 20)
 
 # run DIC
 DIC <- dic.samples(jags_model, n.iter = 15000)
