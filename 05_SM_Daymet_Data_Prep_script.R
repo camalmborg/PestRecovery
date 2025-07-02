@@ -8,6 +8,8 @@ data_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/daymet"
 setwd(data_dir)
 hf_daym <- read.csv("hf_daymet.csv")
 samp_daym <- read.csv("samp_daymet.csv")
+# coordinates:
+# coords object loaded from 03_SM_Sample_Pixels_GEE_Data_cleaning
 
 ### Data for "static" covariates - covs not changing in time
 # set the growing season months (may-sep):
