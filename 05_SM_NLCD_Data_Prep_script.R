@@ -14,8 +14,21 @@ nlcd <- read.csv("sample_nlcd.csv") %>%
 # legend landcover types:
 legend <- read.csv("NLCD_landcover_legend.csv", header = T, na.strings=c("","NA")) %>%
   filter(!is.na(Legend))
-
-
+# landcover groups:
+developed <- c(21, 22, 23, 24)
+forest_decid <- c(41, 90, 95)
+forest_mixed <- c(43)
+forest_evergreen <- c(42)
+herb_shrub <- c(52, 71)
+# assign categories to land cover classes:
+nlcd <- nlcd %>% 
+  mutate(
+    category = case_when(
+      landcover %in% developed ~ "Developed",
+      landcover %in% forest_decid ~ "Deciduous Forest",
+      landcover %in% forest_mixed ~ "Mixed Forest",
+      landcover %in% forest_evergreen ~ "Evergreen Forest",
+      landcover %in% herb_shrub ~ "Herbaceous/Shrub"))
 
 
 # coordinates:
