@@ -40,8 +40,22 @@ hf_dmag <- dist_mag_calc(hf_tcg, 2016)
 dmag_data_cs <- dist_mag_calc(scores, 2016)
 hf_dmag_cs <- dist_mag_calc(hf_scores, 2016)
 
-####---- Plots ----####
+# making the covariate data for recovery rate state space models:
+dist_hist_tcg <- dmag_data %>%
+  # select years:
+  select(grep("^2", colnames(dmag_data))) %>%
+  # make a dist mag sum of both disturbance years:
+  mutate(dist_2_yrs = rowSums(.))
+# for cs:
+dist_hist_cs <- dmag_data_cs %>%
+  # select years:
+  select(grep("^2", colnames(dmag_data_cs))) %>%
+  # make a dist mag sum of both disturbance years:
+  mutate(dist_2_yrs = rowSums(.))
 
+
+
+####---- Plots ----####
 
 # Update timeline
 # 2025-02-20 created script
