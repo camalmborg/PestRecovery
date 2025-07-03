@@ -22,7 +22,7 @@ seasonal_daym <- samp_daym %>%
   # filter growing season months
   filter(month %in% gs) %>%
   # take mean of each variable during growing season:
-  group_by(year) %>% summarise(across(c(prcp, tmax, tmin, vp), mean, na.rm = TRUE))
+  group_by(site, year) %>% summarise(across(c(prcp, tmax, tmin, vp), mean, na.rm = TRUE))
 
 # separate into static and changing through time groups:
 static_daym <- seasonal_daym %>% filter(year == c(2014, 2015))
