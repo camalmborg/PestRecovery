@@ -33,9 +33,11 @@ x1 <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
 
 # covariate data:
 covs <- data.frame(#lat = coords$lat, lon = coords$lon,
+  # adding disturbance history:
                    dmags_tcg_y1 = dist_hist_tcg$`2016-05-01`,
                    dmags_tcg_y2 = dist_hist_tcg$`2017-05-01`,
                    dmag_tcg_sum = dist_hist_tcg$dist_2_yrs,  
+                   # adding environmental variables:
                    precip_2014 = static_daym$prcp[which(static_daym$year == 2014)],
                    precip_2015 = static_daym$prcp[which(static_daym$year == 2015)],
                    temp_mx_2014 = static_daym$tmax[which(static_daym$year == 2014)],
@@ -44,8 +46,10 @@ covs <- data.frame(#lat = coords$lat, lon = coords$lon,
                    temp_min_2015 = static_daym$tmin[which(static_daym$year == 2015)],
                    vpd_2014 = static_daym$vp[which(static_daym$year == 2014)],
                    vpd_2015 = static_daym$vp[which(static_daym$year == 2015)],
+                   # adding NLCD data:
                    pct_tree_cov = nlcd$percent_tree_cover,
                    nlcd_cat[,grep("^cat_", colnames(nlcd_cat))]) %>%
+  # adding means of multiple pre-disturbance years for environmental variables:
   mutate(precip_mean = rowMeans(select(., precip_2014, precip_2015)), .after = precip_2015) %>%
   mutate(temp_mx_mean = rowMeans(select(., temp_mx_2014, temp_mx_2015)), .after = temp_mx_2015) %>%
   mutate(temp_min_mean = rowMeans(select(., temp_min_2014, temp_min_2015)), .after = temp_min_2015) %>%
@@ -60,6 +64,7 @@ model_data <- list(y = recov_data,
                    t_obs = 0.001, a_obs = 0.001,
                    t_add = 0.001, a_add = 0.001,
                    r_ic = 1, r_prec = 0.001,
+                   b_ic = 1, b_prec = 0.001,
                    x_ic = x1, t_ic = 0.01)
 
 recov_state_space_uni_static <- "model {
@@ -72,29 +77,70 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + betar*cov[s] + asite[s] + atime[t-1]  
+    R[s,t] <- r0 + inprod(beta[], cov[s,])
+    #R[s,t] <- r0 + asite[s] + atime[t-1] + inprod(beta[], cov[s,])
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic, t_ic)
 }
 
-### Random Effects: (add later)
-for (s in sites){
-  asite[s] ~ dnorm(0, tausite)
-}
-
-
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
-}
+### Random Effects:
+# for (s in sites){
+#   asite[s] ~ dnorm(0, tausite)
+# }
+# 
+# 
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
 
 ### Priors:
 r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta ~ dmnorm(b0, Vb)
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-tausite ~ dgamma(0.001, 0.001)
-tautime ~ dgamma(0.001, 0.001)
+#tausite ~ dgamma(0.001, 0.001)
+#tautime ~ dgamma(0.001, 0.001)
 }
 "
+
+# samp <- sort(sample(1:5000, 10))
+test_samp <- recov_data[samp,]
+cov_samp <- covs[samp,] %>%
+  mutate(int = 1, .before = 1)
+
+
+# time series length:
+time = 1:ncol(test_samp)
+sites = 1:nrow(test_samp)
+
+# make list object
+model_data <- list(y = test_samp,
+                   cov = cov_samp[,1:2],
+                   nt = length(time),
+                   sites = sites, 
+                   t_obs = 0.001, a_obs = 0.001,
+                   t_add = 0.001, a_add = 0.001,
+                   r_ic = 1, r_prec = 0.001,
+                   x_ic = x1, t_ic = 0.01)
+
+## Specify priors:
+model_data$b0 <- as.vector(c(0,0))      ## beta means
+model_data$Vb <- solve(diag(20000,2))   ## beta precisions
+
+# model run:
+jags_model <- jags.model(file = textConnection(recov_state_space_uni_static),
+                         data = model_data,
+                         n.chains = 3)
+
+#model test:
+jags_out <- coda.samples(jags_model,
+                         variable.names = c("x", "R",
+                                            "tau_obs", "tau_add",
+                                            "r0", #"atime", "asite",
+                                            "beta"),
+                         n.iter = 100000,
+                         adapt = 20000,
+                         thin = 10)
