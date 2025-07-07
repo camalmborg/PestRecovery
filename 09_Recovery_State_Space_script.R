@@ -72,12 +72,12 @@ jags_out <- coda.samples(jags_model,
                           variable.names = c("x", "R",
                                              "tau_obs", "tau_add",
                                              "r0"),
-                          n.iter = 100000,
-                          adapt = 20000,
-                          thin = 10)
+                          n.iter = 150000,
+                          adapt = 50000,
+                          thin = 50)
 
 # run DIC
-DIC <- dic.samples(jags_model, n.iter = 15000)
+DIC <- dic.samples(jags_model, n.iter = 50000)
 sum <- sum(DIC$deviance, DIC$penalty)
 
 # Make output list
@@ -158,7 +158,7 @@ jags_out <- coda.samples(jags_model,
                          thin = 50)
 
 # run DIC
-DIC <- dic.samples(jags_model, n.iter = 15000)
+DIC <- dic.samples(jags_model, n.iter = 50000)
 sum <- sum(DIC$deviance, DIC$penalty)
 
 # Make output list
