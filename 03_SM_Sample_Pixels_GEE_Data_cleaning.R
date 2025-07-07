@@ -65,7 +65,7 @@ tcg <- tcg_raw %>%
   mutate(latitude = coords$lat, .before = 3)
 
 # clean environment:
-rm("scores_raw", "tcg_raw", "coords")
+rm("scores_raw", "tcg_raw")
 
 # time series plots
 # just get the time series from the scores and tcg:
