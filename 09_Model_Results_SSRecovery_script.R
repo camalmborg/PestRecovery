@@ -29,6 +29,8 @@ atime_params <- jags_out[,grep("^at", vars)]
 asite_samp <- sample(vars[grep("^as", vars)], 6)
 asite_params <- jags_out[,asite_samp]
 
+# for betas (univariate):
+beta_params <- jags_out[,grep("^b", vars)]
 
 # collecting DICs
 model_dics <- matrix(NA, nrow = length(models), ncol = 3)
