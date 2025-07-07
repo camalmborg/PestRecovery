@@ -6,7 +6,8 @@ setwd(dir)
 # load environment if needed:
 #load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_12_environment.RData")
 #load("Environments/2025_06_29_environment.RData")
-load("Environments/2025_07_03_environment.RData")
+#load("Environments/2025_07_03_environment.RData")
+load("Environments/2025_07_07_environment.RData")
 
 # libraries:
 librarian::shelf(rjags, coda)
@@ -34,9 +35,7 @@ x1 <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
 covs <- data.frame(#lat = coords$lat, lon = coords$lon,
                    dmags_tcg_y1 = dist_hist_tcg$`2016-05-01`,
                    dmags_tcg_y2 = dist_hist_tcg$`2017-05-01`,
-                   dmag_tcg_sum = dist_hist_tcg$dist_2_yrs,
-                   land_cov = as.factor(nlcd$category),
-                   pct_tree_cov = nlcd$percent_tree_cover,
+                   dmag_tcg_sum = dist_hist_tcg$dist_2_yrs,  
                    precip_2014 = static_daym$prcp[which(static_daym$year == 2014)],
                    precip_2015 = static_daym$prcp[which(static_daym$year == 2015)],
                    temp_mx_2014 = static_daym$tmax[which(static_daym$year == 2014)],
@@ -44,11 +43,15 @@ covs <- data.frame(#lat = coords$lat, lon = coords$lon,
                    temp_min_2014 = static_daym$tmin[which(static_daym$year == 2014)],
                    temp_min_2015 = static_daym$tmin[which(static_daym$year == 2015)],
                    vpd_2014 = static_daym$vp[which(static_daym$year == 2014)],
-                   vpd_2015 = static_daym$vp[which(static_daym$year == 2015)]) %>%
-  mutate(precip_mean = rowMeans(select(., precip_2014, precip_2015))) %>%
-  mutate(temp_mx_mean = rowMeans(select(., temp_mx_2014, temp_mx_2015))) %>%
-  mutate(temp_min_mean = rowMeans(select(., temp_min_2014, temp_min_2015))) %>%
-  mutate(vpd_mean = rowMeans(select(., vpd_2014, vpd_2015)))
+                   vpd_2015 = static_daym$vp[which(static_daym$year == 2015)],
+                   pct_tree_cov = nlcd$percent_tree_cover,
+                   nlcd_cat[,grep("^cat_", colnames(nlcd_cat))]) %>%
+  mutate(precip_mean = rowMeans(select(., precip_2014, precip_2015)), .after = precip_2015) %>%
+  mutate(temp_mx_mean = rowMeans(select(., temp_mx_2014, temp_mx_2015)), .after = temp_mx_2015) %>%
+  mutate(temp_min_mean = rowMeans(select(., temp_min_2014, temp_min_2015)), .after = temp_min_2015) %>%
+  mutate(vpd_mean = rowMeans(select(., vpd_2014, vpd_2015)), .after = vpd_2015) %>%
+  # z-score normalizing (value-mean/sd): 
+  mutate(across(-c(grep("^cat_", colnames(covs))), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE)))
 
 # make list object
 model_data <- list(y = recov_data,
@@ -69,7 +72,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + asite[s] + atime[t-1]  
+    R[s,t] <- r0 + betar*cov[s] + asite[s] + atime[t-1]  
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
