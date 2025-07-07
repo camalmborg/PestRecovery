@@ -36,7 +36,8 @@ nlcd_cat <- nlcd %>%
   mutate(cat_mixed = ifelse(category == "Mixed Forest", 1, 0)) %>%
   mutate(cat_evergr = ifelse(category == "Evergreen Forest", 1, 0)) %>%
   mutate(cat_herbshr = ifelse(category == "Herbaceous/Shrub", 1, 0)) %>%
-  mutate(cat_dev = ifelse(category == "Developed", 1, 0))
+  mutate(cat_dev = ifelse(category == "Developed", 1, 0)) %>%
+  select(c(lat, lon, cat_decid, cat_mixed, cat_evergr, cat_herbshr, cat_dev))
 
 
 # coordinates:
