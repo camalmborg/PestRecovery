@@ -34,9 +34,9 @@ x1 <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
 # covariate data:
 covs <- data.frame(#lat = coords$lat, lon = coords$lon,
   # adding disturbance history:
-                   dmags_tcg_y1 = dist_hist_tcg$`2016-05-01`,
-                   dmags_tcg_y2 = dist_hist_tcg$`2017-05-01`,
-                   dmag_tcg_sum = dist_hist_tcg$dist_2_yrs,  
+                   #dmags_tcg_y1 = dist_hist_tcg$`2016-05-01`,
+                   #dmags_tcg_y2 = dist_hist_tcg$`2017-05-01`,
+                   #dmag_tcg_sum = dist_hist_tcg$dist_2_yrs,  
                    # adding environmental variables:
                    precip_2014 = static_daym$prcp[which(static_daym$year == 2014)],
                    precip_2015 = static_daym$prcp[which(static_daym$year == 2015)],
@@ -130,7 +130,7 @@ for (i in 1:ncol(covs[-c(grep("^cat_", colnames(covs)))])){
   
   # Make output list
   # track metadata:
-  metadata <- tibble::lst(recov_state_space, model_data)
+  metadata <- tibble::lst(recov_state_space_uni_static, model_data)
   # model selection
   dic <- list(DIC, sum)
   # model output
@@ -230,7 +230,7 @@ sum <- sum(DIC$deviance, DIC$penalty)
 
 # Make output list
 # track metadata:
-metadata <- tibble::lst(recov_state_space, model_data)
+metadata <- tibble::lst(recov_state_space_uni_static_cat, model_data)
 # model selection
 dic <- list(DIC, sum)
 # model output
@@ -264,3 +264,8 @@ save(model_info, file = filename_runs)
 # # time series length:
 # time = 1:ncol(test_samp)
 # sites = 1:nrow(test_samp)
+
+for (i in 1:ncol(covs)){
+  nas <- which(is.na(covs[,i]))
+  print(nas)
+}
