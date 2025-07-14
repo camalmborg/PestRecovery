@@ -97,7 +97,7 @@ tautime ~ dgamma(0.001, 0.001)
 "
 
 # run loop for all the models that aren't categorical:
-for (i in 1:ncol(covs[-c(grep("^cat_", colnames(covs)))])){
+for (i in 9:ncol(covs[-c(grep("^cat_", colnames(covs)))])){
   # make list object
   model_data <- list(y = recov_data,
                      cov = covs[,i],
@@ -142,8 +142,9 @@ for (i in 1:ncol(covs[-c(grep("^cat_", colnames(covs)))])){
   out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
   run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
   date <- as.character(Sys.Date())
-  filename_outputs <- paste0(out_path, date, "_model_static_cov_uni_", i,"_output.csv")
-  filename_runs <- paste0(run_path, date, "_model_static_cov_uni_", i,"_data.RData")
+  model_name <- names(covs)[i]
+  filename_outputs <- paste0(out_path, date, "_model_static_cov_uni_", model_name, "_output.csv")
+  filename_runs <- paste0(run_path, date, "_model_static_cov_uni_", model_name, "_data.RData")
   
   # save output
   write.csv(out, file = filename_outputs)
@@ -242,8 +243,9 @@ model_output <- tibble::lst(metadata, dic, jags_out, out)
 out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
 run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
 date <- as.character(Sys.Date())
-filename_outputs <- paste0(out_path, date, "_model_static_cov_uni_", 17,"_output.csv")
-filename_runs <- paste0(run_path, date, "_model_static_cov_uni_", 17,"_data.RData")
+model_name <- "forest_type"
+filename_outputs <- paste0(out_path, date, "_model_static_cov_uni_", model_name, "_output.csv")
+filename_runs <- paste0(run_path, date, "_model_static_cov_uni_", model_name, "_data.RData")
 
 # save output
 write.csv(out, file = filename_outputs)
@@ -265,7 +267,7 @@ save(model_info, file = filename_runs)
 # time = 1:ncol(test_samp)
 # sites = 1:nrow(test_samp)
 
-for (i in 1:ncol(covs)){
-  nas <- which(is.na(covs[,i]))
-  print(nas)
-}
+# for (i in 1:ncol(covs)){
+#   nas <- which(is.na(covs[,i]))
+#   print(nas)
+# }
