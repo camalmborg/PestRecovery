@@ -263,10 +263,13 @@ state_space_model_run <- function(cov_df, model_num){
 }
 
 # Model Run:
+state_space_model_run(cov_df = stat_covs,
+                      model_num = 1)
+
+
 
 
 ##### ARCHIVE #####
-
 # #for running model with a sample of data
 # # samp <- sort(sample(1:5000, 10))
 # test_samp <- recov_data[samp,]
