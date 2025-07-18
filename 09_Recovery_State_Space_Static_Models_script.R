@@ -251,7 +251,6 @@ state_space_model_run <- function(cov_df, model_num){
   out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
   run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
   date <- as.character(Sys.Date())
-  model_name <- names(covs)
   filename_outputs <- paste0(out_path, date, "_model_static_cov_uni_", model_name, "_output.csv")
   filename_runs <- paste0(run_path, date, "_model_static_cov_uni_", model_name, "_data.RData")
   
