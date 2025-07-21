@@ -228,6 +228,14 @@ state_space_model_run <- function(cov_df, model_num){
     model_data$Vb = 0.001
   }
   
+  # deal with missing data:
+  if(length(which(is.na(covs))) > 0){
+    # missing data:
+    model_data$miss <- which(is.na(covs))
+    model_data$mis_s = mean(dmag_data$steady, na.rm = T)
+    model_data$mis_t = 0.01
+  }
+  
   # model run:
   jags_model <- jags.model(file = textConnection(model),
                            data = model_data,
