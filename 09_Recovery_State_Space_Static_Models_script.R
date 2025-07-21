@@ -3,6 +3,9 @@
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
 setwd(dir)
 
+# setting task id
+task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+
 # load environment if needed:
 #load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_12_environment.RData")
 #load("Environments/2025_06_29_environment.RData")
@@ -199,7 +202,7 @@ state_space_model_run <- function(cov_df, model_num){
   }
   
   # model choice:
-  if(ncol(cov_df) <= 5){
+  if(ncol(cov_df) > 1 & ncol(cov_df) <= 5){
     model <- recov_state_space_uni_static_cat
   } else if (length(which(is.na(covs))) > 0){
     model <- recov_state_space_uni_static_miss
@@ -215,8 +218,15 @@ state_space_model_run <- function(cov_df, model_num){
                      t_obs = 0.001, a_obs = 0.001,
                      t_add = 0.001, a_add = 0.001,
                      r_ic = 1, r_prec = 0.001,
-                     x_ic = x1, t_ic = 0.01,
-                     b0 = 0, Vb = 0.001)
+                     x_ic = x1, t_ic = 0.01)
+  
+  if(ncol(cov_df) <= 5){
+    model_data$b0 <- as.vector(c(rep(0, ncol(cat_covs))))      # beta means for categorical
+    model_data$Vb <- solve(diag(1000, ncol(cat_covs)))   # beta precisions for categorical
+  } else {
+    model_data$b0 = 0
+    model_data$Vb = 0.001
+  }
   
   # model run:
   jags_model <- jags.model(file = textConnection(model),
@@ -267,10 +277,9 @@ state_space_model_run <- function(cov_df, model_num){
 #                      model_num = 1)   # I would like to change these arguments to run my models
 
 # added 7/21
-# i = specified from array job
-if (i == 17){
-  state_space_model_run(cov_df = cat_covs, model_num = i)
+if (task_id == 17){
+  state_space_model_run(cov_df = cat_covs, model_num = task_id)
 } else {
-  state_space_model_run(cov_df = stat_covs, model_num = i)
+  state_space_model_run(cov_df = stat_covs, model_num = task_id)
 }
 
