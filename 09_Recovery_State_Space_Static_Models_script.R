@@ -262,9 +262,15 @@ state_space_model_run <- function(cov_df, model_num){
   save(model_info, file = filename_runs)
 }
 
-# Model Run:
-state_space_model_run(cov_df = stat_covs,
-                      model_num = 1)
+## Model Run line:
+#state_space_model_run(cov_df = stat_covs,
+#                      model_num = 1)   # I would like to change these arguments to run my models
 
-
+# added 7/21
+# i = specified from array job
+if (i == 17){
+  state_space_model_run(cov_df = cat_covs, model_num = i)
+} else {
+  state_space_model_run(cov_df = stat_covs, model_num = i)
+}
 
