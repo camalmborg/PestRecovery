@@ -43,7 +43,11 @@ for (i in 1:length(models)){
   load(paste0(dir, "model_runs/", models[i]))
   # model name:
   name <- models[i]
-  model <- str_match(name, "cov_(.*?)_data")[,2]
+  if (grepl("cov", name) == TRUE){
+    model <- str_match(name, "cov_(.*?)_data")[,2]
+  } else {
+    model <- str_match(name, "_(.*?)_model")[,2]
+  }
   model_dics[i,1] <- i
   model_dics[i,2] <- model
   # extract DIC:
