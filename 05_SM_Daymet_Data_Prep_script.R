@@ -1,7 +1,7 @@
 # Daymet data preparing for recovery state space models
 
 ### libraries
-librarian::shelf(dplyr, stringr)
+librarian::shelf(tidyverse, dplyr, stringr)
 
 ### load data
 data_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/daymet"
@@ -26,4 +26,9 @@ seasonal_daym <- samp_daym %>%
 
 # separate into static and changing through time groups:
 static_daym <- seasonal_daym %>% filter(year == c(2014, 2015))
-time_daym <- seasonal_daym %>% filter(year > 2015)
+time_daym <- seasonal_daym %>% filter(year > 2017)
+
+# pivot time_daym wider to get time series:
+daym_time_series <- time_daym %>%
+  pivot_wider(names_from = c(year),
+              values_from = c(prcp, tmax, tmin, vp))
