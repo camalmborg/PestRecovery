@@ -58,4 +58,74 @@ choose_covs <- function(cov_df, var){
     select(starts_with("2"))
 }
 
+### TESTING DATA:
+test_tcg <- recov_data[1:10,-7] # remember to remove final year when running for match with daymet
+test_covs <- cov_ts[1:10,]
+# time series length:
+time = 1:ncol(test_tcg)
+sites = 1:nrow(test_covs)
+
+# model with covariate added: 
+recov_state_space_uni_tv <- "model {
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + asite[s] + atime[t-1] + beta*cov[s,t]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+### Random Effects:
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
+}
+
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta ~ dnorm(b0, Vb) #initial beta
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tausite ~ dgamma(0.001, 0.001)
+tautime ~ dgamma(0.001, 0.001)
+}
+"
+
+# make list object
+model_data <- list(y = test_tcg,
+                   cov = test_covs,
+                   nt = length(time),
+                   sites = sites, 
+                   t_obs = 0.001, a_obs = 0.001,
+                   t_add = 0.001, a_add = 0.001,
+                   r_ic = 1, r_prec = 0.001,
+                   x_ic = x1, t_ic = 0.01,
+                   b0 = 0, Vb = 0.001)
+
+# model run:
+jags_model <- jags.model(file = textConnection(recov_state_space_uni_tv),
+                         data = model_data,
+                         n.chains = 3)
+#model test:
+jags_out <- coda.samples(jags_model,
+                         variable.names = c("x", "R",
+                                            "tau_obs", "tau_add",
+                                            "r0", "atime", "asite",
+                                            "beta"),
+                         n.iter = 50000,
+                         #adapt = 50000,
+                         thin = 2)
 
