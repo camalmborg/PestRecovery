@@ -38,6 +38,8 @@ x1 <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
 
 # covariates:
 covs <- time_daym %>%
+  # z-score normalizing (value-mean/sd): 
+  mutate(across(-c(site, year), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE)))
   # pivot variables to make a variable column:
   pivot_longer(cols = c(prcp, tmax, tmin, vp), 
                names_to = "variable", 
