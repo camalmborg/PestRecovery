@@ -1,4 +1,4 @@
-# recovery rate state space model script for base and random effect models
+# recovery rate state space model script for static (non-time-varying) recovery models
 # this script contains the code for running a jags model for estimating recovery rates
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
 setwd(dir)
@@ -7,9 +7,6 @@ setwd(dir)
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
 # load environment if needed:
-#load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_12_environment.RData")
-#load("Environments/2025_06_29_environment.RData")
-#load("Environments/2025_07_03_environment.RData")
 load("Environments/2025_07_07_environment.RData")
 
 # libraries:
