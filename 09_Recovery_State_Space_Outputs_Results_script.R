@@ -60,7 +60,7 @@ for (i in 1:length(models)){
 
 # get deltaDICs:
 dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], decreasing = TRUE)
-dic_sort$del_dic <- min(as.numeric(dic_sort$dic)) - as.numeric(dic_sort$dic)
+dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 # save:
-#write.csv(dic_sort, "2025_07_21_uni_static_recov_models_dics.csv")
+#write.csv(dic_sort, "2025_07_23_uni_static_and_base_recov_models_dics.csv")
                                
