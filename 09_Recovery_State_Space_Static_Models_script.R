@@ -55,7 +55,7 @@ covs <- data.frame(#lat = coords$lat, lon = coords$lon,
   mutate(temp_min_mean = rowMeans(select(., temp_min_2014, temp_min_2015)), .after = temp_min_2015) %>%
   mutate(vpd_mean = rowMeans(select(., vpd_2014, vpd_2015)), .after = vpd_2015) %>%
   # z-score normalizing (value-mean/sd): 
-  mutate(across(-c(grep("^cat_", colnames(covs))), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE)))
+  mutate(across(-(grep("^cat_", colnames(covs))), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE)))
 
 # continuous variables:
 stat_covs <- covs[-c(grep("^cat_", colnames(covs)))]
