@@ -15,7 +15,7 @@ task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 load("Environments/2025_07_07_environment.RData")
 
 # libraries:
-librarian::shelf(rjags, coda, dplyr)
+librarian::shelf(rjags, coda, dplyr, tidyverse)
 
 # time series data:
 tcg <- tcg_ts 
@@ -25,7 +25,7 @@ start <- grep("^2013", names(tcg))
 end <- grep("^2015", names(tcg))
 steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
-post_dist <- tcg[,(dist + 1):ncol(tcg)]
+post_dist <- tcg[,(dist + 1):(ncol(tcg)-1)]  # minus 1 here to account for match with daymet data 2018-2023 (2024 not fully available)
 dm_post_dist <- steady_state - post_dist
 
 # data for model:
@@ -39,13 +39,13 @@ x1 <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
 # covariates:
 covs <- time_daym %>%
   # z-score normalizing (value-mean/sd): 
-  mutate(across(-c(site, year), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE)))
+  mutate(across(-any_of(c("site", "year")), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE))) %>%
   # pivot variables to make a variable column:
-  pivot_longer(cols = c(prcp, tmax, tmin, vp), 
-               names_to = "variable", 
+  pivot_longer(cols = c(prcp, tmax, tmin, vp),
+               names_to = "variable",
                values_to = "value") %>%
   # pivot wide to make time series for each row
-  pivot_wider(names_from = year, 
+  pivot_wider(names_from = year,
               values_from = value) %>%
   # arrange by variable:
   arrange(variable, site)
@@ -127,7 +127,7 @@ jags_out <- coda.samples(jags_model,
                                             "tau_obs", "tau_add",
                                             "r0", "atime", "asite",
                                             "beta"),
-                         n.iter = 50000,
-                         #adapt = 50000,
-                         thin = 2)
+                         n.iter = 150000,
+                         adapt = 50000,
+                         thin = 15)
 
