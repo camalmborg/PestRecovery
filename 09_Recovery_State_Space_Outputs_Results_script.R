@@ -36,8 +36,8 @@ beta_params <- jags_out[,grep("^b", vars)]
 
 ### Collecting DICs
 # extract from model metadata:
-model_dics <- matrix(NA, nrow = length(models), ncol = 4)
-colnames(model_dics) <- c("model_number", "covariate", "dic", "group")
+model_dics <- matrix(NA, nrow = length(models), ncol = 3)
+colnames(model_dics) <- c("model_number", "covariate", "dic")
 for (i in 1:length(models)){
   # load model
   load(paste0(dir, "model_runs/", models[i]))
@@ -54,7 +54,6 @@ for (i in 1:length(models)){
   dic <- model_info$dic[[2]]
   # fill in table:
   model_dics[i,3] <- dic
-  model_dics[i,4] <- "static group"
   print(i)
 }
 
