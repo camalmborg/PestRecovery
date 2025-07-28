@@ -13,10 +13,10 @@ models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(
 
 
 # # load model
-# load(paste0(dir, "model_runs/", models[1]))
+load(paste0(dir, "model_runs/", models[24]))
 # 
 # # load jags output:
-# jags_out <- model_info$jags_out
+jags_out <- model_info$jags_out
 vars <- varnames(jags_out)
 params <- jags_out[,grep("r0|^tau", vars)]
 R_samp <- sample(vars[grep("R", vars)], 6)
