@@ -74,17 +74,17 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + asite[s] + atime[t-1] + beta*cov[s]
+    R[s,t] <- r0 + beta*cov[s] + atime[t-1] ##+ asite[s]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic, t_ic)
 }
 
-### Random Effects:
-for (s in sites){
-  asite[s] ~ dnorm(0, tausite)
-}
+# ### Random Effects:
+# for (s in sites){
+#   asite[s] ~ dnorm(0, tausite)
+# }
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
@@ -97,7 +97,7 @@ r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta ~ dnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-tausite ~ dgamma(0.001, 0.001)
+#tausite ~ dgamma(0.001, 0.001)
 tautime ~ dgamma(0.001, 0.001)
 }
 "
@@ -113,17 +113,17 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + asite[s] + atime[t-1] + beta*cov[s]
+    R[s,t] <- r0 + beta*cov[s] + atime[t-1] ##+ asite[s]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic, t_ic)
 }
 
-### Random Effects:
-for (s in sites){
-  asite[s] ~ dnorm(0, tausite)
-}
+# ### Random Effects:
+# for (s in sites){
+#   asite[s] ~ dnorm(0, tausite)
+# }
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
@@ -136,7 +136,7 @@ r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta ~ dnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-tausite ~ dgamma(0.001, 0.001)
+#tausite ~ dgamma(0.001, 0.001)
 tautime ~ dgamma(0.001, 0.001)
 # missing data:
 for (s in miss){
@@ -156,17 +156,17 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + asite[s] + atime[t-1] + inprod(beta[], cov[s,])
+    R[s,t] <- r0 + inprod(beta[], cov[s,]) + atime[t-1] ##+ asite[s]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic, t_ic)
 }
 
-### Random Effects:
-for (s in sites){
-  asite[s] ~ dnorm(0, tausite)
-}
+# ### Random Effects:
+# for (s in sites){
+#   asite[s] ~ dnorm(0, tausite)
+# }
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
@@ -179,7 +179,7 @@ r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta ~ dmnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-tausite ~ dgamma(0.001, 0.001)
+#tausite ~ dgamma(0.001, 0.001)
 tautime ~ dgamma(0.001, 0.001)
 }
 "
@@ -242,7 +242,7 @@ state_space_model_run <- function(cov_df, model_num){
   jags_out <- coda.samples(jags_model,
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
-                                              "r0", "atime", "asite",
+                                              "r0", "atime",
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
