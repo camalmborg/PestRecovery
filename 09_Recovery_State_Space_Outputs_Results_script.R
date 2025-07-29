@@ -38,7 +38,7 @@ for (i in 1:length(models)){
 dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], decreasing = TRUE)
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 # save:
-#write.csv(dic_sort, "2025_07_23_uni_static_and_base_recov_models_dics.csv")
+#write.csv(dic_sort, "2025_07_29_all_base_uni_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
@@ -86,6 +86,11 @@ for (i in 1:length(models)){
     model_params[i,j] <- round(params_mean[j], 3)
   }
 }
+
+# save:
+#write.csv(model_params, "2025_07_29_all_base_uni_recov_models_param_means.csv")
+#save(model_outputs, file = "2025_07_29_recov_models_outputs_list.RData")
+
 
 
 ### For model convergence checks and tests:
