@@ -29,7 +29,7 @@ post_dist <- tcg[,(dist + 1):(ncol(tcg)-1)]  # minus 1 here to account for match
 dm_post_dist <- steady_state - post_dist
 
 # data for model:
-recov_data <- as.matrix(dm_post_dist)
+recov_data <- dm_post_dist
 # time series length:
 time = 1:ncol(recov_data)
 sites = 1:nrow(recov_data)
@@ -79,7 +79,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + beta*cov[s,t] + atime[t-1] ##+ asite[s] 
+    R[s,t] <- r0 + atime[t-1] + beta*cov[s,t] ##+ asite[s] 
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -119,18 +119,18 @@ model_data <- list(y = recov_data,
                    b0 = 0, Vb = 0.001)
 
 # model run:
-jags_model <- jags.model(file = textConnection(recov_state_space_uni_tv),
-                         data = model_data,
-                         n.chains = 3)
+#jags_model <- jags.model(file = textConnection(recov_state_space_uni_tv),
+#                         data = model_data,
+#                         n.chains = 3)
 #model test:
-jags_out <- coda.samples(jags_model,
-                         variable.names = c("x", "R",
-                                            "tau_obs", "tau_add",
-                                            "r0", "atime", #"asite",
-                                            "beta"),
-                         n.iter = 150000,
-                         adapt = 50000,
-                         thin = 50)
+#jags_out <- coda.samples(jags_model,
+#                         variable.names = c("x", "R",
+#                                            "tau_obs", "tau_add",
+#                                            "r0", "atime", #"asite",
+#                                            "beta"),
+#                         n.iter = 150000,
+#                         adapt = 50000,
+#                         thin = 50)
 
 # function for running model:----
 #'@param model_data = list object with data for jags model
@@ -145,11 +145,11 @@ state_space_model_run <- function(model_data, model, model_name){
   jags_out <- coda.samples(jags_model,
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
-                                              "r0", "atime", #"asite",
+                                              "r0", "atime", "tautime", #"asite",
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
-                           thin = 15)
+                           thin = 50)
   
   # run DIC
   DIC <- dic.samples(jags_model, n.iter = 50000)

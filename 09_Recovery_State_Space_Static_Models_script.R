@@ -246,7 +246,7 @@ state_space_model_run <- function(cov_df, model_num){
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
-                           thin = 15)
+                           thin = 50)
   
   # run DIC
   DIC <- dic.samples(jags_model, n.iter = 50000)
