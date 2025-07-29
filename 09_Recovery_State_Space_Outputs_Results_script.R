@@ -43,8 +43,8 @@ dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic))
 
 ### Getting beta parameters and calculating CIs
 # # testing...
-models <- list.files(paste0(dir, "model_runs", "/archive"))#[grep("RData", list.files(paste0(dir, "model_runs")))]
-load(paste0(dir, "model_runs/archive/", models[8]))
+#models <- list.files(paste0(dir, "model_runs", "/archive"))#[grep("RData", list.files(paste0(dir, "model_runs")))]
+#load(paste0(dir, "model_runs/archive/", models[8]))
 
 #varnames(params)
 model_params <- as.data.frame(matrix(NA, nrow = length(models), ncol = 12))
@@ -53,7 +53,8 @@ colnames(model_params) <- c("model_number", "covariate",
                             "atime[1]", "atime[2]", "atime[3]", "atime[4]", "atime[5]", "atime[6]",
                             "beta", "r0", "tau_add", "tau_obs")
 for (i in 1:length(models)){
-  # load model:
+  # progress bar:
+  print(i)
   # load model:
   load(paste0(dir, "model_runs/", models[i]))
   # model name:
