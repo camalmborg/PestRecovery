@@ -93,7 +93,7 @@ for (i in 1:length(models)){
 #save(model_outputs, file = "2025_07_29_recov_models_outputs_list.RData")
 
 # remove things I don't need:
-rm(model_info, params, params_burn, params_out, jags_out)
+rm(model_info, params, params_burn, params_out, jags_out, vars)
 
 
 ### For model convergence checks and tests:
