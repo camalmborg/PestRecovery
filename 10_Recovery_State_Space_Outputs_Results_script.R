@@ -79,6 +79,7 @@ for (i in 1:length(models)){
   params_out <- as.data.frame(as.matrix(params_burn))
   # save model params to list:
   model_outputs[[i]] <- params_out
+  names(model_outputs)[i] <- model
   # get param means:
   params_mean <- apply(params_out, 2, mean)
   # fill in table of parameter means:
