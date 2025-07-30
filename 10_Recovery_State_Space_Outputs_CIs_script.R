@@ -58,3 +58,60 @@ model_results_CIs <- as.data.frame(model_means) %>%
   #   names_sep = c("_"),
   #   values_to = "value")
 
+
+## Ridge Plot for betas
+# load libraries:
+library(ggridges)
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+
+# get the data together:
+beta_ridges <- as.data.frame(matrix(NA, ncol = length(model_outputs)+4, nrow = nrow(model_outputs[[1]])))
+for (i in 1:length(model_outputs)){
+  model_name <- names(model_outputs)[i]
+  # get results from list:
+  result <- model_outputs[[i]]
+  if (TRUE %in% grepl("beta", colnames(result))){
+    beta <- as.data.frame(result[,grep("beta", colnames(result))])
+    colnames(beta) <- "beta"
+    for(j in 1:ncol(beta)){
+      beta_ridges[,i] <- beta[j]
+      colnames(beta_ridges)[i] <- c(paste0("beta_", j, "_", model_name))
+    }
+  } else {
+    colnames(beta_ridges)[i] <- c(paste0(model_name))
+  }
+}
+rm(model_name, result, beta)
+
+# pivot longer to prepare for making ridges:
+beta_ridges_long <- beta_ridges %>%
+  select(contains("beta")) %>%
+  pivot_longer(., 
+               cols = everything(),
+               names_to = "model",
+               values_to = "beta_est") %>%
+  group_by(model) %>%
+  # arrange by descending mean to make ridges look nice
+  mutate(mean_beta = mean(beta_est)) %>% ungroup() %>%
+  mutate(model = fct_reorder(model, mean_beta, .desc = TRUE)) %>%
+  # make model a factor for plotting:
+  mutate(model = as.factor(model)) %>%
+  arrange(model)
+
+# Now let's make the ridge plot:
+beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = stat(x))) +
+  # title:
+  labs(title = 'Slope Estimates') +
+  # add color scaling:
+  geom_density_ridges_gradient() +
+  scale_fill_gradient2(
+    low = "blue", mid = "white", high = "red", midpoint = 0#,
+    #oob = scales::squish
+  ) +
+  # add vertical line at 0:
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  theme_ipsum() 
+
+beta_ridge_plot
