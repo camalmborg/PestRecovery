@@ -92,6 +92,8 @@ for (i in 1:length(models)){
 #write.csv(model_params, "2025_07_29_all_base_uni_recov_models_param_means.csv")
 #save(model_outputs, file = "2025_07_29_recov_models_outputs_list.RData")
 
+# remove things I don't need:
+rm(model_info, params, params_burn, params_out, jags_out)
 
 
 ### For model convergence checks and tests:
