@@ -105,13 +105,14 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   # title:
   labs(title = 'Slope Estimates') +
   # add color scaling:
-  geom_density_ridges_gradient() +
+  geom_density_ridges_gradient(scale = 1.5) +
   scale_fill_gradient2(
-    low = "blue", mid = "white", high = "red", midpoint = 0#,
-    #oob = scales::squish
-  ) +
+    low = "blue", mid = "white", high = "red", midpoint = 0) +
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
-  theme_ipsum() 
+  theme_ipsum() +
+  theme(legend.position = "none",
+        panel.spacing = unit(0.1, "lines"),
+        strip.text.x = element_text(size = 8))
 
 beta_ridge_plot
