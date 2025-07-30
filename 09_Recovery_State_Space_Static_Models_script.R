@@ -242,7 +242,7 @@ state_space_model_run <- function(cov_df, model_num){
   jags_out <- coda.samples(jags_model,
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
-                                              "r0", "atime",
+                                              "r0", "atime", "tautime",
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
