@@ -38,7 +38,7 @@ for (i in 1:length(models)){
 dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], decreasing = TRUE)
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 # save:
-#write.csv(dic_sort, "2025_07_29_all_base_uni_recov_models_dics.csv")
+write.csv(dic_sort, "2025_07_31_all_base_uni_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
@@ -89,33 +89,33 @@ for (i in 1:length(models)){
 }
 
 # save:
-#write.csv(model_params, "2025_07_29_all_base_uni_recov_models_param_means.csv")
-#save(model_outputs, file = "2025_07_29_recov_models_outputs_list.RData")
+write.csv(model_params, "2025_07_31_all_base_uni_recov_models_param_means.csv")
+save(model_outputs, file = "2025_07_31_recov_models_outputs_list.RData")
 
 # remove things I don't need:
 rm(model_info, params, params_burn, params_out, jags_out, vars)
 
 
-### For model convergence checks and tests:
-# # load model
-load(paste0(dir, "model_runs/", models[1]))
-#
-# # load jags output:
-jags_out <- model_info$jags_out
-vars <- varnames(jags_out)
-params <- jags_out[,grep("r0|^tau", vars)]
-R_samp <- sample(vars[grep("R", vars)], 6)
-x_samp <- sample(vars[grep("x", vars)], 6)
-R_params <- jags_out[,R_samp]
-x_params <- jags_out[,x_samp]
-
-# for the random effects model
-atime_params <- jags_out[,grep("^at", vars)]
-# asite_samp <- sample(vars[grep("^as", vars)], 6)
-# asite_params <- jags_out[,asite_samp]
-
-# for betas (univariate):
-beta_params <- jags_out[,grep("^b", vars)]
+# ### For model convergence checks and tests:
+# # # load model
+# load(paste0(dir, "model_runs/", models[1]))
+# #
+# # # load jags output:
+# jags_out <- model_info$jags_out
+# vars <- varnames(jags_out)
+# params <- jags_out[,grep("r0|^tau", vars)]
+# R_samp <- sample(vars[grep("R", vars)], 6)
+# x_samp <- sample(vars[grep("x", vars)], 6)
+# R_params <- jags_out[,R_samp]
+# x_params <- jags_out[,x_samp]
+# 
+# # for the random effects model
+# atime_params <- jags_out[,grep("^at", vars)]
+# # asite_samp <- sample(vars[grep("^as", vars)], 6)
+# # asite_params <- jags_out[,asite_samp]
+# 
+# # for betas (univariate):
+# beta_params <- jags_out[,grep("^b", vars)]
 
 # testing convergence with plots
 # testing effective sizes
