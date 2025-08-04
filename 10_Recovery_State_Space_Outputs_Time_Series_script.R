@@ -66,8 +66,15 @@ time_series <- ggplot(data = plot_data, aes(x = date, y = obs)) +
              color = "red", size = 2) +
   geom_line(aes(x = date, y = x_med),
             color = "red", linetype = "dashed") +
+  # add confidence intervals:
   geom_ribbon(aes(ymin = x_low, ymax = x_high),
-              fill = "red", alpha = 0.25)
+              fill = "red", alpha = 0.25) +
+  # plot labels:
+  labs(title = "Sample Time Series",
+       y = "Tasseled Cap Greenness", 
+       x = "Date") +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+  theme_bw()
 
 time_series
 
