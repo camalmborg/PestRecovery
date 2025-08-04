@@ -14,6 +14,7 @@ setwd(dir)
 model_params <- read.csv("2025_07_31_all_base_uni_recov_models_param_means.csv")
 load("2025_07_31_recov_models_outputs_list.RData")  # object is called model_outputs
 
+
 ## Calculating CIs for all models
 # getting means, low CI (0.025 quantile), high CI (0.975 quantile):
 model_means <- matrix(NA, nrow = length(model_outputs), ncol = 6)
@@ -105,6 +106,7 @@ for (i in seq_along(model_outputs)) {
 }
 # unlist and combine:
 beta_ridges <- do.call(cbind, beta_list)
+rm(na_col, beta, n_rows, result)
 
 # pivot longer to prepare for making ridges:
 beta_ridges_long <- beta_ridges %>%
@@ -120,8 +122,8 @@ beta_ridges_long <- beta_ridges %>%
   # make model a factor for plotting:
   mutate(model = as.factor(model)) %>%
   arrange(model) %>%
-  # if we remove categorical...
-  filter(!str_detect(model, "nlcd"))
+  # to remove categorical...
+  filter(!str_detect(model, "nlcd")) 
 
 # Now let's make the ridge plot:
 beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = after_stat(x))) +
@@ -134,7 +136,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.1, 0.125)) +
+  xlim(c(-0.1, 0.13)) +
   theme_ipsum() +
   theme(legend.position = "none",
         panel.spacing = unit(1, "lines"),
