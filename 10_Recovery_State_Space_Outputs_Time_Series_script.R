@@ -20,7 +20,7 @@ models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(
 # uni_dmags_tcg_y2 = models[11]
 
 # choose model:
-m_num <- 1  # change this when changing models
+m_num <- 8  # change this when changing models
 model_pick <- models[m_num]
 # load model_info object
 load(paste0(dir, "model_runs/", model_pick))
@@ -35,7 +35,8 @@ r <- grep("r0", colnames(out))
 
 # making time series:
 sample <- 156
-obs <- model_inputs$y[sample,]  # example sites: 1, 6, 9, 52, 56, 77, 87, 98, 104, 124, 125, 144, 156, 161, 1550, 1990
+y <- as.matrix(model_inputs$y)
+obs <- y[sample,]  # example sites: 1, 6, 9, 52, 56, 77, 87, 98, 104, 124, 125, 144, 156, 161, 1550, 1990
 # get confidence intervals of x from model outputs:
 xs <- out[,x_params]
 x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
