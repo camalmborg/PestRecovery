@@ -107,6 +107,8 @@ for (i in seq_along(model_outputs)) {
 # unlist and combine:
 beta_ridges <- do.call(cbind, beta_list)
 rm(na_col, beta, n_rows, result)
+# rename columns for models:
+#colnames(beta_ridges)
 
 # pivot longer to prepare for making ridges:
 beta_ridges_long <- beta_ridges %>%
@@ -115,31 +117,60 @@ beta_ridges_long <- beta_ridges %>%
                cols = everything(),
                names_to = "model",
                values_to = "beta_est") %>%
+  arrange(model) %>%
+  # to remove categorical...
+  filter(!str_detect(model, "nlcd")) %>%
+  # make the names better for plot:
+  mutate(model = gsub("beta_1_uni_vp", "beta_1_uni_vpd", model)) %>%
+  mutate(model = gsub("_", " ", model)) %>%
+  mutate(model = gsub("beta 1 uni ", "", model)) %>%
+  mutate(model = gsub("mean", "2014-15 mean", model)) %>%
+  mutate(model = gsub("vpdd", "vpd", model)) %>%
+  mutate(model = gsub("prcp", "precip", model)) %>%
   group_by(model) %>%
   # arrange by descending mean to make ridges look nice
   mutate(mean_beta = mean(beta_est)) %>% ungroup() %>%
   mutate(model = fct_reorder(model, mean_beta, .desc = TRUE)) %>%
   # make model a factor for plotting:
   mutate(model = as.factor(model)) %>%
-  arrange(model) %>%
-  # to remove categorical...
-  filter(!str_detect(model, "nlcd")) 
+  arrange(model) 
+
+# Selecting different groups:
+betas_dist_hist <- beta_ridges_long %>%
+  filter(grepl("tcg", model))
+betas_pre_dist <- beta_ridges_long %>%
+  filter(grepl("20", model))
+betas_post_dist <- beta_ridges_long %>%
+  filter(grepl("tcg|20", model) == FALSE)
 
 # Now let's make the ridge plot:
-beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = after_stat(x))) +
+beta_ridge_plot <- ggplot(betas_post_dist, aes(x = beta_est, y = model, fill = after_stat(x))) +
   # title:
-  labs(title = 'Slope Estimates') +
+  labs(title = 'Beta Parameter (Slope) Estimates') +
+  # axes titles:
+  xlab("Estimated Value") +
+  ylab("Model Covariates") +
   # add color scaling:
-  geom_density_ridges_gradient(scale = 5) +
+  geom_density_ridges_gradient(scale = 1.5, rel_min_height = 0.001, 
+                               bandwidth = 0.001, lwd = 0.5) +
   scale_fill_gradient2(
     low = "blue", mid = "white", high = "red", midpoint = 0) +
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.1, 0.13)) +
-  theme_ipsum() +
-  theme(legend.position = "none",
-        panel.spacing = unit(1, "lines"),
-        strip.text.x = element_text(size = 8))
+  xlim(c(-0.1, 0.13)) + # for all + post-dist
+  #xlim(c(-0.055, 0.05)) + # for pre-dist
+  #xlim(c(-0.09, 0.001)) + # for dist hist
+  theme_bw() +
+  theme(legend.position = "none")
 
 beta_ridge_plot
+
+# save them:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# all vars:
+# Save the plot to a PNG file
+ggsave("2025_08_06_ridges_post_dist_ESA.png", 
+       plot = beta_ridge_plot,
+       dpi = 600)
