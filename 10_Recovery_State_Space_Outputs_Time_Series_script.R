@@ -34,9 +34,9 @@ taus <- grep("tau", colnames(out))
 r <- grep("r0", colnames(out))
 
 # making time series:
-sample <- 156
+sample <- 161
 y <- as.matrix(model_inputs$y)
-obs <- y[sample,]  # example sites: 1, 6, 9, 52, 56, 77, 87, 98, 104, 124, 125, 144, 156, 161, 1550, 1990
+obs <- y[sample,]  # example sites: 1, 6, 9, 52, 56, 77**, 87, 98, 104, 124, 125, 144, 156*, 161**, 1550, 1990
 # get confidence intervals of x from model outputs:
 xs <- out[,x_params]
 x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
@@ -57,25 +57,40 @@ plot_data <- data.frame(date = as.Date(names(obs)),
                         x_med = x_ci[2,],
                         x_high = x_ci[3,])
 
+plot_name <- sub(".*uni_(.*?)_data.*", "\\1", model_pick)
+
 # make the plot layering observation and model preds:
-time_series <- ggplot(data = plot_data, aes(x = date, y = obs)) +
+time_series <- ggplot(data = plot_data) +
   # time series for observations:
-  geom_point(color = "black", size = 2) +
-  geom_line(color = "black", linetype = "solid") +
+  geom_point(aes(x = date, y = obs), color = "black", size = 2) +
+  geom_line(aes(x = date, y = obs), color = "black", linetype = "solid") +
   # time series for model:
   geom_point(aes(x = date, y = x_med),
              color = "red", size = 2) +
   geom_line(aes(x = date, y = x_med),
             color = "red", linetype = "dashed") +
   # add confidence intervals:
-  geom_ribbon(aes(ymin = x_low, ymax = x_high),
+  geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high),
               fill = "red", alpha = 0.25) +
+  # set the axis limits:
+  #ylim(c(-0.095, 0.0025)) +
   # plot labels:
   labs(title = "Sample Time Series",
        y = "Tasseled Cap Greenness", 
-       x = "Date") +
+       x = "Year") +
   scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position = "right")
 
 time_series
+
+# save them:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# all vars:
+# Save the plot to a PNG file
+ggsave("2025_08_06_sample_time_series_ESA.png", 
+       plot = time_series,
+       dpi = 600)
+
 
