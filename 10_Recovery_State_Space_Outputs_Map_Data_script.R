@@ -82,9 +82,9 @@ recov_map <- ggplot(recov_vec) +
   # add the state outlines:
   geom_sf(data = states, fill = NA, color = "black", size = 0.5) +
   # add labels
-  labs(title = "Mean Annual Recovery Rates",
+  labs(#title = "Mean Annual Recovery Rates",
        fill = "Predicted Recovery Rates") +
-  theme_bw() +
+  theme_classic() +
   theme(panel.grid = element_blank())
 
 recov_map
@@ -107,3 +107,25 @@ inset_map <- ggplot() +
   theme_void()
 
 inset_map
+
+library(cowplot)
+
+# Convert inset map to a grob object
+inset_grob <- ggplotGrob(inset_map)
+
+# Combine the maps
+final_map <- ggdraw(recov_map) +
+  draw_plot(inset_grob, x = 0.7, y = 0.6, 
+            width = 0.25, height = 0.25) # Adjust x, y, width, height for placement and size
+
+print(final_map)
+
+
+# save them:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# Save the plot to a PNG file
+ggsave("2025_08_06_recov_rate_map_ESA.png", 
+       plot = final_map,
+       dpi = 600)
+
