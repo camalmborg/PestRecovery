@@ -57,6 +57,12 @@ plot_data <- data.frame(date = as.Date(names(obs)),
                         x_med = x_ci[2,],
                         x_high = x_ci[3,])
 
+# base_model_data <- data.frame(date = as.Date(names(obs)),
+#                               obs = obs,
+#                               x_low = x_ci[1,],
+#                               x_med = x_ci[2,],
+#                               x_high = x_ci[3,])
+
 plot_name <- sub(".*uni_(.*?)_data.*", "\\1", model_pick)
 
 # make the plot layering observation and model preds:
@@ -72,6 +78,13 @@ time_series <- ggplot(data = plot_data) +
   # add confidence intervals:
   geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high),
               fill = "red", alpha = 0.25) +
+  # add base model for compare:
+  geom_point(data = base_model_data, aes(x = date, y = x_med),
+             color = "navy", size = 1) +
+  geom_line(data = base_model_data, aes(x = date, y = x_med),
+            color = "navy", linetype = "dashed", linewidth = 0.5) +
+  geom_ribbon(data = base_model_data, aes(x = date, ymin = x_low, ymax = x_high),
+              fill = "navy", alpha = 0.15) +
   # set the axis limits:
   #ylim(c(-0.095, 0.0025)) +
   # plot labels:
@@ -89,7 +102,7 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-ggsave("2025_08_06_sample_time_series_ESA.png", 
+ggsave("2025_08_06_sample_time_series_with_base_ESA.png", 
        plot = time_series,
        dpi = 600)
 
