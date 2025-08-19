@@ -104,6 +104,9 @@ setwd(save_dir)
 # Save the plot to a PNG file
 ggsave("2025_08_06_sample_time_series_with_base_ESA.png", 
        plot = time_series,
+       height = 7,
+       width = 8,
+       units = "in",
        dpi = 600)
 
 
