@@ -144,7 +144,7 @@ betas_post_dist <- beta_ridges_long %>%
   filter(grepl("tcg|20", model) == FALSE)
 
 # Now let's make the ridge plot:
-beta_ridge_plot <- ggplot(betas_post_dist, aes(x = beta_est, y = model, fill = after_stat(x))) +
+beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = after_stat(x))) +
   # title:
   labs(title = 'Beta Parameter (Slope) Estimates') +
   # axes titles:
@@ -166,11 +166,22 @@ beta_ridge_plot <- ggplot(betas_post_dist, aes(x = beta_est, y = model, fill = a
 
 beta_ridge_plot
 
-# save them:
-save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
-setwd(save_dir)
-# all vars:
-# Save the plot to a PNG file
-ggsave("2025_08_06_ridges_post_dist_ESA.png", 
-       plot = beta_ridge_plot,
-       dpi = 600)
+# # save them:
+# save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# setwd(save_dir)
+# # all vars:
+# # Save the plot to a PNG file
+# ggsave("2025_08_06_ridges_post_dist_ESA.png", 
+#        plot = beta_ridge_plot,
+#        dpi = 600)
+
+## Make a quick table of results
+library(grid)
+library(gridExtra)
+# get model performance list:
+model_beta_result <- data.frame(model = unique(beta_ridges_long$model), means = unique(beta_ridges_long$mean_beta))
+# sort by absolute value of beta mean:
+model_beta_result <- model_beta_result[order(abs(model_beta_result$means), decreasing = TRUE),]
+model_beta_result$perform <- 1:nrow(model_beta_result)
+# print to plots tab:
+grid.table(model_beta_result)
