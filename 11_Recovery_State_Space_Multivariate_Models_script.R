@@ -11,6 +11,7 @@ librarian::shelf(rjags, coda, dplyr, tidyverse)
 load("Environments/2025_07_07_environment.RData")
 
 ## Load models
+tv_model 
 
 ## Prepare data for models
 # time series data:
@@ -56,6 +57,87 @@ post_dist_covs <- time_daym %>%
   # arrange by variable:
   arrange(variable, site)
 
+# choosing time-varying variable time series function:
+#'@param cov_df = dataframe object of covariate time series sorted by variable and site
+#'@param var = variable you would like to use for analysis
+choose_covs <- function(cov_df, var){
+  cov_df <- cov_df %>%
+    filter(variable == var) %>%
+    ungroup() %>%
+    select(starts_with("2"))
+}
+# time-varying variables:
+tv_vars <- unique(covs$variable)
+
+## Make list of model_data objects for entering in models:
+# make list object
+model_data <- list(y = recov_data,
+                   #cov = cov_ts, ### CHANGE THIS
+                   nt = length(time),
+                   sites = sites, 
+                   t_obs = 0.001, a_obs = 0.001,
+                   t_add = 0.001, a_add = 0.001,
+                   r_ic = 1, r_prec = 0.001,
+                   x_ic = x1, t_ic = 0.01,
+                   b0 = 0, Vb = 0.001)
+
+## Making function for running models
+# function for running model:----
+#'@param model_data = list object with data for jags model
+#'@param model = character - jags model
+#'@param model_name = character - model name selected with task_id from variable list
+state_space_model_run <- function(model_data, model, model_name){
+  # model run:
+  jags_model <- jags.model(file = textConnection(model),
+                           data = model_data,
+                           n.chains = 3)
+  #model test:
+  jags_out <- coda.samples(jags_model,
+                           variable.names = c("x", "R",
+                                              "tau_obs", "tau_add",
+                                              "r0", "atime", "tautime", #"asite",
+                                              "beta"),
+                           n.iter = 150000,
+                           adapt = 50000,
+                           thin = 50)
+  
+  # run DIC
+  DIC <- dic.samples(jags_model, n.iter = 50000)
+  sum <- sum(DIC$deviance, DIC$penalty)
+  
+  # Make output list
+  # track metadata:
+  metadata <- tibble::lst(model, model_data)
+  # model selection
+  dic <- list(DIC, sum)
+  # model output
+  out <- as.matrix(jags_out)
+  # combine output
+  model_output <- tibble::lst(metadata, dic, jags_out, out)
+  
+  # save base model output:
+  out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
+  run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
+  date <- as.character(Sys.Date())
+  filename_outputs <- paste0(out_path, date, "_model_cov_multi_", model_name, "_output.csv")
+  filename_runs <- paste0(run_path, date, "_model_cov_multi_", model_name, "_data.RData")
+  
+  # save output
+  write.csv(out, file = filename_outputs)
+  
+  # save model selection and metadata to folder
+  model_info <- model_output[c('jags_out', 'dic', 'metadata')]
+  save(model_info, file = filename_runs)
+}
+
 ## Model runs
 # setting task id for cluster runs:
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+
+# set model name:
+
+
+state_space_model_run(model_data = model_data,
+                      #model = CHANGE THIS!
+                      model_name = model_name)
+
