@@ -12,7 +12,7 @@ setwd(dir)
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
 # load environment if needed:
-load("Environments/2025_07_07_environment.RData")
+load("Environments/2025_07_08_environment.RData")
 
 # libraries:
 librarian::shelf(rjags, coda, dplyr, tidyverse)
