@@ -12,6 +12,8 @@ load("Environments/2025_07_07_environment.RData")
 
 ## Load models
 tv_model 
+tv_stat_model
+tv_stat_miss_model
 
 ## Prepare data for models
 # time series data:
@@ -67,19 +69,8 @@ choose_covs <- function(cov_df, var){
     select(starts_with("2"))
 }
 # time-varying variables:
-tv_vars <- unique(covs$variable)
+tv_vars <- unique(post_dist_covs$variable)  # 1 = prcp, 2 = tmax, 3 = vp
 
-## Make list of model_data objects for entering in models:
-# make list object
-model_data <- list(y = recov_data,
-                   #cov = cov_ts, ### CHANGE THIS
-                   nt = length(time),
-                   sites = sites, 
-                   t_obs = 0.001, a_obs = 0.001,
-                   t_add = 0.001, a_add = 0.001,
-                   r_ic = 1, r_prec = 0.001,
-                   x_ic = x1, t_ic = 0.01,
-                   b0 = 0, Vb = 0.001)
 
 ## Making function for running models
 # function for running model:----
@@ -95,7 +86,7 @@ state_space_model_run <- function(model_data, model, model_name){
   jags_out <- coda.samples(jags_model,
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
-                                              "r0", "atime", "tautime", #"asite",
+                                              "r0", "atime", "tautime", 
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
@@ -130,14 +121,75 @@ state_space_model_run <- function(model_data, model, model_name){
   save(model_info, file = filename_runs)
 }
 
-## Model runs
+## Model runs:
+# covariate lists:
+model_covariates <- list(prcp = choose_covs(post_dist_covs, tv_vars[1]),
+                         tmax = choose_covs(post_dist_covs, tv_vars[2]),
+                         vpd = choose_covs(post_dist_covs, tv_vars[3]),
+                         dmagy2 = pre_dist_covs$dmags_tcg_y2,
+                         dmagsum = pre_dist_covs$dmag_tcg_sum,
+                         prcp_2015 = pre_dist_covs$precip_2015)
+# model names:
+model_name <- c("vpd_precip", "vpd_tmax", "vpd_dmagy2", "vpd_dmagsum", "vpd_precip2015",
+                "precip_dmagy2", "precip_dmagsum")
+
+# model data lists:
+input_data_list <- list()
+input_data_list[[1]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$prcp)
+input_data_list[[2]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$tmax)
+input_data_list[[3]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$dmagy2)
+input_data_list[[4]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$dmagsum)
+input_data_list[[5]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$prcp_2015)
+input_data_list[[6]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$dmagy2)
+input_data_list[[7]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$dmagsum)
+
+# missing data models:
+missing <- c(3, 6)
+
+# models:
+model_list <- list()
+model_list[[1]] <- tv_model
+model_list[[2]] <- 
+model_list[[3]] <-
+model_list[[4]] <- 
+
 # setting task id for cluster runs:
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
-# set model name:
+# model data object:
+if (task_id %in% missing) {
+  # model data object for missing data:
+  model_data <- list(y = recov_data,
+                     cov_one = input_data_list[[task_id]]$cov_one,
+                     cov_two = input_data_list[[task_id]]$cov_two,
+                     nt = length(time),
+                     sites = sites, 
+                     t_obs = 0.001, a_obs = 0.001,
+                     t_add = 0.001, a_add = 0.001,
+                     r_ic = 1, r_prec = 0.001,
+                     x_ic = x1, t_ic = 0.01,
+                     b0 = 0, Vb = 0.001,
+                     b00 = 0, Vbb = 0.001)
+  # missing data:
+  model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
+  model_data$mis_s = mean(dmag_data$steady, na.rm = T)
+  model_data$mis_t = 0.01
+} else {
+  model_data <- list(y = recov_data,
+                     cov_one = input_data_list[[task_id]]$cov_one,
+                     cov_two = input_data_list[[task_id]]$cov_two,
+                     nt = length(time),
+                     sites = sites, 
+                     t_obs = 0.001, a_obs = 0.001,
+                     t_add = 0.001, a_add = 0.001,
+                     r_ic = 1, r_prec = 0.001,
+                     x_ic = x1, t_ic = 0.01,
+                     b0 = 0, Vb = 0.001,
+                     b00 = 0, Vbb = 0.001)
+}
 
-
+# run the models according to task_id:
 state_space_model_run(model_data = model_data,
-                      #model = CHANGE THIS!
-                      model_name = model_name)
+                      model = model_list[[task_id]],
+                      model_name = model_name[task_id])
 
