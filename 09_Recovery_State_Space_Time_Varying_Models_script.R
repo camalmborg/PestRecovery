@@ -118,19 +118,6 @@ model_data <- list(y = recov_data,
                    x_ic = x1, t_ic = 0.01,
                    b0 = 0, Vb = 0.001)
 
-# model run:
-#jags_model <- jags.model(file = textConnection(recov_state_space_uni_tv),
-#                         data = model_data,
-#                         n.chains = 3)
-#model test:
-#jags_out <- coda.samples(jags_model,
-#                         variable.names = c("x", "R",
-#                                            "tau_obs", "tau_add",
-#                                            "r0", "atime", #"asite",
-#                                            "beta"),
-#                         n.iter = 150000,
-#                         adapt = 50000,
-#                         thin = 50)
 
 # function for running model:----
 #'@param model_data = list object with data for jags model
