@@ -8,12 +8,109 @@ librarian::shelf(rjags, coda, dplyr, tidyverse)
 
 ## Load data
 # load environment if needed:
-load("Environments/2025_07_07_environment.RData")
+load("Environments/2025_07_08_environment.RData")
 
 ## Load models
-tv_model 
-tv_stat_model
-tv_stat_miss_model
+tv_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s,t-1]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb)
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+}"
+
+tv_stat_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb)
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+}"
+
+tv_stat_miss_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb) #initial beta
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+# missing data:
+for (s in miss){
+ cov[s] ~ dnorm(mis_s, mis_t)
+  }
+}"
 
 ## Prepare data for models
 # time series data:
@@ -88,9 +185,9 @@ state_space_model_run <- function(model_data, model, model_name){
                                               "tau_obs", "tau_add",
                                               "r0", "atime", "tautime", 
                                               "beta"),
-                           n.iter = 150000,
-                           adapt = 50000,
-                           thin = 50)
+                           n.iter = 200000,
+                           adapt = 75000,
+                           thin = 100)
   
   # run DIC
   DIC <- dic.samples(jags_model, n.iter = 50000)
@@ -149,9 +246,12 @@ missing <- c(3, 6)
 # models:
 model_list <- list()
 model_list[[1]] <- tv_model
-model_list[[2]] <- 
-model_list[[3]] <-
-model_list[[4]] <- 
+model_list[[2]] <- tv_model
+model_list[[3]] <- tv_stat_miss_model
+model_list[[4]] <- tv_stat_model
+model_list[[5]] <- tv_stat_model
+model_list[[6]] <- tv_stat_miss_model
+model_list[[7]] <- tv_stat_model
 
 # setting task id for cluster runs:
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
@@ -188,8 +288,10 @@ if (task_id %in% missing) {
                      b00 = 0, Vbb = 0.001)
 }
 
+jags_run <- model_list[[task_id]]
+
 # run the models according to task_id:
 state_space_model_run(model_data = model_data,
-                      model = model_list[[task_id]],
+                      model = jags_run,
                       model_name = model_name[task_id])
 
