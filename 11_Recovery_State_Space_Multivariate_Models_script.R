@@ -75,6 +75,76 @@ tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
 }"
 
+stat_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb) #initial beta
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+}"
+
+stat_miss_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic, t_ic)
+}
+
+
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb) #initial beta
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+# missing data:
+for (s in miss){
+ cov_two[s] ~ dnorm(mis_s, mis_t)
+  }
+}"
+
 tv_stat_miss_model <- "model{
 for (s in sites){
 
@@ -108,7 +178,7 @@ tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
 # missing data:
 for (s in miss){
- cov[s] ~ dnorm(mis_s, mis_t)
+ cov_two[s] ~ dnorm(mis_s, mis_t)
   }
 }"
 
@@ -222,36 +292,33 @@ state_space_model_run <- function(model_data, model, model_name){
 # covariate lists:
 model_covariates <- list(prcp = choose_covs(post_dist_covs, tv_vars[1]),
                          tmax = choose_covs(post_dist_covs, tv_vars[2]),
-                         vpd = choose_covs(post_dist_covs, tv_vars[3]),
                          dmagy2 = pre_dist_covs$dmags_tcg_y2,
                          dmagsum = pre_dist_covs$dmag_tcg_sum,
                          prcp_2015 = pre_dist_covs$precip_2015)
 # model names:
-model_name <- c("vpd_precip", "vpd_tmax", "vpd_dmagy2", "vpd_dmagsum", "vpd_precip2015",
-                "precip_dmagy2", "precip_dmagsum")
+model_name <- c("prcp_tmax", "prcp_dmagy2", "prcp_dmagsum", "prcp_prcp2015", "dmagy2_prcp_2015",
+                "dmagsum_prcp2015")
 
 # model data lists:
 input_data_list <- list()
-input_data_list[[1]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$prcp)
-input_data_list[[2]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$tmax)
-input_data_list[[3]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$dmagy2)
-input_data_list[[4]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$dmagsum)
-input_data_list[[5]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$prcp_2015)
-input_data_list[[6]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$dmagy2)
-input_data_list[[7]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$dmagsum)
+input_data_list[[1]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$tmax)
+input_data_list[[2]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$dmagy2)
+input_data_list[[3]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$dmagsum)
+input_data_list[[4]] <- list(cov_one = model_covariates$prcp, cov_two = model_covariates$prcp_2015)
+input_data_list[[5]] <- list(cov_one = model_covariates$dmagy2, cov_two = model_covariates$prcp_2015)
+input_data_list[[6]] <- list(cov_one = model_covariates$dmagsum, cov_two = model_covariates$prcp_2015)
 
 # missing data models:
-missing <- c(3, 6)
+missing <- c(2, 5)
 
 # models:
 model_list <- list()
 model_list[[1]] <- tv_model
-model_list[[2]] <- tv_model
-model_list[[3]] <- tv_stat_miss_model
+model_list[[2]] <- tv_stat_miss_model
+model_list[[3]] <- tv_stat_model
 model_list[[4]] <- tv_stat_model
-model_list[[5]] <- tv_stat_model
-model_list[[6]] <- tv_stat_miss_model
-model_list[[7]] <- tv_stat_model
+model_list[[5]] <- stat_miss_model
+model_list[[6]] <- stat_model
 
 # setting task id for cluster runs:
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
