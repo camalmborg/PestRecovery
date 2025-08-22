@@ -141,7 +141,7 @@ tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
 # missing data:
 for (s in miss){
- cov_two[s] ~ dnorm(mis_s, mis_t)
+ cov_one[s] ~ dnorm(mis_s, mis_t)
   }
 }"
 
@@ -309,16 +309,16 @@ input_data_list[[5]] <- list(cov_one = model_covariates$dmagy2, cov_two = model_
 input_data_list[[6]] <- list(cov_one = model_covariates$dmagsum, cov_two = model_covariates$prcp_2015)
 
 # missing data models:
-missing <- c(2, 5)
+missing <- c(2, 3, 5, 6)
 
 # models:
 model_list <- list()
 model_list[[1]] <- tv_model
 model_list[[2]] <- tv_stat_miss_model
-model_list[[3]] <- tv_stat_model
+model_list[[3]] <- tv_stat_miss_model
 model_list[[4]] <- tv_stat_model
 model_list[[5]] <- stat_miss_model
-model_list[[6]] <- stat_model
+model_list[[6]] <- stat_miss_model
 
 # setting task id for cluster runs:
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
