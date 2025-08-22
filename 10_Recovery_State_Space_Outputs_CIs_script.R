@@ -11,8 +11,8 @@ dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs
 setwd(dir)
 
 ## Load model output files
-model_params <- read.csv("2025_07_31_all_base_uni_recov_models_param_means.csv")
-load("2025_07_31_recov_models_outputs_list.RData")  # object is called model_outputs
+model_params <- read.csv("2025_08_22_all_base_uni_recov_models_param_means.csv")
+load("2025_08_22_recov_models_outputs_list.RData")  # object is called model_outputs
 
 
 ## Calculating CIs for all models
@@ -144,7 +144,7 @@ betas_post_dist <- beta_ridges_long %>%
   filter(grepl("tcg|20", model) == FALSE)
 
 # Now let's make the ridge plot:
-beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = after_stat(x))) +
+beta_ridge_plot <- ggplot(betas_post_dist, aes(x = beta_est, y = model, fill = after_stat(x))) +
   # title:
   labs(title = 'Beta Parameter (Slope) Estimates') +
   # axes titles:
@@ -158,7 +158,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.1, 0.13)) + # for all + post-dist
+  xlim(c(-0.06, 0.2)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +
@@ -166,14 +166,14 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
 
 beta_ridge_plot
 
-# # save them:
-# save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
-# setwd(save_dir)
-# # all vars:
-# # Save the plot to a PNG file
-# ggsave("2025_08_06_ridges_post_dist_ESA.png", 
-#        plot = beta_ridge_plot,
-#        dpi = 600)
+# save them:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# all vars:
+# Save the plot to a PNG file
+ggsave("2025_08_22_ridges_post_dist.png",
+       plot = beta_ridge_plot,
+       dpi = 600)
 
 ## Make a quick table of results
 library(grid)
@@ -184,4 +184,6 @@ model_beta_result <- data.frame(model = unique(beta_ridges_long$model), means = 
 model_beta_result <- model_beta_result[order(abs(model_beta_result$means), decreasing = TRUE),]
 model_beta_result$perform <- 1:nrow(model_beta_result)
 # print to plots tab:
+png("model_beta_results.png")
 grid.table(model_beta_result)
+dev.off()
