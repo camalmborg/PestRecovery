@@ -11,8 +11,8 @@ dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs
 setwd(dir)
 
 ## Load model output files
-model_params <- read.csv("2025_08_22_all_base_uni_recov_models_param_means.csv")
-load("2025_08_22_recov_models_outputs_list.RData")  # object is called model_outputs
+#model_params <- read.csv("2025_08_22_all_base_uni_recov_models_param_means.csv")
+#load("2025_08_22_recov_models_outputs_list.RData")  # object is called model_outputs
 
 
 ## Calculating CIs for all models
@@ -63,16 +63,29 @@ model_results_CIs_cat <- model_results_CIs %>%
   mutate(model = paste0("uni_nlcd_cat_", set), .before = 2) %>%
   select(-set)
 
+# fix multivariate:
+model_results_CIs_multi <- model_results_CIs %>%
+  filter(., grepl("multi", model)) %>%
+  pivot_longer(
+    cols = matches("^(mean|low|high)_\\d+"),
+    names_to = c(".value", "set"),
+    names_pattern = "(mean|low|high)_(\\d+)") %>%
+  filter(set %in% c(1, 2)) %>%
+  mutate(model = paste0(model, "_", set), .before = 2) %>%
+  select(-set)
+
 # bind to original, fix column names:
 model_results_CIs <- model_results_CIs %>%
-  filter(!.[[1]] == "uni_nlcd_cat") %>%
+  filter(!.[[1]] == "uni_nlcd_cat" & !grepl("multi", model)) %>%
   mutate(mean = mean_1) %>%
   mutate(low = low_1) %>%
   mutate(high = high_1) %>%
   select(model, mean, low, high) %>%
-  bind_rows(model_results_CIs_cat)
+  bind_rows(model_results_CIs_cat) %>%
+  bind_rows(model_results_CIs_multi)
 #remove unnecessary things:
 rm(model_results_CIs_cat)
+rm(model_results_CIs_multi)
 
 
 ## Ridge Plot for betas

@@ -10,6 +10,8 @@ setwd(dir)
 
 # model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
+# for multivariate:
+#models <- models[which(grepl("multi", models) == T)]
 
 ### Collecting DICs
 # extract from model metadata:
@@ -38,7 +40,7 @@ for (i in 1:length(models)){
 dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], decreasing = TRUE)
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 # save:
-write.csv(dic_sort, "2025_08_22_all_base_uni_recov_models_dics.csv")
+write.csv(dic_sort, "2025_08_25_all_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
@@ -89,8 +91,8 @@ for (i in 1:length(models)){
 }
 
 # save:
-write.csv(model_params, "2025_08_22_all_base_uni_recov_models_param_means.csv")
-save(model_outputs, file = "2025_08_22_recov_models_outputs_list.RData")
+write.csv(model_params, "2025_08_25_all_recov_models_param_means.csv")
+save(model_outputs, file = "2025_08_25_all_recov_models_outputs_list.RData")
 
 # remove things I don't need:
 rm(model_info, params, params_burn, params_out, jags_out, vars)
