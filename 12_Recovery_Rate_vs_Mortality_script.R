@@ -94,7 +94,11 @@ hf_box <- ggplot(hf_tcg_box, aes(x = box_groups, y = recovery_rate, fill = box_g
   annotate("text", x = 2.98, y = -0.009, label = paste0("p-value: ", p_value), size = 5) +
   theme_bw() +
   theme(panel.grid = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
 hf_box
 
 # Tukey's Honest Significant Difference test
