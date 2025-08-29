@@ -54,7 +54,43 @@ model_data <- cbind.data.frame(y = resp$pdba,
 
 #### ----- running multivariate models----- ####
 # multivariate mortality model:
-multmort_model <- read_file("Models/2025_04_22_multi_mort_model_with_logit.txt")
+#multmort_model <- read_file("Models/2025_04_22_multi_mort_model_with_logit.txt")
+multmort_model <- "model{
+### Loop over individual sites
+
+	### Data Model:
+	## left (0) censored:
+	for (i in  1:c){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- pnorm(0, mu[i], tau)  
+	}
+	
+		## between 0-1:
+	for (i in (c+1):d){
+		y[i] ~ dnorm(mu[i], tau)
+	}
+
+	## right (1) censored:
+	for (i in (d+1):e){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- 1 - pnorm(1, mu[i], tau)
+	}
+
+	### Process Model:
+	for (s in 1:sites) {
+	logit(mu[s]) <- inprod(b[], x[s,]) + alpha[hot[s]]
+	}
+
+  ### Random effect for hotspot:
+  for (h in 1:hs) {
+  	alpha[h] ~ dnorm(0, q)
+	}
+
+### Priors:
+b ~ dmnorm(b0, Vb)
+q ~ dgamma(q0, qb)
+tau ~ dgamma(0.001, 1)
+}"
 
 # multivariate mortality model run function:
 #'@param model_data = pred/resp dataframe object
