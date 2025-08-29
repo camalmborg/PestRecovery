@@ -85,9 +85,82 @@ colnames(pred) <- colnames(preds)
 
 #### ----- running univariate models----- ####
 # model with logit link:
-model_log <- read_file("Models/2025_03_31_mort_model_with_logit.txt")
+#model_log <- read_file("Models/2025_03_31_mort_model_with_logit.txt")
+model_log <- "model{
+### Loop over individual sites
+
+	### Data Model:
+	## left (0) censored:
+	for (i in  1:c){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- pnorm(0, mu[i], tau)  
+	}
+	
+		## between 0-1:
+	for (i in (c+1):d){
+		y[i] ~ dnorm(mu[i], tau)
+	}
+
+	## right (1) censored:
+	for (i in (d+1):e){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- 1 - pnorm(1, mu[i], tau)
+	}
+
+	### Process Model:
+	for (s in 1:sites) {
+	logit(mu[s]) <- b[1] + b[2]*x[s] + alpha[hot[s]]
+	}
+
+  ### Random effect for hotspot:
+  for (h in 1:hs) {
+  	alpha[h] ~ dnorm(0, q)
+	}
+
+### Priors:
+b ~ dmnorm(b0, Vb)
+q ~ dgamma(q0, qb)
+tau ~ dgamma(0.001, 1)
+}"
+
 # model without logit link:
-model_nolog <- read_file("Models/2025_03_31_mort_model_no_logit.txt")
+#model_nolog <- read_file("Models/2025_03_31_mort_model_no_logit.txt")
+model_nolog <- "model{
+### Loop over individual sites
+
+	### Data Model:
+	## left (0) censored:
+	for (i in  1:c){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- pnorm(0, mu[i], tau)  
+	}
+	
+		## between 0-1:
+	for (i in (c+1):d){
+		y[i] ~ dnorm(mu[i], tau)
+	}
+
+	## right (1) censored:
+	for (i in (d+1):e){
+		y[i] ~ dbern(theta[i])
+		theta[i] <- 1 - pnorm(1, mu[i], tau)
+	}
+
+	### Process Model:
+	for (s in 1:sites) {
+	mu[s] <- b[1] + b[2]*x[s] + alpha[hot[s]]
+	}
+
+  ### Random effect for hotspot:
+  for (h in 1:hs) {
+  	alpha[h] ~ dnorm(0, q)
+	}
+
+### Priors:
+b ~ dmnorm(b0, Vb)
+q ~ dgamma(q0, qb)
+tau ~ dgamma(0.001, 1)
+}"
 
 # univariate mortality model run function:
 #'@param data = pred/resp dataframe object
