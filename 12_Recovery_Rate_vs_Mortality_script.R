@@ -1,7 +1,7 @@
 ### Script for Recovery Rate vs Mortality
 
 ## Load libraries:
-librarian::shelf(dplyr, tidyverse)
+librarian::shelf(dplyr, tidyverse, ggplot2, ggpubr, ggpmisc)
 
 ## Load data
 # set working directory:
@@ -38,11 +38,26 @@ hf_tcg_pdba$dead_bin <- resp$dead_bin
 # add plot for percent mortality:
 hf_tcg_pdba$pdead <- resp$pdead
 # add plot for percent dead basal area:
-hf_tcg_pdba$pdba <- resp$pdba
+hf_tcg_pdba$pdba <- resp$pdba*100
 
 # Make a nice ggplot of it:
+recov_mort_plot <- ggplot(hf_tcg_pdba, aes(x = pdba, y = recovery_rate)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", se=FALSE) +
+  stat_fit_glance(method = "lm", method.args = list(formula = y ~ x), 
+                  aes(label = paste("P-value =", signif(after_stat(p.value), 3))), 
+                  label.x = 0.83, label.y = 0.90, size = 6) +
+  stat_regline_equation(label.x = 55, label.y = 0.02, size = 6) +
+  labs(x = "Percent Dead Basal Area in Plot",
+       y = "Recovery Rate (Greenness per Year)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+recov_mort_plot
 
- 
+
 ## Box Plot version:
 # get plot-level mortality:
 tree_to_plot <- trees %>%
@@ -63,25 +78,24 @@ hf_tcg_box$box_groups <- paste0(hf_tcg_box$dead_bin, "-", hf_tcg_box$timber_harv
 hf_tcg_box$box_groups <- ifelse(grepl("T", hf_tcg_box$box_groups), "Timber Harvest",
                                 ifelse(grepl("D", hf_tcg_box$box_groups), "Dead", "Live"))
 
-# Make a plot:
-library(ggplot2)
-library(ggpubr)
-
 # ANOVA:
 anova_box <- aov(hf_tcg_box$recovery_rate ~ hf_tcg_box$box_groups, data = hf_tcg_box)
 p_value <- round(summary(anova_box)[[1]][["Pr(>F)"]][1], 9)
 
 # Boxplot
-ggplot(hf_tcg_box, aes(x = box_groups, y = recovery_rate, fill = box_groups)) +
+hf_box <- ggplot(hf_tcg_box, aes(x = box_groups, y = recovery_rate, fill = box_groups)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("T" = "#F0E442", "D" = "#0072B2", "L" = "#D55E00")) +
+  geom_jitter(width = 0.15, size = 0.75) +
+  scale_fill_manual(values = c("Timber Harvest" = "#F0E442", "Dead" = "#0072B2", "Live" = "#D55E00")) +
   labs(title = "Mortality Outcomes vs Recovery Rates",
        x = "Group",
        y = "Recovery Rates") +
   #stat_compare_means(method = "anova", size = 6, label.y = -0.0075, label.x = 2.5) +
-  annotate("text", x = 2.95, y = -0.0075, label = paste0("p-value: ", p_value), size = 5) +
+  annotate("text", x = 2.98, y = -0.009, label = paste0("p-value: ", p_value), size = 5) +
   theme_bw() +
-  theme(panel.grid = element_blank())
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+hf_box
 
 # Tukey's Honest Significant Difference test
 TukeyHSD(anova_box)
