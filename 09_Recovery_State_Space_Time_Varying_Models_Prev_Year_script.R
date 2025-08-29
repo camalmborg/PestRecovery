@@ -12,7 +12,7 @@ setwd(dir)
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
 # load environment if needed:
-load("Environments/2025_07_08_environment.RData")
+load("Environments/2025_07_07_environment.RData")
 
 # libraries:
 librarian::shelf(rjags, coda, dplyr, tidyverse)
@@ -48,7 +48,9 @@ covs <- time_daym %>%
   pivot_wider(names_from = year,
               values_from = value) %>%
   # arrange by variable:
-  arrange(variable, site)
+  arrange(variable, site) %>%
+  # select 2017 onwards:
+  select(-"2016")
 
 # choosing variable time series function:
 #'@param cov_df = dataframe object of covariate time series sorted by variable and site
@@ -79,7 +81,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta*cov[s,t] ##+ asite[s] 
+    R[s,t] <- r0 + atime[t-1] + beta*cov[s,t-1] ##+ asite[s] 
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
