@@ -386,12 +386,12 @@ if (task_id %in% missing) {
                      b00 = 0, Vbb = 0.001)
 }
 
-# jags_run <- model_list[[task_id]]
-# 
-# # run the models according to task_id:
-# state_space_model_run(model_data = model_data,
-#                       model = jags_run,
-#                       model_name = model_name[task_id])
+jags_run <- model_list[[task_id]]
+
+# run the models according to task_id:
+state_space_model_run(model_data = model_data,
+                      model = jags_run,
+                      model_name = model_name[task_id])
 
 
 # ### Run a 3-variable multivariate run:
