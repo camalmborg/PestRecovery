@@ -95,6 +95,10 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 
+# remove multis (fewer rows):
+full_model_outputs <- model_outputs
+model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
+  
 # get the data together:
 beta_list <- list()
 for (i in seq_along(model_outputs)) {
@@ -157,7 +161,7 @@ betas_post_dist <- beta_ridges_long %>%
   filter(grepl("tcg|20", model) == FALSE)
 
 # Now let's make the ridge plot:
-beta_ridge_plot <- ggplot(betas_post_dist, aes(x = beta_est, y = model, fill = after_stat(x))) +
+beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = after_stat(x))) +
   # title:
   labs(title = 'Beta Parameter (Slope) Estimates') +
   # axes titles:
@@ -171,7 +175,7 @@ beta_ridge_plot <- ggplot(betas_post_dist, aes(x = beta_est, y = model, fill = a
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.06, 0.2)) + # for all + post-dist
+  xlim(c(-0.09, 0.2)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +
@@ -184,7 +188,7 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-ggsave("2025_08_22_ridges_post_dist.png",
+ggsave("2025_08_30_ridges_all_vars.png",
        plot = beta_ridge_plot,
        dpi = 600)
 
@@ -197,6 +201,6 @@ model_beta_result <- data.frame(model = unique(beta_ridges_long$model), means = 
 model_beta_result <- model_beta_result[order(abs(model_beta_result$means), decreasing = TRUE),]
 model_beta_result$perform <- 1:nrow(model_beta_result)
 # print to plots tab:
-png("model_beta_results.png")
+png("model_beta_results_all_vars.png")
 grid.table(model_beta_result)
 dev.off()
