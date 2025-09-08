@@ -35,8 +35,8 @@ model_inputs <- model_info$metadata$model_data
 # model output:
 jags_out <- model_info$jags_out
 # model parameter names:
-jags_vars < varnames(jags_out)
-params <- jags_out[,grep("r0|^tau|^b|^at", vars)]
+jags_vars <- varnames(jags_out)
+params <- jags_out[,grep("r|R|^tau|^b|^at", jags_vars)]
 # remove burn in:
 burn_in = 25000
 params_burn <- window(params, start = burn_in)
@@ -47,3 +47,14 @@ x_params <- grep("^x", colnames(out))
 beta_params <- grep("^b",colnames(out))
 taus <- grep("tau", colnames(out))
 r_int <- grep("r0", colnames(out))
+r_rate <- grep("R", colnames(out))
+# extract:
+model_x <- out[,x_params]
+x_ci <- apply(model_x, 2, quantile, c(0.05, 0.5, 0.95))
+x_cols <- colnames(x_ci)
+x_means <- matrix(NA, nrow = 5000, ncol = 7)
+for (i in 1:nrow(x_means)){
+  cols <- which(!is.na(str_match(x_cols, paste0(paste0("x\\[", i, ",")))))
+  col_values <- x_ci[,cols]
+}
+## 
