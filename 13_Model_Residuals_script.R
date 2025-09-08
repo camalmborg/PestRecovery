@@ -50,8 +50,8 @@ params_out <- as.data.frame(as.matrix(params_burn))
 x_params <- grep("^x", colnames(out))
 beta_params <- grep("^b",colnames(out))
 taus <- grep("tau", colnames(out))
-r_int <- grep("r0", colnames(out))
-r_rate <- grep("R", colnames(out))
+r_ints <- grep("r0", colnames(out))
+r_rates <- grep("R", colnames(out))
 # extract:
 model_x <- out[,x_params]
 x_ci <- apply(model_x, 2, quantile, c(0.05, 0.5, 0.95))
@@ -65,27 +65,62 @@ for (i in 1:nrow(x_means)){
   # fill in table:
   x_means[i, 1:7] <- col_values[1:7]
 }
+# beta parameters:
+best_params <- model_params[best,]
+beta_one <- best_params$`beta[1]`
+beta_two <- best_params$`beta[2]`
+# tau parameters (convert sd = 1/precision):
+tau_obs <- 1/best_params$tau_obs
+tau_add <- 1/best_params$tau_add
+# time random effect parameters:
+a_times <- c(best_params$`atime[1]`, best_params$`atime[2]`, best_params$`atime[3]`,
+            best_params$`atime[4]`, best_params$`atime[5]`, best_params$`atime[6]`)
+# recovery rate intercept:
+r_int <- best_params$r0
+# starting TCG:
+x_init <- tcg %>%
+  select(`2017-05-01`:`2023-05-01`)
+# for missing values:
+fill <- apply(x_init, 2, mean, na.rm = T)
+for (i in 1:ncol(x_init)){
+  x_init[is.na(x_init[,i]),i] <- fill[i]
+}
+# covariates:
+cov_one <- model_inputs$cov_one
+cov_two <- model_inputs$cov_two
+
+## Prepare to run forward in time:
+y_pred <- matrix(NA, nrow = 5000, ncol = 6)
+for (i in 1:nrow(y_pred)){
+  for(j in 1:ncol(y_pred)){
+    R[i,j] <- r_int + a_times[j] + (beta_one*cov_one[i, j]) + (beta_two*cov_two[i])
+    mu[i,j] <- R[i,j] * x_init[i,j]
+    y_pred[i,j] <- mu[i,j]
+  }
+}
 
 ## Residual calculation
-# get the model input for y:
-y <- as.matrix(model_inputs$y)
-resid <- as.data.frame(x_means) - as.data.frame(y)
-colnames(resid) <- colnames(y)
+# get the model input for y and covariates:
+y <- as.data.frame(model_inputs$y) %>% select(-c(`2024-05-01`))
+resid <- as.data.frame(y_pred) - y
+
+# resid <- as.data.frame(x_means) - as.data.frame(y)
+# colnames(resid) <- colnames(y)
 
 ## Prepare a spatial data set for variogram:
 # add coords:
 # resid$lat <- coords$lat
 # resid$lon <- coords$lon
-resids_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
-
-## Spatial Autocorrelation in Model Residuals
-# test plot:
-plot(resid$lon, resid$lat, pch = 16)
-map("state",add=TRUE)
-
-# attempt variogram:
-surf0 <- surf0 <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,1]))
-vg <- variogram(surf0, 100) 
-cg <- correlogram(surf0, 100)
-
-vario <- gstat::variogram(resids_spatial, locations = coordinates(resids_spatial))
+# resids_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
+# 
+# ## Spatial Autocorrelation in Model Residuals
+# # test plot:
+# plot(resid$lon, resid$lat, pch = 16)
+# map("state",add=TRUE)
+# 
+# # attempt variogram:
+# surf0 <- surf0 <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,1]))
+# vg <- variogram(surf0, 100) 
+# cg <- correlogram(surf0, 100)
+# 
+# vario <- gstat::variogram(resids_spatial, locations = coordinates(resids_spatial))
