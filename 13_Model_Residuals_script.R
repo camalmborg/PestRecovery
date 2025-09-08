@@ -4,6 +4,10 @@
 library(dplyr)
 library(tidyverse)
 library(rjags)
+library(spatial)  
+library(maps) 
+library(gstat)
+library(sp)
 
 ## set working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
@@ -54,7 +58,34 @@ x_ci <- apply(model_x, 2, quantile, c(0.05, 0.5, 0.95))
 x_cols <- colnames(x_ci)
 x_means <- matrix(NA, nrow = 5000, ncol = 7)
 for (i in 1:nrow(x_means)){
+  # get correct columns for each row:
   cols <- which(!is.na(str_match(x_cols, paste0(paste0("x\\[", i, ",")))))
-  col_values <- x_ci[,cols]
+  # get values:
+  col_values <- x_ci[2, cols]
+  # fill in table:
+  x_means[i, 1:7] <- col_values[1:7]
 }
-## 
+
+## Residual calculation
+# get the model input for y:
+y <- as.matrix(model_inputs$y)
+resid <- as.data.frame(x_means) - as.data.frame(y)
+colnames(resid) <- colnames(y)
+
+## Prepare a spatial data set for variogram:
+# add coords:
+# resid$lat <- coords$lat
+# resid$lon <- coords$lon
+resids_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
+
+## Spatial Autocorrelation in Model Residuals
+# test plot:
+plot(resid$lon, resid$lat, pch = 16)
+map("state",add=TRUE)
+
+# attempt variogram:
+surf0 <- surf0 <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,1]))
+vg <- variogram(surf0, 100) 
+cg <- correlogram(surf0, 100)
+
+vario <- gstat::variogram(resids_spatial, locations = coordinates(resids_spatial))
