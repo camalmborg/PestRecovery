@@ -109,9 +109,9 @@ resid <- as.data.frame(y_pred) - y
 
 ## Prepare a spatial data set for variogram:
 # add coords:
-# resid$lat <- coords$lat
-# resid$lon <- coords$lon
-# resids_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
+resid$lat <- coords$lat
+resid$lon <- coords$lon
+resids_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
 # 
 # ## Spatial Autocorrelation in Model Residuals
 # # test plot:
@@ -123,4 +123,4 @@ resid <- as.data.frame(y_pred) - y
 # vg <- variogram(surf0, 100) 
 # cg <- correlogram(surf0, 100)
 # 
-# vario <- gstat::variogram(resids_spatial, locations = coordinates(resids_spatial))
+#vario <- gstat::variogram(resids_spatial, locations = coordinates(resids_spatial))
