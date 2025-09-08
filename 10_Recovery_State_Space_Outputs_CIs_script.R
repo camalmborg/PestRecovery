@@ -86,6 +86,8 @@ model_results_CIs <- model_results_CIs %>%
 #remove unnecessary things:
 rm(model_results_CIs_cat)
 rm(model_results_CIs_multi)
+# save:
+write.csv(model_results_CIs, "2025_09_03_model_results_CIs.csv")
 
 
 ## Ridge Plot for betas
