@@ -4,9 +4,10 @@
 library(dplyr)
 library(tidyverse)
 library(rjags)
+library(sf)
 library(spatial)  
-library(maps) 
-library(sp)
+library(ggplot2)
+library(tigris)
 
 ## set working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
@@ -65,7 +66,6 @@ for (i in 1:nrow(x_means)){
   x_means[i, 1:7] <- col_values[1:7]
 }
 # beta parameters:
-best_params <- model_params[best,]
 beta_one <- best_params$`beta[1]`
 beta_two <- best_params$`beta[2]`
 # tau parameters (convert sd = 1/precision):
@@ -78,7 +78,7 @@ a_times <- c(best_params$`atime[1]`, best_params$`atime[2]`, best_params$`atime[
 r_int <- best_params$r0
 # starting TCG:
 x_init <- tcg %>%
-  select(`2017-05-01`:`2023-05-01`)
+  select(`2017-05-01`:`2022-05-01`)
 # covariates:
 cov_one <- model_inputs$cov_one
 cov_two <- model_inputs$cov_two
@@ -95,9 +95,9 @@ for (i in 1:nrow(y_pred)){
 
 ## Residual calculation
 # get the model input for y and covariates:
-y <- as.data.frame(model_inputs$y) %>% select(-c(`2024-05-01`))
+y <- tcg %>% select(`2018-05-01`:`2023-05-01`)
 resid <- as.data.frame(y_pred) - y
-colnames(resid) <- colnames(y)
+colnames(resid) <- paste0("year_", seq(1, ncol(resid), length.out = ncol(resid)))
 
 
 ### Spatial Autocorrelation in Model Residuals ###
@@ -107,24 +107,65 @@ resid$lat <- coords$lat
 resid$lon <- coords$lon
 resid_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
 
-# Make maps for each year, color by resid values
+# get states for mapping:
+ma_ct_ri <- tigris::states(cb = TRUE) %>%
+  filter(NAME %in% c("Massachusetts", "Connecticut", "Rhode Island"))
+# convert spatial data points to points:
+resid_sf <- st_as_sf(resid_spatial)
+# set crs to be same as states:
+resid_sf <- st_set_crs(resid_sf, st_crs(ma_ct_ri))
 
-# test plot:
-plot(resid$lon, resid$lat, pch = 16)
-map("state",add=TRUE)
+## Make maps for each year
+mapping_residuals <- function(resid_col, resid_sf){
+  # select chosen column in residuals data frame:
+  column <- paste0("year_", resid_col)
+  map_data <- c(column, "lon", "lat", "geometry")
+  # grab map data:
+  resid_map <- resid_sf[,map_data]
+  colnames(resid_map) <- c("resids", map_data[2:4])
+  resid_map <- resid_map %>%
+    filter(!is.na(resids))
+  
+  # make the map:
+  residual_map <- ggplot(resid_map) +
+    geom_sf(data = ma_ct_ri, fill = "grey", color = "black", size = 0.5) +
+    # add the points:
+    geom_sf(aes(fill = resids), size = 1.5,
+            color = "black", shape = 21, stroke = 0.1) +
+    scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
+    theme_bw() +
+    labs(#title = "Mean Annual Recovery Rates",
+      fill = "Residual") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
+}
+
 
 ## Make variograms for each year
+spatial_ac <- function(resid, resid_col){
+  # make trend surface:
+  surf <- surf.ls(4, resid$lon, resid$lat, na.omit(resid[,resid_col]))
+  # # project matrix over region:
+  # tr <- trmat(surf, 
+  #             min(resid$lon) , max(resid$lon),
+  #             min(resid$lat), max(resid$lat), 
+  #             50) # 50x50m matrix
+  vg <- spatial::variogram(surf, 100)
+  cg <- spatial::variogram(surf, 1000, xlim = c(0,1))
+  
+}
 # make trend surface:
-surf <- surf.ls(4, resid$lon, resid$lat, na.omit(resid[,1]))  # 4 had lowest AIC
+# surf <- surf.ls(4, resid$lon, resid$lat, na.omit(resid[,6]))  # 4 had lowest AIC
+# summary(surf)
 # project a matrix over the region:
-tr <- trmat(surf, 
-            min(resid_spatial$lon) , max(resid_spatial$lon),
-            min(resid_spatial$lat), max(resid_spatial$lat), 
-            50) # 50x50m matrix
-image(tr, asp = 3/5) 
-
-vg <- spatial::variogram(surf, 100)
-cg <- spatial::correlogram(surf, 1000, xlim = c(0,1))
+# tr <- trmat(surf, 
+#             min(resid_spatial$lon) , max(resid_spatial$lon),
+#             min(resid_spatial$lat), max(resid_spatial$lat), 
+#             50) # 50x50m matrix
+# image(tr, asp = 5/5) 
+# 
+# vg <- spatial::variogram(surf, 100)
+# cg <- spatial::correlogram(surf, 1000, xlim = c(0,1))
 
 # repeat for each year
 
