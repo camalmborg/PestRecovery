@@ -144,7 +144,7 @@ mapping_residuals <- function(resid_col, resid_sf){
 ## Make variograms for each year
 spatial_ac <- function(resid, resid_col){
   # make trend surface:
-  surf <- surf.ls(4, resid$lon, resid$lat, na.omit(resid[,resid_col]))
+  surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,resid_col]))
   # # project matrix over region:
   # tr <- trmat(surf, 
   #             min(resid$lon) , max(resid$lon),
@@ -154,15 +154,16 @@ spatial_ac <- function(resid, resid_col){
   cg <- spatial::variogram(surf, 1000, xlim = c(0,1))
   
 }
+
 # make trend surface:
-# surf <- surf.ls(4, resid$lon, resid$lat, na.omit(resid[,6]))  # 4 had lowest AIC
-# summary(surf)
+surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,6]))  # 4 had lowest AIC
+summary(surf)
 # project a matrix over the region:
-# tr <- trmat(surf, 
-#             min(resid_spatial$lon) , max(resid_spatial$lon),
-#             min(resid_spatial$lat), max(resid_spatial$lat), 
-#             50) # 50x50m matrix
-# image(tr, asp = 5/5) 
+tr <- trmat(surf,
+            min(resid_spatial$lon) , max(resid_spatial$lon),
+            min(resid_spatial$lat), max(resid_spatial$lat),
+            50) # 50x50m matrix
+image(tr, asp = 5/5)
 # 
 # vg <- spatial::variogram(surf, 100)
 # cg <- spatial::correlogram(surf, 1000, xlim = c(0,1))
