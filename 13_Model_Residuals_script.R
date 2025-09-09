@@ -6,7 +6,6 @@ library(tidyverse)
 library(rjags)
 library(spatial)  
 library(maps) 
-library(gstat)
 library(sp)
 
 ## set working directory
@@ -80,11 +79,11 @@ r_int <- best_params$r0
 # starting TCG:
 x_init <- tcg %>%
   select(`2017-05-01`:`2023-05-01`)
-# for missing values:
-fill <- apply(x_init, 2, mean, na.rm = T)
-for (i in 1:ncol(x_init)){
-  x_init[is.na(x_init[,i]),i] <- fill[i]
-}
+# # for missing values:
+# fill <- apply(x_init, 2, mean, na.rm = T)
+# for (i in 1:ncol(x_init)){
+#   x_init[is.na(x_init[,i]),i] <- fill[i]
+# }
 # covariates:
 cov_one <- model_inputs$cov_one
 cov_two <- model_inputs$cov_two
@@ -112,15 +111,33 @@ resid <- as.data.frame(y_pred) - y
 resid$lat <- coords$lat
 resid$lon <- coords$lon
 resids_spatial <- sp::SpatialPointsDataFrame(coords, data = resid)
-# 
-# ## Spatial Autocorrelation in Model Residuals
-# # test plot:
-# plot(resid$lon, resid$lat, pch = 16)
-# map("state",add=TRUE)
-# 
-# # attempt variogram:
-# surf0 <- surf0 <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,1]))
-# vg <- variogram(surf0, 100) 
-# cg <- correlogram(surf0, 100)
-# 
-#vario <- gstat::variogram(resids_spatial, locations = coordinates(resids_spatial))
+# get bounding box
+
+## Spatial Autocorrelation in Model Residuals
+# make maps for each year, color by resid values
+# test plot:
+plot(resid$lon, resid$lat, pch = 16)
+map("state",add=TRUE)
+
+
+# attempt variogram:
+surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,1]))  
+# check the AICs to choose the best surface?
+
+tr0 <- trmat(surf0, -74 ,-70, 40, 43, 50) # bounding box + 50/50 matrix
+image(tr0, asp = 3/5) 
+
+vg <- spatial::variogram(surf, 100)
+cg <- spatial::correlogram(surf, 1000, xlim = c(0,0.05))
+
+# repeat for each year
+
+
+# have a matrix of residuals by time
+# create 1 vector that is starting point in time and another vector that is ending point in time
+# vector that is timepoint 1 across sites, timepoint 2 across sites, through k-1 )(cols 1:5)
+# vector that is cols 2:6
+# ask the correlation between these
+# lag 2 is 1:4/3:6
+# lag 3 is 1:3/4:6
+
