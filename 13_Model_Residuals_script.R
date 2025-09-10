@@ -199,13 +199,30 @@ for (i in 1:6){
 
 
 ### Temporal Autocorrelation in model residuals ###
-# have a matrix of residuals by time
-# create 1 vector that is starting point in time and another vector that is ending point in time
-# vector that is timepoint 1 across sites, timepoint 2 across sites, through k-1 )(cols 1:5)
-# vector that is cols 2:6
-# ask the correlation between these
-# lag 2 is 1:4/3:6
-# lag 3 is 1:3/4:6
+# resid = matrix of residuals by time
+# create two vectors for covariance in repeated measures:
+# vector that is timepoint 1 across sites, timepoint 2 across sites, through k-1 )(cols 1:5):
+t_one <- as.vector(c(resid[,1], resid[,2], resid[,3], resid[,4], resid[,5]))
+# vector that is cols 2:6:
+t_minus_one <- as.vector(c(resid[,2], resid[,3], resid[,4], resid[,5], resid[,6]))
+# ask the correlation between these:
+lag_one_cor <- cor(t_one, t_minus_one, use = "complete.obs")
+
+# do lag 2:
+# vector that is cols 1:4:
+t_one <- as.vector(c(resid[,1], resid[,2], resid[,3], resid[,4]))
+# vector that is cols 3:6:
+t_minus_one <- as.vector(c(resid[,3], resid[,4], resid[,5], resid[,6]))
+# ask the correlation between these:
+lag_two_cor <- cor(t_one, t_minus_one, use = "complete.obs")
+
+# do lag 3:
+# vector that is cols 1:3:
+t_one <- as.vector(c(resid[,1], resid[,2], resid[,3]))
+# vector that is cols 4:6:
+t_minus_one <- as.vector(c(resid[,4], resid[,5], resid[,6]))
+# ask the correlation between these:
+lag_three_cor <- cor(t_one, t_minus_one, use = "complete.obs")
 
 
 ### ARCHIVE ###
