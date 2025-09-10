@@ -9,6 +9,9 @@ library(spatial)
 library(ggplot2)
 library(tigris)
 
+# load environment if needed:
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_07_07_environment.RData")
+
 ## set working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
@@ -21,10 +24,13 @@ best <- 38  # also important: 42, 29, 7
 best_model <- models[best] 
 # load model:
 load(paste0(dir, "model_runs/", best_model))
+# load model_params:
+model_params <- read.csv(file = "2025_09_03_all_recov_models_param_means.csv")
 
 ## Get Model Information and Data
 # get parameter values:
-best_model_params <- model_params[best,]
+best_params <- model_params[best,]
+name = best_model
 # model name:
 model_name <- best_model
 if (grepl("cov", name) == TRUE){
@@ -40,56 +46,57 @@ model_inputs <- model_info$metadata$model_data
 jags_out <- model_info$jags_out
 # model parameter names:
 jags_vars <- varnames(jags_out)
-params <- jags_out[,grep("r|R|^tau|^b|^at", jags_vars)]
+params <- jags_out[,grep("x|r|R|^tau|^b|^at", jags_vars)]
 # remove burn in:
 burn_in = 25000
 params_burn <- window(params, start = burn_in)
 # convert output to dataframe:
 params_out <- as.data.frame(as.matrix(params_burn))
 # separate out specific params:
-x_params <- grep("^x", colnames(out))
-beta_params <- grep("^b",colnames(out))
-taus <- grep("tau", colnames(out))
-r_ints <- grep("r0", colnames(out))
-r_rates <- grep("R", colnames(out))
+x_params <- grep("^x", colnames(params_out))
+beta_params <- grep("^b",colnames(params_out))
+taus <- grep("tau", colnames(params_out))
+r_ints <- grep("r0", colnames(params_out))
+r_rates <- grep("R", colnames(params_out))
 # extract:
-model_x <- out[,x_params]
+model_x <- params_out[,x_params]
 x_ci <- apply(model_x, 2, quantile, c(0.05, 0.5, 0.95))
 x_cols <- colnames(x_ci)
-x_means <- matrix(NA, nrow = 5000, ncol = 7)
+x_means <- matrix(NA, nrow = 5000, ncol = 6)
 for (i in 1:nrow(x_means)){
   # get correct columns for each row:
   cols <- which(!is.na(str_match(x_cols, paste0(paste0("x\\[", i, ",")))))
   # get values:
   col_values <- x_ci[2, cols]
   # fill in table:
-  x_means[i, 1:7] <- col_values[1:7]
+  x_means[i, 1:6] <- col_values[1:6]
 }
 # beta parameters:
-beta_one <- best_params$`beta[1]`
-beta_two <- best_params$`beta[2]`
+beta_one <- best_params$beta.1.
+beta_two <- best_params$beta.2.
 # tau parameters (convert sd = 1/precision):
 tau_obs <- 1/best_params$tau_obs
 tau_add <- 1/best_params$tau_add
 # time random effect parameters:
-a_times <- c(best_params$`atime[1]`, best_params$`atime[2]`, best_params$`atime[3]`,
-            best_params$`atime[4]`, best_params$`atime[5]`, best_params$`atime[6]`)
+a_times <- c(best_params$atime.1., best_params$atime.2., best_params$atime.3.,
+            best_params$atime.4., best_params$atime.5., best_params$atime.6.)
 # recovery rate intercept:
 r_int <- best_params$r0
 # starting TCG:
 x_init <- tcg %>%
-  select(`2017-05-01`:`2022-05-01`)
+  select(`2017-05-01`:`2022-05-01`) %>%
+  as.matrix()
 # covariates:
-cov_one <- model_inputs$cov_one
-cov_two <- model_inputs$cov_two
+cov_one <- as.matrix(model_inputs$cov_one)
+cov_two <- as.matrix(model_inputs$cov_two)
 
 ## Prepare to run forward in time:
 y_pred <- matrix(NA, nrow = 5000, ncol = 6)
 for (i in 1:nrow(y_pred)){
   for(j in 1:ncol(y_pred)){
-    R[i,j] <- r_int + a_times[j] + (beta_one*cov_one[i, j]) + (beta_two*cov_two[i])
-    mu[i,j] <- R[i,j] * x_init[i,j]
-    y_pred[i,j] <- mu[i,j]
+    R <- r_int + a_times[j] + (beta_one*cov_one[i, j]) + (beta_two*cov_two[i])
+    mu <- R * x_init[i,j]
+    y_pred[i,j] <- mu
   }
 }
 
