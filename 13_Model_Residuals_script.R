@@ -145,30 +145,50 @@ mapping_residuals <- function(resid_col, resid_sf){
 spatial_ac <- function(resid, resid_col){
   # make trend surface:
   surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,resid_col]))
-  # # project matrix over region:
-  # tr <- trmat(surf, 
+  # project matrix over region:
+  # tr <- trmat(surf,
   #             min(resid$lon) , max(resid$lon),
-  #             min(resid$lat), max(resid$lat), 
+  #             min(resid$lat), max(resid$lat),
   #             50) # 50x50m matrix
-  vg <- spatial::variogram(surf, 100)
-  cg <- spatial::variogram(surf, 1000, xlim = c(0,1))
+  vg <- spatial::variogram(surf, 100, plotit = F)
+  cg <- spatial::correlogram(surf, 1000, xlim = c(0,1), plotit = F)
   
+  # plot variogram:
+  vg_data <- data.frame(xp = vg$x, yp = vg$y)
+  vg_plot <- ggplot(data = vg_data, aes(x = xp, y = yp)) +
+    geom_point() +
+    labs(title = paste0("Variogram: Year ", as.character(resid_col))) +
+    theme_bw() 
+  #vg_plot
+  # plot save location:
+  save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/"
+  # Save the plot to a PNG file:
+  ggsave(paste0(save_dir, Sys.Date(), "_", "Year_", as.character(resid_col), "_variogram_plot.png"),
+         plot = vg_plot,
+         width = 10, height = 6,
+         dpi = 600)
+  
+  # plot correlogram:
+  cg_data <- data.frame(xp = cg$x, yp = cg$y)
+  cg_plot <- ggplot(data = cg_data, aes(x = xp, y = yp)) +
+    geom_point() +
+    labs(title = paste0("Correlogram: Year ", as.character(resid_col))) +
+    theme_bw()
+  #cg_plot
+  # plot save location:
+  save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/"
+  # Save the plot to a PNG file:
+  ggsave(paste0(save_dir, Sys.Date(), "_", "Year_", as.character(resid_col), "_correlogram_plot.png"),
+         plot = cg_plot,
+         width = 10, height = 6,
+         dpi = 600)
 }
 
-# make trend surface:
-surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,6]))  # 4 had lowest AIC
-summary(surf)
-# project a matrix over the region:
-tr <- trmat(surf,
-            min(resid_spatial$lon) , max(resid_spatial$lon),
-            min(resid_spatial$lat), max(resid_spatial$lat),
-            50) # 50x50m matrix
-image(tr, asp = 5/5)
-# 
-# vg <- spatial::variogram(surf, 100)
-# cg <- spatial::correlogram(surf, 1000, xlim = c(0,1))
-
-# repeat for each year
+# Run for each year:
+for (i in 1:6){
+  mapping_residuals(resid_col = i, resid_sf = resid_sf)
+  spatial_ac(resid = resid, resid_col = i)
+}
 
 
 ### Temporal Autocorrelation in model residuals ###
@@ -180,3 +200,20 @@ image(tr, asp = 5/5)
 # lag 2 is 1:4/3:6
 # lag 3 is 1:3/4:6
 
+
+### ARCHIVE ###
+
+# # make trend surface:
+# surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,1]))  # 4 had lowest AIC
+# summary(surf)
+# # project a matrix over the region:
+# tr <- trmat(surf,
+#             min(resid_spatial$lon) , max(resid_spatial$lon),
+#             min(resid_spatial$lat), max(resid_spatial$lat),
+#             50) # 50x50m matrix
+# image(tr, asp = 5/5)
+# 
+# vg <- spatial::variogram(surf, 100)
+# cg <- spatial::correlogram(surf, 1000, xlim = c(0,1))
+
+# repeat for each year
