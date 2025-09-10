@@ -206,7 +206,7 @@ t_one <- as.vector(c(resid[,1], resid[,2], resid[,3], resid[,4], resid[,5]))
 # vector that is cols 2:6:
 t_minus_one <- as.vector(c(resid[,2], resid[,3], resid[,4], resid[,5], resid[,6]))
 # ask the correlation between these:
-lag_one_cor <- cor(t_one, t_minus_one, use = "complete.obs")
+lag_one_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 
 # do lag 2:
 # vector that is cols 1:4:
@@ -214,7 +214,7 @@ t_one <- as.vector(c(resid[,1], resid[,2], resid[,3], resid[,4]))
 # vector that is cols 3:6:
 t_minus_one <- as.vector(c(resid[,3], resid[,4], resid[,5], resid[,6]))
 # ask the correlation between these:
-lag_two_cor <- cor(t_one, t_minus_one, use = "complete.obs")
+lag_two_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 
 # do lag 3:
 # vector that is cols 1:3:
@@ -222,7 +222,27 @@ t_one <- as.vector(c(resid[,1], resid[,2], resid[,3]))
 # vector that is cols 4:6:
 t_minus_one <- as.vector(c(resid[,4], resid[,5], resid[,6]))
 # ask the correlation between these:
-lag_three_cor <- cor(t_one, t_minus_one, use = "complete.obs")
+lag_three_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
+
+# do lag 4:
+# vector that is cols 1:3:
+t_one <- as.vector(c(resid[,1], resid[,2]))
+# vector that is cols 4:6:
+t_minus_one <- as.vector(c(resid[,5], resid[,6]))
+# ask the correlation between these:
+lag_four_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
+
+# do lag 5:
+# vector that is cols 1:3:
+t_one <- as.vector(c(resid[,1]))
+# vector that is cols 4:6:
+t_minus_one <- as.vector(c(resid[,6]))
+# ask the correlation between these:
+lag_five_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
+
+# make a table:
+cor_lags <- data.frame(lag = c("Lag 1", "Lag 2", "Lag 3", "Lag 4", "Lag 5"),
+                       cor = c(lag_one_cor, lag_two_cor, lag_three_cor, lag_four_cor, lag_five_cor))
 
 
 ### ARCHIVE ###
