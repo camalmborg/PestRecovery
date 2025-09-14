@@ -53,7 +53,7 @@ covs <- time_daym %>%
   # arrange by variable:
   arrange(variable, site) %>%
   # select 2017 onwards:
-  select(-"2016")
+  select(-c("2016", "2023"))
 
 # choosing variable time series function:
 #'@param cov_df = dataframe object of covariate time series sorted by variable and site
@@ -161,8 +161,8 @@ state_space_model_run <- function(model_data, model, model_name){
   out_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_outputs/"
   run_path <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/model_runs/"
   date <- as.character(Sys.Date())
-  filename_outputs <- paste0(out_path, date, "_model_tv_cov_uni_", model_name, "_output.csv")
-  filename_runs <- paste0(run_path, date, "_model_tv_cov_uni_", model_name, "_data.RData")
+  filename_outputs <- paste0(out_path, date, "_model_tv_cov_uni_", model_name, "_yrlag_output.csv")
+  filename_runs <- paste0(run_path, date, "_model_tv_cov_uni_", model_name, "_yrlag_data.RData")
   
   # save output
   write.csv(out, file = filename_outputs)

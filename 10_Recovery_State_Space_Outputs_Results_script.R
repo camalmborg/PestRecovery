@@ -11,7 +11,7 @@ setwd(dir)
 # model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
 # for multivariate:
-#models <- models[which(grepl("multi", models) == T)]
+models <- models[which(grepl("multi", models) == F)]
 
 ### Collecting DICs
 # extract from model metadata:
@@ -40,7 +40,7 @@ for (i in 1:length(models)){
 dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], decreasing = TRUE)
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 # save:
-write.csv(dic_sort, "2025_09_03_all_recov_models_dics.csv")
+write.csv(dic_sort, "2025_09_14_uni_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
