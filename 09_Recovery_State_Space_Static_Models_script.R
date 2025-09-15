@@ -20,11 +20,8 @@ start <- grep("^2013", names(tcg))
 end <- grep("^2015", names(tcg))
 steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
-# post_dist <- tcg[,(dist + 1):ncol(tcg)]
-# dm_post_dist <- steady_state - post_dist
 
 # data for model:
-#recov_data <- as.matrix(dm_post_dist)
 r_start <- grep("^2018", names(tcg))
 r_end <- grep("^2023", names(tcg))
 recov_data <- as.matrix(tcg[,r_start:r_end])

@@ -25,11 +25,8 @@ start <- grep("^2013", names(tcg))
 end <- grep("^2015", names(tcg))
 steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
-# post_dist <- tcg[,(dist + 1):(ncol(tcg)-1)]  # minus 1 here to account for match with daymet data 2018-2023 (2024 not fully available)
-# dm_post_dist <- steady_state - post_dist
 
 # data for model:
-#recov_data <- dm_post_dist
 r_start <- grep("^2018", names(tcg))
 r_end <- grep("^2023", names(tcg))
 recov_data <- as.matrix(tcg[,r_start:r_end])
