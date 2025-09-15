@@ -12,7 +12,7 @@ setwd(dir)
 
 ## Load model output files
 #model_params <- read.csv("2025_08_22_all_base_uni_recov_models_param_means.csv")
-#load("2025_08_22_recov_models_outputs_list.RData")  # object is called model_outputs
+load("2025_09_14_uni_recov_models_outputs_list.RData")  # object is called model_outputs
 
 
 ## Calculating CIs for all models
@@ -87,7 +87,7 @@ model_results_CIs <- model_results_CIs %>%
 rm(model_results_CIs_cat)
 rm(model_results_CIs_multi)
 # save:
-write.csv(model_results_CIs, "2025_09_03_model_results_CIs.csv")
+write.csv(model_results_CIs, "2025_09_14_uni_model_results_CIs.csv")
 
 
 ## Ridge Plot for betas
@@ -98,8 +98,8 @@ library(viridis)
 library(hrbrthemes)
 
 # remove multis (fewer rows):
-full_model_outputs <- model_outputs
-model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
+#full_model_outputs <- model_outputs
+#model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
   
 # get the data together:
 beta_list <- list()
@@ -177,7 +177,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.09, 0.2)) + # for all + post-dist
+  xlim(c(-0.06, 0.05)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +

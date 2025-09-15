@@ -91,8 +91,8 @@ for (i in 1:length(models)){
 }
 
 # save:
-write.csv(model_params, "2025_09_03_all_recov_models_param_means.csv")
-save(model_outputs, file = "2025_09_03_all_recov_models_outputs_list.RData")
+write.csv(model_params, "2025_09_14_uni_recov_models_param_means.csv")
+save(model_outputs, file = "2025_09_14_uni_recov_models_outputs_list.RData")
 
 # remove things I don't need:
 rm(model_info, params, params_burn, params_out, jags_out, vars)
