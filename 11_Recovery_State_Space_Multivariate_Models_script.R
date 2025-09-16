@@ -498,6 +498,7 @@ task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 model_data <- list(y = recov_data,
                    cov_one = input_data_list[[task_id]]$cov_one,
                    cov_two = input_data_list[[task_id]]$cov_two,
+                   cov_three = input_data_list[[task_id]]$cov_three,
                    nt = length(time),
                    sites = sites, 
                    t_obs = 0.001, a_obs = 0.001,
@@ -505,12 +506,8 @@ model_data <- list(y = recov_data,
                    r_ic = 1, r_prec = 0.001,
                    x_ic = x1, t_ic = 0.01,
                    b0 = 0, Vb = 0.001,
-                   b00 = 0, Vbb = 0.001)
-# missing data:
-model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
-model_data$mis_s = mean(dmag_data$steady, na.rm = T)
-model_data$mis_t = 0.01
-
+                   b00 = 0, Vbb = 0.001,
+                   b000 = 0, Vbbb = 0.001)
 # missing data:
 model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
 model_data$mis_s = mean(dmag_data$steady, na.rm = T)
