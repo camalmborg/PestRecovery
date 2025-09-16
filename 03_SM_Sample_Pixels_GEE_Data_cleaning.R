@@ -25,6 +25,9 @@ gee <- "gee_data/"         # Google Earth Engine data
 scores_raw <- loader(home, gee, "2025_02_28_growing_season_sample_score_mean.csv")
 tcg_raw <- loader(home, gee, "2025_02_28_growing_season_sample_tcg_mean.csv")
 
+# standard deviations for each pixel tcg:
+sd_tcg_raw <- loader(home, gee, "2025_02_28_growing_season_sample_tcg_stddev.csv")
+
 # extract the coordinates from the .geo column:
 get_lat_lon <- function(data){
   geo <- as.data.frame(data[,".geo"])
@@ -64,8 +67,16 @@ tcg <- tcg_raw %>%
   mutate(longitude = coords$lon, .before = 2) %>%
   mutate(latitude = coords$lat, .before = 3)
 
+coords <- get_lat_lon(sd_tcg_raw)
+sd_tcg <- sd_tcg_raw %>%
+  select(starts_with("X")) %>%
+  rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
+  mutate(site = 1:nrow(sd_tcg_raw), .before = 1) %>%
+  mutate(longitude = coords$lon, .before = 2) %>%
+  mutate(latitude = coords$lat, .before = 3)
+
 # clean environment:
-rm("scores_raw", "tcg_raw")
+rm("scores_raw", "tcg_raw", "sd_tcg_raw")
 
 # time series plots
 # just get the time series from the scores and tcg:
