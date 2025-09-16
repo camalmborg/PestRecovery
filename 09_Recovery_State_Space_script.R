@@ -27,7 +27,13 @@ recov_data <- as.matrix(tcg[,r_start:r_end])
 time = 1:ncol(recov_data)
 sites = 1:nrow(recov_data)
 # first x:
-x1 <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
+x_miss <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
+x_prec_miss <- sd(tcg[,grep("^2017", names(tcg))], na.rm = T)
+x1 <- tcg[,grep("2017", names(tcg))]
+x1[which(is.na(x1))] <- x_miss
+# x1 precision:
+x_prec <- 1/(sd_tcg[,grep("2017", names(sd_tcg))])
+x_prec[which(is.na(x_prec))] <- x_prec_miss
 
 # make list object
 model_data <- list(y = recov_data,
@@ -36,7 +42,7 @@ model_data <- list(y = recov_data,
                    t_obs = 0.001, a_obs = 0.001,
                    t_add = 0.001, a_add = 0.001,
                    r_ic = 1, r_prec = 0.001,
-                   x_ic = x1, t_ic = 0.01)
+                   x_ic = x1, t_ic = x_prec)
 
 
 ### "Base Model" - no covariates or random effects:
@@ -54,7 +60,7 @@ for (t in 2:nt){
     mu[s,t] <- R[s,t] * x[s,t-1]
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
-  x[s,1] ~ dnorm(x_ic, t_ic)
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
 ### Priors:
@@ -121,7 +127,7 @@ for (t in 2:nt){
     mu[s,t] <- R[s,t] * x[s,t-1]
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
-  x[s,1] ~ dnorm(x_ic, t_ic)
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
 ### Random Effects:
@@ -202,7 +208,7 @@ for (t in 2:nt){
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
-  x[s,1] ~ dnorm(x_ic, t_ic)
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
 # ### Random Effects: 
@@ -282,7 +288,7 @@ for (t in 2:nt){
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
-  x[s,1] ~ dnorm(x_ic, t_ic)
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
 ### Random Effects: 
