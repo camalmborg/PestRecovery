@@ -11,7 +11,7 @@ setwd(dir)
 # model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
 # for multivariate:
-models <- models[which(grepl("multi", models) == F)]
+#models <- models[which(grepl("multi", models) == F)]
 
 ### Collecting DICs
 # extract from model metadata:
