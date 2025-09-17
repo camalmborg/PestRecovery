@@ -3,11 +3,11 @@
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
 setwd(dir)
 
-# setting task id
-task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
-
 # load environment if needed:
 load("Environments/2025_07_07_environment.RData")
+
+# setting task id
+task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
 # libraries:
 librarian::shelf(rjags, coda, dplyr)

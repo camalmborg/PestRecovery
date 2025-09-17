@@ -8,11 +8,12 @@
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
 setwd(dir)
 
+# load environment if needed:
+load("Environments/2025_07_07_environment.RData")
+
 # setting task id for running array job on SCC:
 task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
-# load environment if needed:
-load("Environments/2025_07_07_environment.RData")
 
 # libraries:
 librarian::shelf(rjags, coda, dplyr, tidyverse)
