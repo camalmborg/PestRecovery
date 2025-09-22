@@ -156,6 +156,8 @@ results_extract <- function(dir, model_list){
 
 multi_results <- results_extract(dir, model_list)
 #save(multi_results, file = "2025_05_01_multivar_model_results_list.RData")
+mort_results_table <- multi_results$results
+#write.csv(mort_results_table, file = "2025_09_19_mort_results_table.csv")
 
 ### Visualizations and parsing outputs:
 # selecting model:
