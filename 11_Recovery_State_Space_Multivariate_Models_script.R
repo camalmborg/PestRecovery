@@ -520,6 +520,90 @@ model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
 model_data$mis_s = mean(dmag_data$steady, na.rm = T)
 model_data$mis_t = 0.01
 
+# # model:
+# jags_run <- model_list[[task_id]]
+# 
+# # run the models according to task_id:
+# state_space_model_run(model_data = model_data,
+#                       model = jags_run,
+#                       model_name = model_name[task_id])
+
+
+## Run a 4-var model
+tv_tv_tv_stat_miss_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s, t-1] + beta[3]*cov_three[s, t-1] + beta[4]*cov_four[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
+}
+
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb) #initial beta 2
+beta[3] ~ dnorm(b000, Vbbb) #initial beta 3
+beta[4] ~dnorm(b0000, Vbbbb) #initial beta 4
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+# missing data:
+for (s in miss){
+ cov_four[s] ~ dnorm(mis_s, mis_t)
+  }
+}
+"
+
+# model names:
+model_name <- c("prcpyrlag_prcp_vpdyrlag_dmagy2")
+
+# model data lists:
+input_data_list <- list()
+input_data_list[[1]] <- list(cov_one = model_covariates$prcp_year_lag, model_covariates$prcp ,cov_three = model_covariates$vpd_year_lag, cov_four = model_covariates$dmagy2)
+
+# models:
+model_list <- list()
+model_list[[1]] <- tv_tv_tv_stat_miss_model
+
+# setting task id for cluster runs:
+#task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+task_id = 1
+
+# model data object for missing data (all models in this run):
+model_data <- list(y = recov_data,
+                   cov_one = input_data_list[[task_id]]$cov_one,
+                   cov_two = input_data_list[[task_id]]$cov_two,
+                   cov_three = input_data_list[[task_id]]$cov_three,
+                   cov_four = input_data_list[[task_id]]$cov_four,
+                   nt = length(time),
+                   sites = sites,
+                   t_obs = 0.001, a_obs = 0.001,
+                   t_add = 0.001, a_add = 0.001,
+                   r_ic = 1, r_prec = 0.001,
+                   x_ic = x1, t_ic = x_prec,
+                   b0 = 0, Vb = 0.001,
+                   b00 = 0, Vbb = 0.001,
+                   b000 = 0, Vbbb = 0.001,
+                   b0000 = 0, Vbbbb = 0.001)
+# missing data:
+model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
+model_data$mis_s = mean(dmag_data$steady, na.rm = T)
+model_data$mis_t = 0.01
+
 # model:
 jags_run <- model_list[[task_id]]
 
@@ -527,4 +611,5 @@ jags_run <- model_list[[task_id]]
 state_space_model_run(model_data = model_data,
                       model = jags_run,
                       model_name = model_name[task_id])
+
 
