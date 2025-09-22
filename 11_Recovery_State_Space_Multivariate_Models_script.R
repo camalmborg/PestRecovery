@@ -573,7 +573,10 @@ model_name <- c("prcpyrlag_prcp_vpdyrlag_dmagy2")
 
 # model data lists:
 input_data_list <- list()
-input_data_list[[1]] <- list(cov_one = model_covariates$prcp_year_lag, model_covariates$prcp ,cov_three = model_covariates$vpd_year_lag, cov_four = model_covariates$dmagy2)
+input_data_list[[1]] <- list(cov_one = model_covariates$prcp_year_lag, 
+                             cov_two = model_covariates$prcp, 
+                             cov_three = model_covariates$vpd_year_lag, 
+                             cov_four = model_covariates$dmagy2)
 
 # models:
 model_list <- list()
