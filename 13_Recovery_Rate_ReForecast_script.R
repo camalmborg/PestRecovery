@@ -53,45 +53,87 @@ ncovs = length(covs)
 # initial conditions - 2017 tcg:
 ic <- model_info$metadata$model_data$x_ic
 
+
+## Prep params and inputs
+# covariates:
+cov_groups <- unique(sub("\\..*", "", colnames(covariates)))
+cov_list <- list()
+for (i in cov_groups){
+  cov_list[[i]] <- covariates[,grep(i, colnames(covariates))]
+}
+# assign:
+for (name in names(cov_list)) {
+  assign(name, cov_list[[name]])
+}
+# model parameters:
+# betas:
+betas <- params[grep("beta", names(params))]
+# taus - convert to SD from 1/precision:
+tau_obs <- 1/params[grep("obs", names(params))]
+tau_add <- 1/params[grep("add", names(params))]
+a_time <- c(0, 1/params[grep("atime", names(params))])
+a_time[is.infinite(a_time)] <- 0  # fix Inf value from conversion to SD from precisions
+# r0:
+r <- params[grep("r", names(params))]
+
+## Run the forecast
+# for single site
+s = 1
+ic = ic[s]
+cov_one = cov_one[s,]
+cov_two = cov_two[s,]
+cov_three = cov_three[s]
+
+# matrix to hold results:
+N <- matrix(NA, nrow = 1, ncol = length(nt)+1)
+N[,1] <- ic
+# loop over time:
+for (t in 2:length(N)){
+  R <- r + a_time[t-1] + (betas[1]*cov_one[,t-1]) + (betas[2]*cov_two[,t-1]) + betas[3]*cov_three
+  N[,t] <- rnorm(1, mean = N[,t-1]*R, sd = tau_add)
+}
+
+
+
 ## Forecast function
 #'@param nt = vector - timesteps
 #'@param n_ens = numeric - number of ensemble members
 #'@param ic = vector - initial condition, in this case 2017 TCG
 #'@param params = vector - parameters from get_params function
 #'@param covariates = covariates for model
-rss_forecast <- function(nt, n_ens, ic, params, covariates){
-  ## Prep params and inputs
-  # covariates:
-  cov_groups <- unique(sub("\\..*", "", colnames(covariates)))
-  cov_list <- list()
-  for (i in cov_groups){
-    cov_list[[i]] <- covariates[,grep(i, colnames(covariates))]
-  }
-  # assign:
-  for (name in names(cov_list)) {
-    assign(name, cov_list[[name]])
-  }
-  # model parameters:
-  # betas:
-  betas <- params[grep("beta", names(params))]
-  # taus - convert to SD from 1/precision:
-  tau_obs <- 1/params[grep("obs", names(params))]
-  tau_add <- 1/params[grep("add", names(params))]
-  tau_time <- 1/params[grep("atime", names(params))]
-  tau_time[is.infinite(tau_time)] <- 0  # fix Inf value from conversion to SD from precisions
-  # r0:
-  r <- params[grep("r", names(params))]
-  
-  ## Run the forecast
-  # matrix to hold results:
-  N <- matrix(NA, nrow = n_ens, ncol = last(nt))
-  # loop over time:
-  for (t in 1:nt){
-    R[s] <- r + tau_time[t] + (betas[1]*cov_list$cov_one[s,t]) + (betas[2]*cov_two[s,t]) + betas[3]*cov_three[s]
-    mu[s,t] <- R[s] * x[s,t-1]  
-    # x[s,t] <- dnorm(mu[s,t], tau_add)
-    # x[s,1] <- ic[s]
-    }
-}
-
-
+# rss_forecast <- function(nt, n_ens, ic, params, covariates){
+#   ## Prep params and inputs
+#   # covariates:
+#   cov_groups <- unique(sub("\\..*", "", colnames(covariates)))
+#   cov_list <- list()
+#   for (i in cov_groups){
+#     cov_list[[i]] <- covariates[,grep(i, colnames(covariates))]
+#   }
+#   # assign:
+#   for (name in names(cov_list)) {
+#     assign(name, cov_list[[name]])
+#   }
+#   # model parameters:
+#   # betas:
+#   betas <- params[grep("beta", names(params))]
+#   # taus - convert to SD from 1/precision:
+#   tau_obs <- 1/params[grep("obs", names(params))]
+#   tau_add <- 1/params[grep("add", names(params))]
+#   tau_time <- 1/params[grep("atime", names(params))]
+#   tau_time[is.infinite(tau_time)] <- 0  # fix Inf value from conversion to SD from precisions
+#   # r0:
+#   r <- params[grep("r", names(params))]
+#   
+#   ## Run the forecast
+#   # matrix to hold results:
+#   N <- matrix(NA, nrow = 1, ncol = last(nt))
+#   # loop over time:
+#   for (t in nt){
+#     R[,t] <- r + tau_time[t] + (betas[1]*cov_one[,t]) + (betas[2]*cov_two[,t]) + betas[3]*cov_three[s]
+#     N[,t] <- rnorm(N[,t-1] * R[,t], tau_add)
+#     # x[s,t] <- dnorm(mu[s,t], tau_add)
+#     # x[s,1] <- ic[s]
+#     }
+# }
+# 
+# 
