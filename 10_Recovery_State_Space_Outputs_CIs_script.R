@@ -11,8 +11,8 @@ dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs
 setwd(dir)
 
 ## Load model output files
-#model_params <- read.csv("2025_08_22_all_base_uni_recov_models_param_means.csv")
-#load("2025_09_14_uni_recov_models_outputs_list.RData")  # object is called model_outputs
+#model_params <- read.csv("2025_10_06_all_recov_models_param_means.csv")
+#load("2025_10_06_all_recov_models_outputs_list.RData")  # object is called model_outputs
 
 
 ## Calculating CIs for all models
@@ -70,7 +70,7 @@ model_results_CIs_multi <- model_results_CIs %>%
     cols = matches("^(mean|low|high)_\\d+"),
     names_to = c(".value", "set"),
     names_pattern = "(mean|low|high)_(\\d+)") %>%
-  filter(set %in% c(1, 2)) %>%
+  filter(set %in% c(1, 2, 3, 4)) %>%
   mutate(model = paste0(model, "_", set), .before = 2) %>%
   select(-set)
 
@@ -82,12 +82,14 @@ model_results_CIs <- model_results_CIs %>%
   mutate(high = high_1) %>%
   select(model, mean, low, high) %>%
   bind_rows(model_results_CIs_cat) %>%
-  bind_rows(model_results_CIs_multi)
+  bind_rows(model_results_CIs_multi) %>%
+  # remove NA rows from 2-var multivariate models:
+  filter(!if_all(c(mean, low, high), is.na))
 #remove unnecessary things:
 rm(model_results_CIs_cat)
 rm(model_results_CIs_multi)
 # save:
-write.csv(model_results_CIs, "2025_09_19_uni_multi_model_results_CIs.csv")
+write.csv(model_results_CIs, "2025_10_06_all_model_results_CIs.csv")
 
 
 ## Ridge Plot for betas
