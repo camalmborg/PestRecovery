@@ -39,8 +39,9 @@ for (i in 1:length(models)){
 # get deltaDICs:
 dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], decreasing = TRUE)
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
+dic_sort$perform <- 1:nrow(dic_sort)
 # save:
-write.csv(dic_sort, "2025_09_22_all_recov_models_dics.csv")
+#write.csv(dic_sort, "2025_10_06_all_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
@@ -91,8 +92,8 @@ for (i in 1:length(models)){
 }
 
 # save:
-write.csv(model_params, "2025_09_22_all_recov_models_param_means.csv")
-save(model_outputs, file = "2025_09_22_all_recov_models_outputs_list.RData")
+#write.csv(model_params, "2025_10_06_all_recov_models_param_means.csv")
+#save(model_outputs, file = "2025_10_06_all_recov_models_outputs_list.RData")
 
 # remove things I don't need:
 rm(model_info, params, params_burn, params_out, jags_out, vars)
