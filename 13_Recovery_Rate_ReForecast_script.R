@@ -12,15 +12,14 @@ setwd(dir)
 # model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
 model_num = 1
+# get model:
+top_model <- dic_sort[dic_sort$perform == model_num,]
+top_model <- top_model$model_number
+# load the best model:
+load(paste0(dir, "model_runs/", models[as.numeric(top_model)]))
 
 ## Get model parameters for running forecast
-get_params <- function(model_num){
-  # get model:
-  top_model <- dic_sort[dic_sort$perform == model_num,]
-  top_model <- top_model$model_number
-  # load the best model:
-  load(paste0(dir, "model_runs/", models[as.numeric(top_model)]))
-  
+get_params <- function(model_info, yr){
   ## Sample parameters from the model posterior
   # get parameters from model output:
   posterior <- as.matrix(model_info$jags_out)
@@ -32,29 +31,20 @@ get_params <- function(model_num){
   taus <- grep("tau", colnames(posterior))
   r <- grep("r0", colnames(posterior))
   tau_time <- grep("at", colnames(posterior))
+  x_ic <- grep(paste0("^x\\[[0-9+,", as.character(yr),"\\]"), colnames(posterior))
   # group them:
-  params <- cbind(posterior[,beta_params], posterior[,taus], posterior[,tau_time], r = posterior[,r])
+  params <- cbind(posterior[,beta_params], posterior[,taus], posterior[,tau_time], r = posterior[,r], posterior[,x_ic])
   # sample:
   params <- params[sample,]
   return(params)
 }
-# model params:
-params <- get_params(model_num)
+
 
 ## Prepare the forecast
-# time steps:
-start = 2017
-end = 2023
-nt = 1:(end-start)
 # model covariates inputs:
 covs <- grep("cov", names(model_info$metadata$model_data))
 covariates <- do.call(cbind, model_info$metadata$model_data[covs])
 ncovs = length(covs)
-# initial conditions - 2017 tcg:
-ic <- model_info$metadata$model_data$x_ic
-
-
-## Prep params and inputs
 # covariates:
 cov_groups <- unique(sub("\\..*", "", colnames(covariates)))
 cov_list <- list()
@@ -65,75 +55,65 @@ for (i in cov_groups){
 for (name in names(cov_list)) {
   assign(name, cov_list[[name]])
 }
-# model parameters:
-# betas:
-betas <- params[grep("beta", names(params))]
-# taus - convert to SD from 1/precision:
-tau_obs <- 1/params[grep("obs", names(params))]
-tau_add <- 1/params[grep("add", names(params))]
-a_time <- c(0, 1/params[grep("atime", names(params))])
-a_time[is.infinite(a_time)] <- 0  # fix Inf value from conversion to SD from precisions
-# r0:
-r <- params[grep("r", names(params))]
+
+# time steps:
+yr = 2
+start = 2018
+end = 2023
+nt = 1:(end-start)
+# number of ensemble members:
+n_ens = 2
+# number of sites:
+ns = 2
+# # matrix to hold results:
+# N <- matrix(NA, nrow = n_ens, ncol = length(nt)+1)
+
 
 ## Run the forecast
-# for single site
-s = 1
-ic = ic[s]
-cov_one = cov_one[s,]
-cov_two = cov_two[s,]
-cov_three = cov_three[s]
-
-# matrix to hold results:
-N <- matrix(NA, nrow = 1, ncol = length(nt)+1)
-N[,1] <- ic
-# loop over time:
-for (t in 2:length(N)){
-  R <- r + a_time[t-1] + (betas[1]*cov_one[,t-1]) + (betas[2]*cov_two[,t-1]) + betas[3]*cov_three
-  N[,t] <- rnorm(1, mean = N[,t-1]*R, sd = tau_add)
+# function to run across all sites and ensemble members:
+run_forecast <- function(nt, ns, n_ens){
+  # empty list to hold result:
+  forecast_result <- list()
+  # loop over sites:
+  for (s in 1:ns){
+    # matrix to hold results:
+    N <- matrix(NA, nrow = n_ens, ncol = length(nt)+1)
+    # loop over ensemble members:
+    for (i in 1:n_ens){
+      # model params:
+      params <- get_params(model_info, yr)
+      
+      ## Prep params and inputs
+      # model parameters:
+      # betas:
+      betas <- params[grep("beta", names(params))]
+      # taus - convert to SD from 1/precision:
+      tau_obs <- 1/params[grep("obs", names(params))]
+      tau_add <- 1/params[grep("add", names(params))]
+      a_time <- c(0, 1/params[grep("atime", names(params))])
+      a_time[is.infinite(a_time)] <- 0  # fix Inf value from conversion to SD from precisions
+      # r0:
+      r <- params[grep("r", names(params))]
+      
+      ## Run the forecast
+      c_one = cov_one[s,]
+      c_two = cov_two[s,]
+      c_three = cov_three[s]
+      # x_ic:
+      N[,1] <- params[grep("^x", names(params))][s]
+      
+      # loop over time:
+      for (t in 2:ncol(N)){
+        R <- r + a_time[t-1] + (betas[1]*c_one[,t-1]) + (betas[2]*c_two[,t-1]) + betas[3]*c_three
+        N[i,t] <- rnorm(1, mean = N[i,t-1]*R, sd = tau_add)
+      }
+    }
+    forecast_result[[s]] <- as.data.frame(N)
+    print(s)
+  }
+  # bind together:
+  forecast_result <- bind_rows(forecast_result, .id = "site")
+  return(forecast_result)
 }
 
-
-
-## Forecast function
-#'@param nt = vector - timesteps
-#'@param n_ens = numeric - number of ensemble members
-#'@param ic = vector - initial condition, in this case 2017 TCG
-#'@param params = vector - parameters from get_params function
-#'@param covariates = covariates for model
-# rss_forecast <- function(nt, n_ens, ic, params, covariates){
-#   ## Prep params and inputs
-#   # covariates:
-#   cov_groups <- unique(sub("\\..*", "", colnames(covariates)))
-#   cov_list <- list()
-#   for (i in cov_groups){
-#     cov_list[[i]] <- covariates[,grep(i, colnames(covariates))]
-#   }
-#   # assign:
-#   for (name in names(cov_list)) {
-#     assign(name, cov_list[[name]])
-#   }
-#   # model parameters:
-#   # betas:
-#   betas <- params[grep("beta", names(params))]
-#   # taus - convert to SD from 1/precision:
-#   tau_obs <- 1/params[grep("obs", names(params))]
-#   tau_add <- 1/params[grep("add", names(params))]
-#   tau_time <- 1/params[grep("atime", names(params))]
-#   tau_time[is.infinite(tau_time)] <- 0  # fix Inf value from conversion to SD from precisions
-#   # r0:
-#   r <- params[grep("r", names(params))]
-#   
-#   ## Run the forecast
-#   # matrix to hold results:
-#   N <- matrix(NA, nrow = 1, ncol = last(nt))
-#   # loop over time:
-#   for (t in nt){
-#     R[,t] <- r + tau_time[t] + (betas[1]*cov_one[,t]) + (betas[2]*cov_two[,t]) + betas[3]*cov_three[s]
-#     N[,t] <- rnorm(N[,t-1] * R[,t], tau_add)
-#     # x[s,t] <- dnorm(mu[s,t], tau_add)
-#     # x[s,1] <- ic[s]
-#     }
-# }
-# 
-# 
+test <- run_forecast(nt = nt, ns = ns, n_ens = n_ens)
