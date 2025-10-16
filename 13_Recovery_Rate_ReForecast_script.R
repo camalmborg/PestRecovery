@@ -41,7 +41,7 @@ get_params <- function(model_info, n_ens){
   return(params)
 }
 # number of ensemble members:
-n_ens = 2500
+n_ens = 5
 # get sampled parameters: nrow = n_ens
 ens_params <- get_params(model_info, n_ens)
 
@@ -61,18 +61,17 @@ for (name in names(cov_list)) {
   assign(name, cov_list[[name]])
 }
 
-# time steps:
-yr = 1
-start = 2017
-end = 2023
-nt = 1:(end-start)
 # number of sites:
-ns = 5000
+ns = 3
 
 
 ## Run the forecast
 # function to run across all sites and ensemble members:
-run_forecast <- function(nt, ns, n_ens, params, yr){
+run_forecast <- function(start, end, ns, n_ens, params, yr){
+  # time steps:
+  start = start
+  end = end
+  nt = 1:(end-start)
   # empty list to hold result:
   forecast_result <- list()
   # loop over sites:
@@ -115,5 +114,15 @@ run_forecast <- function(nt, ns, n_ens, params, yr){
   return(forecast_result)
 }
 
-test <- run_forecast(nt = nt, ns = ns, n_ens = n_ens, params = ens_params, yr = 1)
-write.csv(test, file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_10_16_re_forecast_test.csv")
+years <- 2017:2023
+n_yr <- 1:(length(years)-1)
+
+testing <- list()
+for (i in n_yr){
+  testing[[i]] <- run_forecast(start = years[i], end = last(years), ns = ns, n_ens = n_ens, params = ens_params, yr = i)
+}
+
+test <- run_forecast(start = 2017, end = 2023, ns = ns, n_ens = n_ens, params = ens_params, yr = 1)
+
+
+#write.csv(test, file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_10_16_re_forecast_test.csv")
