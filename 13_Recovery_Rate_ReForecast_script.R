@@ -33,7 +33,7 @@ get_params <- function(model_info, n_ens){
   taus <- grep("tau", colnames(posterior))
   r <- grep("r0", colnames(posterior))
   tau_time <- grep("at", colnames(posterior))
-  x_ic <- grep(paste0("^x\\[[0-9+,1\\]"), colnames(posterior))
+  x_ic <- grep("^x\\[[0-9+,1\\]", colnames(posterior))
   # group them:
   params <- cbind(posterior[,beta_params], posterior[,taus], posterior[,tau_time], r = posterior[,r], posterior[,x_ic])
   # sample:
@@ -41,7 +41,7 @@ get_params <- function(model_info, n_ens){
   return(params)
 }
 # number of ensemble members:
-n_ens = 5
+n_ens = 2500
 # get sampled parameters: nrow = n_ens
 ens_params <- get_params(model_info, n_ens)
 
@@ -67,12 +67,12 @@ start = 2017
 end = 2023
 nt = 1:(end-start)
 # number of sites:
-ns = 2
+ns = 5000
 
 
 ## Run the forecast
 # function to run across all sites and ensemble members:
-run_forecast <- function(nt, ns, n_ens, params){
+run_forecast <- function(nt, ns, n_ens, params, yr){
   # empty list to hold result:
   forecast_result <- list()
   # loop over sites:
@@ -98,7 +98,8 @@ run_forecast <- function(nt, ns, n_ens, params){
       c_two = cov_two[s,]
       c_three = cov_three[s]
       # x_ic:
-      N[,1] <- params[n_ens, c(grep("^x", colnames(params)))][s]
+      x_ic <- grep(paste0("^x\\[[0-9+,", as.character(yr), "\\]"), colnames(params))
+      N[,1] <- params[n_ens, x_ic][s]
       
       # loop over time:
       for (t in 2:ncol(N)){
@@ -114,4 +115,5 @@ run_forecast <- function(nt, ns, n_ens, params){
   return(forecast_result)
 }
 
-test <- run_forecast(nt = nt, ns = ns, n_ens = n_ens, params = ens_params)
+test <- run_forecast(nt = nt, ns = ns, n_ens = n_ens, params = ens_params, yr = 1)
+write.csv(test, file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_10_16_re_forecast_test.csv")
