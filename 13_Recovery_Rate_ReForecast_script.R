@@ -10,13 +10,18 @@ dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs
 setwd(dir)
 # load model performance information:
 dic_sort <- read.csv("2025_10_06_all_recov_models_dics.csv", row.names = 1)
+# data.frame of model jobs:
+model_jobs <- data.frame(task_id = 1:18, 
+                         model_num = c(rep(1,6), rep(2, 6), rep(3,6)),
+                         year_run = rep(c(1:6), 3))
 
 ## Get model
 # model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
 # setting task id for cluster runs:
-model_num <- as.numeric(Sys.getenv("SGE_TASK_ID"))
-#model_num = 2
+task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+# model number:
+model_num = model_jobs$model_num[task_id]
 # get model:
 top_model <- dic_sort[dic_sort$perform == model_num,]
 top_model <- top_model$model_number
@@ -169,27 +174,41 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
 # number of sites:
 ns = 5000
 # number of ensemble members:
-n_ens = 1000
+n_ens = 2500
 
 # get sampled parameters: nrow = n_ens
 ens_params <- get_params(model_info, n_ens)
 # years of analysis:
 years <- 2017:2023
 n_yr <- 1:(length(years)-1)
+# use taskid to select proper years for model run:
+i = model_jobs$year_run[task_id]
 
 # making list for results from every year being "re-forecast":
 if (model_num != 2){
-  reforecast_list <- list()
-  for (i in n_yr){
-    reforecast_list[[i]] <- run_forecast_3_var(start = years[i], end = last(years), ns = ns, n_ens = n_ens, params = ens_params, yr = i)
-  }
-  save(reforecast_list, file = paste0("Recovery_Forecasts/", Sys.Date(), "_model_", as.character(model_num), "_reforecast_result.RData"))
+  reforecast <- run_forecast_3_var(start = years[i], 
+                                   end = last(years), 
+                                   ns = ns, 
+                                   n_ens = n_ens, 
+                                   params = ens_params, 
+                                   yr = i)
+  save(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+                                 "ens_", as.character(n_ens),
+                                 "_model_", as.character(model_num), 
+                                 "start_year_", as.character(year[i]),
+                                 "_reforecast_result.RData"))
 } else if (model_num == 2){
-  reforecast_list <- list()
-  for (i in n_yr){
-    reforecast_list[[i]] <- run_forecast_4_var(start = years[i], end = last(years), ns = ns, n_ens = n_ens, params = ens_params, yr = i)
-  }
-  save(reforecast_list, file = paste0("Recovery_Forecasts/", Sys.Date(), "_model_", as.character(model_num), "_reforecast_result.RData"))
+  reforecast <- run_forecast_4_var(start = years[i], 
+                                   end = last(years), 
+                                   ns = ns, 
+                                   n_ens = n_ens, 
+                                   params = ens_params, 
+                                   yr = i)
+  save(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+                                 "ens_", as.character(n_ens),
+                                 "_model_", as.character(model_num), 
+                                 "start_year_", as.character(year[i]),
+                                 "_reforecast_result.RData"))
 }
 
 
