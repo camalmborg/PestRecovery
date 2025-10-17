@@ -169,7 +169,7 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
 # number of sites:
 ns = 5000
 # number of ensemble members:
-n_ens = 1500
+n_ens = 2500
 
 # get sampled parameters: nrow = n_ens
 ens_params <- get_params(model_info, n_ens)
