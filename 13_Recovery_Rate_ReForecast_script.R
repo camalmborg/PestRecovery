@@ -195,7 +195,7 @@ if (model_num != 2){
   write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                  "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
-                                 "_start_year_", as.character(year[i]),
+                                 "_start_year_", as.character(years[i]),
                                  "_reforecast_result.csv"),
             row.names = FALSE)
 } else if (model_num == 2){
@@ -208,7 +208,7 @@ if (model_num != 2){
   write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                  "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
-                                 "_start_year_", as.character(year[i]),
+                                 "_start_year_", as.character(years[i]),
                                  "_reforecast_result.csv"),
             row.names = FALSE)
 }
