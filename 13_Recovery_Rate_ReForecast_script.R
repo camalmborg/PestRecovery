@@ -192,11 +192,12 @@ if (model_num != 2){
                                    n_ens = n_ens, 
                                    params = ens_params, 
                                    yr = i)
-  save(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
-                                 "ens_", as.character(n_ens),
+  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+                                 "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
-                                 "start_year_", as.character(year[i]),
-                                 "_reforecast_result.RData"))
+                                 "_start_year_", as.character(year[i]),
+                                 "_reforecast_result.csv"),
+            row.names = FALSE)
 } else if (model_num == 2){
   reforecast <- run_forecast_4_var(start = years[i], 
                                    end = last(years), 
@@ -204,11 +205,12 @@ if (model_num != 2){
                                    n_ens = n_ens, 
                                    params = ens_params, 
                                    yr = i)
-  save(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
-                                 "ens_", as.character(n_ens),
+  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+                                 "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
-                                 "start_year_", as.character(year[i]),
-                                 "_reforecast_result.RData"))
+                                 "_start_year_", as.character(year[i]),
+                                 "_reforecast_result.csv"),
+            row.names = FALSE)
 }
 
 
