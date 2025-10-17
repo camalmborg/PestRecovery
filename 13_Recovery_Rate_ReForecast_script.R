@@ -10,6 +10,8 @@ dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs
 setwd(dir)
 # load model performance information:
 dic_sort <- read.csv("2025_10_06_all_recov_models_dics.csv", row.names = 1)
+# load model params:
+load("Recovery_Forecasts/model_params_list.RData")
 # data.frame of model jobs:
 model_jobs <- data.frame(task_id = 1:18, 
                          model_num = c(rep(1,6), rep(2, 6), rep(3,6)),
@@ -60,7 +62,7 @@ get_params <- function(model_info, n_ens){
   taus <- grep("tau", colnames(posterior))
   r <- grep("r0", colnames(posterior))
   tau_time <- grep("at", colnames(posterior))
-  x_ic <- grep("^x\\[[0-9+,1\\]", colnames(posterior))
+  x_ic <- grep("^x", colnames(posterior))
   # group them:
   params <- cbind(posterior[,beta_params], posterior[,taus], posterior[,tau_time], r = posterior[,r], posterior[,x_ic])
   # sample:
@@ -105,7 +107,7 @@ run_forecast_3_var <- function(start, end, ns, n_ens, params, yr){
       c_two = cov_two[s,]
       c_three = cov_three[s]
       # x_ic:
-      x_ic <- grep(paste0("^x\\[[0-9+,", as.character(yr), "\\]"), colnames(params))
+      x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(params))
       N[,1] <- params[n_ens, x_ic][s]
       
       # loop over time:
@@ -152,7 +154,7 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
       c_three = cov_three[s,]
       c_four = cov_four[s]
       # x_ic:
-      x_ic <- grep(paste0("^x\\[[0-9+,", as.character(yr), "\\]"), colnames(params))
+      x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(ens_params))
       N[,1] <- params[n_ens, x_ic][s]
       
       # loop over time:
@@ -174,10 +176,11 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
 # number of sites:
 ns = 5000
 # number of ensemble members:
-n_ens = 2500
+n_ens = 1500
 
-# get sampled parameters: nrow = n_ens
-ens_params <- get_params(model_info, n_ens)
+# get sampled parameters: 
+ens_params <- model_params[[model_num]]  # for these runs, using pre-sampled to make sure all time horizons have the same parameters for each model
+#ens_params <- read.csv(paste0("Recovery_Forecasts/model_", as.character(model_num), "_params.csv"))
 # years of analysis:
 years <- 2017:2023
 n_yr <- 1:(length(years)-1)
