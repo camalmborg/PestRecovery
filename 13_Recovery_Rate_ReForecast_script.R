@@ -181,6 +181,7 @@ n_ens = 1500
 # get sampled parameters: 
 ens_params <- model_params[[model_num]]  # for these runs, using pre-sampled to make sure all time horizons have the same parameters for each model
 #ens_params <- read.csv(paste0("Recovery_Forecasts/model_", as.character(model_num), "_params.csv"))
+#ens_params <- get_params(model_info, n_ens)
 # years of analysis:
 years <- 2017:2023
 n_yr <- 1:(length(years)-1)
@@ -195,11 +196,11 @@ if (model_num != 2){
                                    n_ens = n_ens, 
                                    params = ens_params, 
                                    yr = i)
-  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+  saveRDS(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                  "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
                                  "_start_year_", as.character(years[i]),
-                                 "_reforecast_result.csv"),
+                                 "_reforecast_result.rds"),
             row.names = FALSE)
 } else if (model_num == 2){
   reforecast <- run_forecast_4_var(start = years[i], 
@@ -208,11 +209,11 @@ if (model_num != 2){
                                    n_ens = n_ens, 
                                    params = ens_params, 
                                    yr = i)
-  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+  saveRDS(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                  "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
                                  "_start_year_", as.character(years[i]),
-                                 "_reforecast_result.csv"),
+                                 "_reforecast_result.rds"),
             row.names = FALSE)
 }
 
