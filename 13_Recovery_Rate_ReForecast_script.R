@@ -106,6 +106,13 @@ run_forecast_3_var <- function(start, end, ns, n_ens, params, yr){
       c_one = cov_one[s,]
       c_two = cov_two[s,]
       c_three = cov_three[s]
+      
+      # deal with missing data:
+      if(is.na(c_three)){
+        # fill in missing data:
+        c_three <- rnorm(1, mean = model_info$metadata$model_data$mis_s, sd = model_info$metadata$model_data$mis_t)
+      }
+      
       # x_ic:
       x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(params))
       N[,1] <- params[n_ens, x_ic][s]
@@ -153,6 +160,13 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
       c_two = cov_two[s,]
       c_three = cov_three[s,]
       c_four = cov_four[s]
+      
+      # deal with missing data:
+      if(is.na(c_four)){
+        # missing data:
+        c_four <- rnorm(1, mean = model_info$metadata$model_data$mis_s, sd = model_info$metadata$model_data$mis_t)
+      }
+      
       # x_ic:
       x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(ens_params))
       N[,1] <- params[n_ens, x_ic][s]
@@ -196,11 +210,11 @@ if (model_num != 2){
                                    n_ens = n_ens, 
                                    params = ens_params, 
                                    yr = i)
-  saveRDS(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                  "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
                                  "_start_year_", as.character(years[i]),
-                                 "_reforecast_result.rds"),
+                                 "_reforecast_result.csv"),
             row.names = FALSE)
 } else if (model_num == 2){
   reforecast <- run_forecast_4_var(start = years[i], 
@@ -209,11 +223,11 @@ if (model_num != 2){
                                    n_ens = n_ens, 
                                    params = ens_params, 
                                    yr = i)
-  saveRDS(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                  "_ens_", as.character(n_ens),
                                  "_model_", as.character(model_num), 
                                  "_start_year_", as.character(years[i]),
-                                 "_reforecast_result.rds"),
+                                 "_reforecast_result.csv"),
             row.names = FALSE)
 }
 
