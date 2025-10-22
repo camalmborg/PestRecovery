@@ -26,8 +26,12 @@ get_ens_params <- function(model_num, n_ens){
   # load the best model:
   load(paste0(dir, "model_runs/", models[as.numeric(top_model)]))
   ## Sample parameters from the model posterior
+  # remove burn in:
+  jags_out <- model_info$jags_out
+  burn_in = 50000
+  jags_burn <- window(jags_out, start = burn_in) 
   # get parameters from model output:
-  posterior <- as.matrix(model_info$jags_out)
+  posterior <- as.matrix(jags_burn)
   # random sample of an entire row:
   sample <- sample(1:nrow(posterior), n_ens, replace = FALSE)
   # make them the right objects to go into the forecast:
