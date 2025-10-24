@@ -9,22 +9,25 @@ library(scoringRules)
 # set working directory:
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/"
 setwd(dir)
+  
+# load model forecast files:
+files <- list.files(pattern = "result.csv$")
+model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
+# get years of analysis:
+start_year <- as.numeric(stringr::str_extract(files[model_num], "(?<=start_year_)\\d+"))
+years <- start_year:2023
+# loading predicted forecast values file:
+model_out <- read.csv(files[model_num])
+pred <- model_out %>%
+  # rename columns with years:
+  rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
+
 # load observation data:
-years <- 2017:2023
 tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
   # select columns with observations for 2017-2023:
   select(matches(as.character(years))) %>%
   # rename columns for years:
   rename_with(~ as.character(years)[seq_along(.)])
-  
-# load model forecast files:
-files <- list.files(pattern = "result.csv$")
-model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
-# loading test file:
-model_out <- read.csv(files[model_num])
-pred <- model_out %>%
-  # rename columns with years:
-  rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
 
 ## Get CRPS scores for ensemble model
 # make matrix to hold scores:
@@ -50,6 +53,23 @@ for (s in site){
   }
 }
 
+crps_means <- crps_scores %>%
+  # take mean across sites:
+  summarise(across(., mean, na.rm = TRUE))
+
+## Saving results
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/CRPS/"
+# select information from model name to match file names from forecasts:
+model <- stringr::str_extract(files[model_num], "(?<=model_)\\d+")
+# file name:
+crps_run <- write.csv(crps_scores, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_crps_result_all_sites.csv"))
+
+
+# plot(1:ncol(crps_scores), log10(crps_scores[1,]), type = "l")
+# for (i in 2:nrow(crps_scores)){
+#   lines(1:ncol(crps_scores), log10(crps_scores[i,]), type = "l")
+# }
+  
 
 # # get observed value for each site:
 # year = years[1]
