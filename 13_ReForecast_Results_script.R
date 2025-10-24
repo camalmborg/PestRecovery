@@ -53,37 +53,24 @@ for (s in site){
   }
 }
 
-crps_scores_df <- as.data.frame(crps_scores)
-crps_means <- crps_scores %>%
+crps_means <- as.data.frame(crps_scores) %>%
   # take mean across sites:
-  summarise(across(everything(), mean, na.rm = TRUE))
+  summarise_all(., mean, na.rm = TRUE)
 
 ## Saving results
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/CRPS/"
 # select information from model name to match file names from forecasts:
 model <- stringr::str_extract(files[model_num], "(?<=model_)\\d+")
 # file name:
-crps_run <- write.csv(crps_scores, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_crps_result_all_sites.csv"))
+write.csv(crps_scores, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_crps_result_all_sites.csv"))
+write.csv(crps_means, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_crps_result_across_site_means.csv"))
 
 
+
+### ARCHIVE ###
 # plot(1:ncol(crps_scores), log10(crps_scores[1,]), type = "l")
 # for (i in 2:nrow(crps_scores)){
 #   lines(1:ncol(crps_scores), log10(crps_scores[i,]), type = "l")
 # }
   
 
-# # get observed value for each site:
-# year = years[1]
-# site = 1
-# obs <- tcg[site, as.character(year)]
-# ens <- testing[testing$site == 1, as.character(year)]
-# crps <- scoringRules::crps_sample(y = obs, dat = ens)
-  
-# testing <- test %>%
-#   group_by(site) %>% 
-#  # summarise_all(., mean, na.rm = TRUE) %>%
-#   summarise_all(list(min, max, mean, na.rm = TRUE))
-
-# means <- apply(test, 2, mean, na.rm = TRUE)
-# lower <- apply(test, 2, quantile, probs = c(0.05), na.rm = TRUE)
-# upper <- apply(test, 2, quantile, probs = c(0.95), na.rm = TRUE)
