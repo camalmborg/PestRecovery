@@ -53,9 +53,10 @@ for (s in site){
   }
 }
 
+crps_scores_df <- as.data.frame(crps_scores)
 crps_means <- crps_scores %>%
   # take mean across sites:
-  summarise(across(., mean, na.rm = TRUE))
+  summarise(across(everything(), mean, na.rm = TRUE))
 
 ## Saving results
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/CRPS/"
