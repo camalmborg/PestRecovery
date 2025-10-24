@@ -73,7 +73,7 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space
 model <- stringr::str_extract(files[model_num], "(?<=model_)\\d+")
 # file name and save:
 write.csv(resids, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_resids_raw_all_sites.csv"))
-write.csv(resid_results, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_rmse_mae_bias.csv"))
+write.csv(resid_result, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_rmse_mae_bias.csv"))
 
 
 ### Archive ###
