@@ -2,6 +2,7 @@
 
 ## Load libraries
 library(dplyr)
+library(tidyverse)
 library(stringr)
 
 ## Loading CRPS and Bias run results
@@ -44,6 +45,36 @@ for (i in 1:length(crps_load)){
 crps_all <- as.data.frame(crps_all)
 crps_all$Model <- model_names
 
-## Plotting:
+## Plotting CRPS
+# x <- colnames(crps_all)[-1]
+# y <- log10(crps_all[1, 2:ncol(crps_all)])
+# plot(x, y, type = "l")
+# for (i in 2:nrow(crps_all)){
+#   lines(x, log10(crps_all[i, 2:ncol(crps_all)]))
+# }
 
+## RMSE
+bias_load <- lapply(paste0(rmse_dir, rmse_files), read.csv)
+# identify the maximum col num:
+max_col <- max(sapply(bias_load, ncol))
+# colnames: 
+columns <- c("Model", "Metric", as.character(2017:2023))
+# metric:
+metric <- c("RMSE", "MAE", "Bias")
+
+# loading one:
+i = 1
+
+# select name:
+name <- rmse_files[i]
+name_extract <- str_extract(name, "(?<=_model_).*?(?=_rmse)")
+# add name to column
+model_names[i] <- name_extract
+bias <- bias_load[[i]] %>%
+  rename(Metric = 1) %>%
+  rename_with(~ str_replace_all(., c("X" = ""))) %>%
+  pivot_longer(
+    cols = starts_with("2"),
+    names_to = "Year",
+    values_to = "Score")
 
