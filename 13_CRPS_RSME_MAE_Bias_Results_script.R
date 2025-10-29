@@ -53,7 +53,8 @@ crps_all$Model <- model_names
 #   lines(x, log10(crps_all[i, 2:ncol(crps_all)]))
 # }
 
-## RMSE
+## RMSE, MAE, and Bias
+# load files:
 bias_load <- lapply(paste0(rmse_dir, rmse_files), read.csv)
 # identify the maximum col num:
 max_col <- max(sapply(bias_load, ncol))
@@ -62,19 +63,62 @@ columns <- c("Model", "Metric", as.character(2017:2023))
 # metric:
 metric <- c("RMSE", "MAE", "Bias")
 
-# loading one:
-i = 1
+# how to make it into one dataframe:
+rmse_all <- matrix(data = NA, nrow = length(bias_load), ncol = max_col + 1)
+mae_all <- matrix(data = NA, nrow = length(bias_load), ncol = max_col + 1)
+bias_all <- matrix(data = NA, nrow = length(bias_load), ncol = max_col + 1)
+colnames(rmse_all) <- columns
+colnames(mae_all) <- columns
+colnames(bias_all) <- columns
+model_names <- c()
 
-# select name:
-name <- rmse_files[i]
-name_extract <- str_extract(name, "(?<=_model_).*?(?=_rmse)")
-# add name to column
-model_names[i] <- name_extract
-bias <- bias_load[[i]] %>%
-  rename(Metric = 1) %>%
-  rename_with(~ str_replace_all(., c("X" = ""))) %>%
-  pivot_longer(
-    cols = starts_with("2"),
-    names_to = "Year",
-    values_to = "Score")
+# loading one:
+#i = 1
+# loop to fill in matrices:
+for (i in 1:length(bias_load)){
+  # select name:
+  name <- rmse_files[i]
+  name_extract <- str_extract(name, "(?<=_model_).*?(?=_rmse)")
+  # add name to column
+  model_names[i] <- name_extract
+  # separate all bias data:
+  all_bias <- bias_load[[i]] %>%
+    rename(Metric = 1) %>%
+    rename_with(~ str_replace_all(., c("X" = ""))) %>%
+    pivot_longer(
+      cols = starts_with("2"),
+      names_to = "Year",
+      values_to = "Score")
+  # select each group:
+  rmse <- all_bias %>%
+    filter(Metric == "RMSE") %>%
+    pivot_wider(names_from = Year,
+                values_from = Score) %>%
+    select(-Metric)
+  mae <- all_bias %>%
+    filter(Metric == "MAE") %>%
+    pivot_wider(names_from = Year,
+                values_from = Score) %>%
+    select(-Metric)
+  bias <- all_bias %>%
+    filter(Metric == "Bias") %>%
+    pivot_wider(names_from = Year,
+                values_from = Score) %>%
+    select(-Metric)
+  # put it in the matrix:
+  for (j in colnames(rmse)){
+    rmse_all[i, j] <- suppressWarnings(as.numeric(rmse[,j]))
+    mae_all[i, j] <- suppressWarnings(as.numeric(mae[,j]))
+    bias_all[i, j] <- suppressWarnings(as.numeric(bias[,j]))
+  }
+}
+rmse_all <- as.data.frame(rmse_all)
+mae_all <- as.data.frame(mae_all)
+bias_all <- as.data.frame(bias_all)
+rmse_all$Model <- model_names
+rmse_all$Metric <- "RMSE"
+mae_all$Model <- model_names
+mae_all$Metric <- "MAE"
+bias_all$Model <- model_names
+bias_all$Metric <- "Bias"
 
