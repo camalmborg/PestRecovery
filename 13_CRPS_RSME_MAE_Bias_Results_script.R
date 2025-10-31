@@ -122,3 +122,49 @@ mae_all$Metric <- "MAE"
 bias_all$Model <- model_names
 bias_all$Metric <- "Bias"
 
+## Plotting RSME
+# x <- colnames(rmse_all)[-c(1,2)]
+# y <- log10(rmse_all[1, 3:ncol(rmse_all)])
+# plot(x, y, type = "l")
+# for (i in 2:nrow(rmse_all)){
+#   lines(x, log10(rmse_all[i, 3:ncol(rmse_all)]))
+# }
+
+## Preparing data for score vs lead time and score vs 1-year lag plots
+
+# function for getting results:
+#'@param test = crps/rmse/mae/bias data
+#'@param starts = character object with years being forecast 
+get_plot_data <- function(test, starts){
+  result <- test %>%
+    # add column for model number for indexing:
+    mutate(model_num = as.numeric(substr(result$Model, start = 1, stop = 1)), .after = 1)
+  # make empty matrix to fill with diagonals:
+  plots <- matrix(NA, nrow = length(starts)*3, ncol = length(starts))
+  for (i in 1:nrow(plots)){
+    model_num <- result$model_num[i]
+    get_years <- result[i, grep("2", colnames(result))]
+    nas <- which(is.na(get_years)) 
+    if (length(nas) > 0){
+      casts <- result[result$model_num == model_num, starts[-nas]]
+    } else {
+      casts <- result[result$model_num == model_num, starts]
+    }
+    diag <- diag(as.matrix(casts))
+    plots[i,1:length(diag)] <- diag
+  }
+  colnames(plots) <- starts
+  # get diagonal means and one-year lags:
+  plot_data <- as.data.frame(plots) %>%
+    mutate(model_num = result$model_num, .before = 1) %>%
+    mutate(diag_mean = rowMeans(select(., -1), na.rm = TRUE))
+  nums <- which(complete.cases(plot_data))
+  plot_data$yr_one_lag <- c(plots[nums[1],], plots[nums[2],], plots[nums[3],])
+  plot_data <- plot_data[,-grep("2", colnames(plot_data))]
+}
+
+# Run a test version:
+# years of forecasts:
+starts <- as.character(2018:2023)
+test <- crps_all
+crps_plot <- get_plot_data(test, starts)
