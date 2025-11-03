@@ -148,8 +148,10 @@ get_plot_data <- function(test, starts){
   nums <- which(complete.cases(plot_data))
   plot_data$yr_one_lag <- c(plots[nums[1],], plots[nums[2],], plots[nums[3],])
   # years for each:
+  n_years <- rep(1:length(starts), 3)
   cast_years <- rep(starts, 3)
-  plot_data$year <- cast_years
+  plot_data$year <- n_years
+  plot_data$cast_year <- cast_years
   # make plot data:
   plot_data <- plot_data[,-grep("2", colnames(plot_data))]
 }
@@ -163,7 +165,7 @@ mae_plot_data <- get_plot_data(mae_all, starts)
 bias_plot_data <- get_plot_data(bias_all, starts)
 
 ## Making Plots
-# diagonal means:
+# diagonal means (metric vs lead time):
 crps_plot <- ggplot(crps_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(size = 0.5) +
   geom_point(size = 1.5) +
@@ -184,23 +186,23 @@ bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.fact
   geom_point(size = 1.5) +
   theme_bw()
 
-# year logs:
-crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+# metric vs year logs:
+crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(size = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
-rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(size = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
-mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(size = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
-bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(size = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
