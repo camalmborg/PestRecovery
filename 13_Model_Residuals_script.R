@@ -10,22 +10,24 @@ library(ggplot2)
 library(tigris)
 
 # load environment if needed:
-load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_07_07_environment.RData")
+#load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_07_07_environment.RData")
 
 ## set working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
+# load model performance information:
+dic_sort <- read.csv("2025_10_06_all_recov_models_dics.csv", row.names = 1)
 
 ## Load Best Model
 # all model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
 # best model:
-best <- 38  # also important: 42, 29, 7
+best <- dic_sort$model_number[1]
 best_model <- models[best] 
 # load model:
 load(paste0(dir, "model_runs/", best_model))
 # load model_params:
-model_params <- read.csv(file = "2025_09_03_all_recov_models_param_means.csv")
+model_params <- read.csv(file = "2025_10_06_all_recov_models_param_means.csv")
 
 ## Get Model Information and Data
 # get parameter values:
@@ -41,69 +43,20 @@ if (grepl("cov", name) == TRUE){
 # load model inputs:
 model_inputs <- model_info$metadata$model_data
 
-## Extract Model Parameters:
-# model output:
-jags_out <- model_info$jags_out
-# model parameter names:
-jags_vars <- varnames(jags_out)
-params <- jags_out[,grep("x|r|R|^tau|^b|^at", jags_vars)]
-# remove burn in:
-burn_in = 25000
-params_burn <- window(params, start = burn_in)
-# convert output to dataframe:
-params_out <- as.data.frame(as.matrix(params_burn))
-# separate out specific params:
-x_params <- grep("^x", colnames(params_out))
-beta_params <- grep("^b",colnames(params_out))
-taus <- grep("tau", colnames(params_out))
-r_ints <- grep("r0", colnames(params_out))
-r_rates <- grep("R", colnames(params_out))
-# extract:
-model_x <- params_out[,x_params]
-x_ci <- apply(model_x, 2, quantile, c(0.05, 0.5, 0.95))
-x_cols <- colnames(x_ci)
-x_means <- matrix(NA, nrow = 5000, ncol = 6)
-for (i in 1:nrow(x_means)){
-  # get correct columns for each row:
-  cols <- which(!is.na(str_match(x_cols, paste0(paste0("x\\[", i, ",")))))
-  # get values:
-  col_values <- x_ci[2, cols]
-  # fill in table:
-  x_means[i, 1:6] <- col_values[1:6]
-}
-# beta parameters:
-beta_one <- best_params$beta.1.
-beta_two <- best_params$beta.2.
-# tau parameters (convert sd = 1/precision):
-tau_obs <- 1/best_params$tau_obs
-tau_add <- 1/best_params$tau_add
-# time random effect parameters:
-a_times <- c(best_params$atime.1., best_params$atime.2., best_params$atime.3.,
-            best_params$atime.4., best_params$atime.5., best_params$atime.6.)
-# recovery rate intercept:
-r_int <- best_params$r0
-# starting TCG:
-x_init <- tcg %>%
-  select(`2017-05-01`:`2022-05-01`) %>%
-  as.matrix()
-# covariates:
-cov_one <- as.matrix(model_inputs$cov_one)
-cov_two <- as.matrix(model_inputs$cov_two)
-
-## Prepare to run forward in time:
-y_pred <- matrix(NA, nrow = 5000, ncol = 6)
-for (i in 1:nrow(y_pred)){
-  for(j in 1:ncol(y_pred)){
-    R <- r_int + a_times[j] + (beta_one*cov_one[i, j]) + (beta_two*cov_two[i])
-    mu <- R * x_init[i,j]
-    y_pred[i,j] <- mu
-  }
-}
+## Load forecast result
+forecast <- read.csv("Recovery_Forecasts/2025-10-23_ens_1500_model_1_start_year_2017_reforecast_result.csv")
+# prepare for residual calculation:
+y_pred <- forecast %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>%
+  select(-c(site, V1))
+  
 
 ## Residual calculation
 # get the model input for y and covariates:
 y <- tcg %>% select(`2018-05-01`:`2023-05-01`)
-resid <- as.data.frame(y_pred) - y
+resid <- y_pred - y
 colnames(resid) <- paste0("year_", seq(1, ncol(resid), length.out = ncol(resid)))
 
 
@@ -283,3 +236,63 @@ plot(cor_lags$lag, cor_lags$cor)
 # cg <- spatial::correlogram(surf, 1000, xlim = c(0,1))
 
 # repeat for each year
+
+# # extract:
+# model_x <- params_out[,x_params]
+# x_ci <- apply(model_x, 2, quantile, c(0.05, 0.5, 0.95))
+# x_cols <- colnames(x_ci)
+# x_means <- matrix(NA, nrow = 5000, ncol = 6)
+# for (i in 1:nrow(x_means)){
+#   # get correct columns for each row:
+#   cols <- which(!is.na(str_match(x_cols, paste0(paste0("x\\[", i, ",")))))
+#   # get values:
+#   col_values <- x_ci[2, cols]
+#   # fill in table:
+#   x_means[i, 1:6] <- col_values[1:6]
+# }
+
+# ## Extract Model Parameters:
+# # model output:
+# jags_out <- model_info$jags_out
+# # model parameter names:
+# jags_vars <- varnames(jags_out)
+# params <- jags_out[,grep("x|r|R|^tau|^b|^at", jags_vars)]
+# # remove burn in:
+# burn_in = 50000
+# params_burn <- window(params, start = burn_in)
+# # convert output to dataframe:
+# params_out <- as.data.frame(as.matrix(params_burn))
+# # separate out specific params:
+# x_params <- grep("^x", colnames(params_out))
+# beta_params <- grep("^b",colnames(params_out))
+# taus <- grep("tau", colnames(params_out))
+# r_ints <- grep("r0", colnames(params_out))
+# r_rates <- grep("R", colnames(params_out))
+# # beta parameters:
+# beta_one <- best_params$beta.1.
+# beta_two <- best_params$beta.2.
+# beta_three <- best_params$beta.3.
+# # tau parameters (convert sd = 1/precision):
+# tau_obs <- 1/best_params$tau_obs
+# tau_add <- 1/best_params$tau_add
+# # time random effect parameters:
+# a_times <- c(best_params$atime.1., best_params$atime.2., best_params$atime.3.,
+#              best_params$atime.4., best_params$atime.5., best_params$atime.6.)
+# # recovery rate intercept:
+# r_int <- best_params$r0
+# # starting TCG:
+# x_init <- model_info$jags_out
+# 
+# # covariates:
+# cov_one <- as.matrix(model_inputs$cov_one)
+# cov_two <- as.matrix(model_inputs$cov_two)
+# 
+# ## Prepare to run forward in time:
+# y_pred <- matrix(NA, nrow = 5000, ncol = 6)
+# for (i in 1:nrow(y_pred)){
+#   for(j in 1:ncol(y_pred)){
+#     R <- r_int + a_times[j] + (beta_one*cov_one[i, j]) + (beta_two*cov_two[i])
+#     mu <- R * x_init[i,j]
+#     y_pred[i,j] <- mu
+#   }
+# }

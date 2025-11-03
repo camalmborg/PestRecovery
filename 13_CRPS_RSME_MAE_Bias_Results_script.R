@@ -4,6 +4,8 @@
 library(dplyr)
 library(tidyverse)
 library(stringr)
+library(ggplot2)
+library(patchwork)
 
 ## Loading CRPS and Bias run results
 # working directories:
@@ -44,14 +46,6 @@ for (i in 1:length(crps_load)){
 }
 crps_all <- as.data.frame(crps_all)
 crps_all$Model <- model_names
-
-## Plotting CRPS
-# x <- colnames(crps_all)[-1]
-# y <- log10(crps_all[1, 2:ncol(crps_all)])
-# plot(x, y, type = "l")
-# for (i in 2:nrow(crps_all)){
-#   lines(x, log10(crps_all[i, 2:ncol(crps_all)]))
-# }
 
 ## RMSE, MAE, and Bias
 # load files:
@@ -122,16 +116,8 @@ mae_all$Metric <- "MAE"
 bias_all$Model <- model_names
 bias_all$Metric <- "Bias"
 
-## Plotting RSME
-# x <- colnames(rmse_all)[-c(1,2)]
-# y <- log10(rmse_all[1, 3:ncol(rmse_all)])
-# plot(x, y, type = "l")
-# for (i in 2:nrow(rmse_all)){
-#   lines(x, log10(rmse_all[i, 3:ncol(rmse_all)]))
-# }
 
 ## Preparing data for score vs lead time and score vs 1-year lag plots
-
 # function for getting results:
 #'@param test = crps/rmse/mae/bias data
 #'@param starts = character object with years being forecast 
@@ -158,13 +144,87 @@ get_plot_data <- function(test, starts){
   plot_data <- as.data.frame(plots) %>%
     mutate(model_num = result$model_num, .before = 1) %>%
     mutate(diag_mean = rowMeans(select(., -1), na.rm = TRUE))
+  # which have all years:
   nums <- which(complete.cases(plot_data))
   plot_data$yr_one_lag <- c(plots[nums[1],], plots[nums[2],], plots[nums[3],])
+  # years for each:
+  cast_years <- rep(starts, 3)
+  plot_data$year <- cast_years
+  # make plot data:
   plot_data <- plot_data[,-grep("2", colnames(plot_data))]
 }
 
-# Run a test version:
 # years of forecasts:
 starts <- as.character(2018:2023)
-test <- crps_all
-crps_plot <- get_plot_data(test, starts)
+# use function:
+crps_plot_data <- get_plot_data(crps_all, starts)
+rmse_plot_data <- get_plot_data(rmse_all, starts)
+mae_plot_data <- get_plot_data(mae_all, starts)
+bias_plot_data <- get_plot_data(bias_all, starts)
+
+## Making Plots
+# diagonal means:
+crps_plot <- ggplot(crps_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+mae_plot <- ggplot(mae_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+# year logs:
+crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1.5) +
+  theme_bw()
+
+
+# plot as a group:
+combine_plots <- ((crps_plot / rmse_plot / mae_plot / bias_plot) | (crps_yr_lag_plot / rmse_yr_lag_plot / mae_yr_lag_plot / bias_yr_lag_plot)) + 
+  plot_layout(guides = "collect") & theme(legend.position = "bottom")
+combine_plots
+
+### ARCHIVE ###
+
+## Plotting CRPS
+# x <- colnames(crps_all)[-1]
+# y <- log10(crps_all[1, 2:ncol(crps_all)])
+# plot(x, y, type = "l")
+# for (i in 2:nrow(crps_all)){
+#   lines(x, log10(crps_all[i, 2:ncol(crps_all)]))
+# }
+
+## Plotting RSME
+# x <- colnames(rmse_all)[-c(1,2)]
+# y <- log10(rmse_all[1, 3:ncol(rmse_all)])
+# plot(x, y, type = "l")
+# for (i in 2:nrow(rmse_all)){
+#   lines(x, log10(rmse_all[i, 3:ncol(rmse_all)]))
+# }
