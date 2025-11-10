@@ -88,7 +88,7 @@ for (t in 2:nt){
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
-# ### Random Effects:
+### Random Effects:
 atime[1] = 0                   # option 2: indexing for atime[0]
 for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
@@ -122,12 +122,7 @@ for (t in 2:nt){
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
-# ### Random Effects:
-# for (s in sites){
-#   asite[s] ~ dnorm(0, tausite)
-# }
-
-
+### Random Effects:
 atime[1] = 0                   # option 2: indexing for atime[0]
 for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
@@ -165,12 +160,7 @@ for (t in 2:nt){
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
-# ### Random Effects:
-# for (s in sites){
-#   asite[s] ~ dnorm(0, tausite)
-# }
-
-
+### Random Effects:
 atime[1] = 0                   # option 2: indexing for atime[0]
 for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
