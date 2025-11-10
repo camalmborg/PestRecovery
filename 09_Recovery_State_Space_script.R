@@ -24,7 +24,7 @@ r_start <- grep("^2018", names(tcg))
 r_end <- grep("^2023", names(tcg))
 recov_data <- as.matrix(tcg[,r_start:r_end])
 # time series length:
-time = 1:ncol(recov_data)
+time = 1:(ncol(recov_data) + 1)
 sites = 1:nrow(recov_data)
 # first x:
 x_miss <- mean(tcg[,grep("^2017",names(tcg))], na.rm = T)
@@ -138,7 +138,7 @@ for (s in sites){
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
+for (t in 2:nt){
   atime[t] ~ dnorm(0, tautime)
 }
 
@@ -219,7 +219,7 @@ for (t in 2:nt){
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
+for (t in 2:nt){
   atime[t] ~ dnorm(0, tautime)
 }
 
