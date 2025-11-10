@@ -115,7 +115,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + beta*cov[s] + atime[t-1] ##+ asite[s]
+    R[s,t] <- r0 + beta*cov[s] + atime[t-1]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
