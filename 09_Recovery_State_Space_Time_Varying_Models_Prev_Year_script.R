@@ -97,11 +97,6 @@ for (t in 2:nt){
 }
 
 # ### Random Effects:
-# for (s in sites){
-#   asite[s] ~ dnorm(0, tausite)
-# }
-
-
 atime[1] = 0                   # option 2: indexing for atime[0]
 for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
