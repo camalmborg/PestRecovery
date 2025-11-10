@@ -138,7 +138,7 @@ for (s in sites){
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:nt){
+for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
 }
 
@@ -219,7 +219,7 @@ for (t in 2:nt){
 
 
 atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:nt){
+for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
 }
 
@@ -296,12 +296,6 @@ for (t in 2:nt){
 for (s in sites){
   asite[s] ~ dnorm(0, tausite)
 }
-
-
-# atime[1] = 0                   # option 2: indexing for atime[0]
-# for (t in 2:(nt-1)){
-#   atime[t] ~ dnorm(0, tautime)
-# }
 
 ### Priors:
 r0 ~ dnorm(r_ic, r_prec)  # initial condition r

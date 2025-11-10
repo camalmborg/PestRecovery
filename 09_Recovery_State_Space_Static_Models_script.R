@@ -22,7 +22,7 @@ steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
 
 # data for model:
-r_start <- grep("^2018", names(tcg))
+r_start <- grep("^2017", names(tcg))
 r_end <- grep("^2023", names(tcg))
 recov_data <- as.matrix(tcg[,r_start:r_end])
 # time series length:
@@ -81,7 +81,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + beta*cov[s] + atime[t-1] ##+ asite[s]
+    R[s,t] <- r0 + beta*cov[s] + atime[t-1] 
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -89,11 +89,6 @@ for (t in 2:nt){
 }
 
 # ### Random Effects:
-# for (s in sites){
-#   asite[s] ~ dnorm(0, tausite)
-# }
-
-
 atime[1] = 0                   # option 2: indexing for atime[0]
 for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)

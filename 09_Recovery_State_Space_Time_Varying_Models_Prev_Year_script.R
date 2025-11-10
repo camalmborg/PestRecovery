@@ -1,4 +1,4 @@
-# recovery rate state space model script for non-static (time-varying) recovery models
+# recovery rate state space model script for non-static (time-varying previous year) recovery models
 # this script contains the code for running a jags model for estimating recovery rates
 
 # there will be 4 models, one for time-varying variable for univariate runs - growing season
@@ -28,7 +28,7 @@ steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
 
 # data for model:
-r_start <- grep("^2018", names(tcg))
+r_start <- grep("^2017", names(tcg))
 r_end <- grep("^2023", names(tcg))
 recov_data <- as.matrix(tcg[,r_start:r_end])
 # time series length:
@@ -89,7 +89,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta*cov[s,t-1] ##+ asite[s] 
+    R[s,t] <- r0 + atime[t-1] + beta*cov[s,t-1]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
