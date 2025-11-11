@@ -32,7 +32,7 @@ x_prec_miss <- sd(tcg[,grep("^2017", names(tcg))], na.rm = T)
 x1 <- tcg[,grep("2017", names(tcg))]
 x1[which(is.na(x1))] <- x_miss
 # x1 precision:
-x_prec <- 1/(sd_tcg[,grep("2017", names(sd_tcg))])
+x_prec <- 1/(sd_tcg[,grep("2017", names(sd_tcg))]^2)
 x_prec[which(is.na(x_prec))] <- 1/x_prec_miss
 x_prec[which(x_prec == Inf)] <- 1/x_prec_miss
 
