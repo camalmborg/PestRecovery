@@ -44,109 +44,6 @@ tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
 }"
 
-# one time-varying covariate, one static covariate:
-tv_stat_model <- "model{
-for (s in sites){
-
-### Data Model:
-  for (t in 1:nt){
-    y[s,t] ~ dnorm(x[s,t], tau_obs)
-  }
-
-### Process Model:
-for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
-    mu[s,t] <- R[s,t] * x[s,t-1]  
-    x[s,t] ~ dnorm(mu[s,t], tau_add)
-  }
-  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
-}
-
-### Random Effects:
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
-}
-
-### Priors:
-r0 ~ dnorm(r_ic, r_prec)  # initial condition r
-beta[1] ~ dnorm(b0, Vb) #initial beta
-beta[2] ~ dnorm(b00, Vbb)
-tau_obs ~ dgamma(t_obs, a_obs)
-tau_add ~ dgamma(t_add, a_add)
-tautime ~ dgamma(0.001, 0.001)
-}"
-
-# two static covariates:
-stat_model <- "model{
-for (s in sites){
-
-### Data Model:
-  for (t in 1:nt){
-    y[s,t] ~ dnorm(x[s,t], tau_obs)
-  }
-
-### Process Model:
-for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
-    mu[s,t] <- R[s,t] * x[s,t-1]  
-    x[s,t] ~ dnorm(mu[s,t], tau_add)
-  }
-  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
-}
-
-# Random Effects:
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
-}
-
-### Priors:
-r0 ~ dnorm(r_ic, r_prec)  # initial condition r
-beta[1] ~ dnorm(b0, Vb) #initial beta
-beta[2] ~ dnorm(b00, Vbb) #initial beta
-tau_obs ~ dgamma(t_obs, a_obs)
-tau_add ~ dgamma(t_add, a_add)
-tautime ~ dgamma(0.001, 0.001)
-}"
-
-# two static covariates with one having missing data:
-stat_miss_model <- "model{
-for (s in sites){
-
-### Data Model:
-  for (t in 1:nt){
-    y[s,t] ~ dnorm(x[s,t], tau_obs)
-  }
-
-### Process Model:
-for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
-    mu[s,t] <- R[s,t] * x[s,t-1]  
-    x[s,t] ~ dnorm(mu[s,t], tau_add)
-  }
-  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
-}
-
-### Random Effects:
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
-}
-
-### Priors:
-r0 ~ dnorm(r_ic, r_prec)  # initial condition r
-beta[1] ~ dnorm(b0, Vb) #initial beta
-beta[2] ~ dnorm(b00, Vbb) #initial beta
-tau_obs ~ dgamma(t_obs, a_obs)
-tau_add ~ dgamma(t_add, a_add)
-tautime ~ dgamma(0.001, 0.001)
-# missing data:
-for (s in miss){
- cov_one[s] ~ dnorm(mis_s, mis_t)
-  }
-}"
-
 # one time varying covariate and one static covariate with missing data:
 tv_stat_miss_model <- "model{
 for (s in sites){
@@ -628,3 +525,109 @@ state_space_model_run(model_data = model_data,
 #                       model_name = model_name[task_id])
 # 
 # 
+
+
+### ARCHIVE ###
+
+# # one time-varying covariate, one static covariate:
+# tv_stat_model <- "model{
+# for (s in sites){
+# 
+# ### Data Model:
+#   for (t in 1:nt){
+#     y[s,t] ~ dnorm(x[s,t], tau_obs)
+#   }
+# 
+# ### Process Model:
+# for (t in 2:nt){
+#     R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
+#     mu[s,t] <- R[s,t] * x[s,t-1]  
+#     x[s,t] ~ dnorm(mu[s,t], tau_add)
+#   }
+#   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
+# }
+# 
+# ### Random Effects:
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
+# 
+# ### Priors:
+# r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+# beta[1] ~ dnorm(b0, Vb) #initial beta
+# beta[2] ~ dnorm(b00, Vbb)
+# tau_obs ~ dgamma(t_obs, a_obs)
+# tau_add ~ dgamma(t_add, a_add)
+# tautime ~ dgamma(0.001, 0.001)
+# }"
+# 
+# # two static covariates:
+# stat_model <- "model{
+# for (s in sites){
+# 
+# ### Data Model:
+#   for (t in 1:nt){
+#     y[s,t] ~ dnorm(x[s,t], tau_obs)
+#   }
+# 
+# ### Process Model:
+# for (t in 2:nt){
+#     R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
+#     mu[s,t] <- R[s,t] * x[s,t-1]  
+#     x[s,t] ~ dnorm(mu[s,t], tau_add)
+#   }
+#   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
+# }
+# 
+# # Random Effects:
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
+# 
+# ### Priors:
+# r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+# beta[1] ~ dnorm(b0, Vb) #initial beta
+# beta[2] ~ dnorm(b00, Vbb) #initial beta
+# tau_obs ~ dgamma(t_obs, a_obs)
+# tau_add ~ dgamma(t_add, a_add)
+# tautime ~ dgamma(0.001, 0.001)
+# }"
+# 
+# # two static covariates with one having missing data:
+# stat_miss_model <- "model{
+# for (s in sites){
+# 
+# ### Data Model:
+#   for (t in 1:nt){
+#     y[s,t] ~ dnorm(x[s,t], tau_obs)
+#   }
+# 
+# ### Process Model:
+# for (t in 2:nt){
+#     R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
+#     mu[s,t] <- R[s,t] * x[s,t-1]  
+#     x[s,t] ~ dnorm(mu[s,t], tau_add)
+#   }
+#   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
+# }
+# 
+# ### Random Effects:
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
+# 
+# ### Priors:
+# r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+# beta[1] ~ dnorm(b0, Vb) #initial beta
+# beta[2] ~ dnorm(b00, Vbb) #initial beta
+# tau_obs ~ dgamma(t_obs, a_obs)
+# tau_add ~ dgamma(t_add, a_add)
+# tautime ~ dgamma(0.001, 0.001)
+# # missing data:
+# for (s in miss){
+#  cov_one[s] ~ dnorm(mis_s, mis_t)
+#   }
+# }"
