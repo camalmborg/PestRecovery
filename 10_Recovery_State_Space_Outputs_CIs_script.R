@@ -12,7 +12,7 @@ setwd(dir)
 
 ## Load model output files
 #model_params <- read.csv("2025_10_06_all_recov_models_param_means.csv")
-#load("2025_10_06_all_recov_models_outputs_list.RData")  # object is called model_outputs
+load("2025_11_12_uni_recov_models_outputs_list.RData")  # object is called model_outputs
 
 
 ## Calculating CIs for all models
@@ -89,7 +89,7 @@ model_results_CIs <- model_results_CIs %>%
 rm(model_results_CIs_cat)
 rm(model_results_CIs_multi)
 # save:
-write.csv(model_results_CIs, "2025_10_06_all_model_results_CIs.csv")
+write.csv(model_results_CIs, "2025_11_12_uni_model_results_CIs.csv")
 
 
 ## Ridge Plot for betas
@@ -100,8 +100,8 @@ library(viridis)
 library(hrbrthemes)
 
 # remove multis (fewer rows):
-full_model_outputs <- model_outputs
-model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
+#full_model_outputs <- model_outputs
+#model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
   
 # get the data together:
 beta_list <- list()
@@ -127,7 +127,7 @@ for (i in seq_along(model_outputs)) {
 }
 # unlist and combine:
 beta_ridges <- do.call(cbind, beta_list)
-rm(na_col, beta, n_rows, result)
+#rm(na_col, beta, n_rows, result)
 # rename columns for models:
 #colnames(beta_ridges)
 
@@ -179,7 +179,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.06, 0.05)) + # for all + post-dist
+  xlim(c(-0.069, 0.04)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +
@@ -192,7 +192,7 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-ggsave("2025_09_19_ridges_all_vars.png",
+ggsave("2025_11_12_ridges_uni_vars.png",
        plot = beta_ridge_plot,
        height = 8,
        width = 6,
@@ -208,6 +208,6 @@ model_beta_result <- data.frame(model = unique(beta_ridges_long$model), means = 
 model_beta_result <- model_beta_result[order(abs(model_beta_result$means), decreasing = TRUE),]
 model_beta_result$perform <- 1:nrow(model_beta_result)
 # print to plots tab:
-png("model_beta_results_all_vars.png")
+png("2025_11_12_model_beta_results_uni_vars.png")
 grid.table(model_beta_result)
 dev.off()
