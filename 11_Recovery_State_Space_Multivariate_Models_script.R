@@ -347,8 +347,8 @@ beta[3] ~ dnorm(b000, Vbbb) #initial beta 3
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
+}
 "
-
 # model names:
 model_name <- c("prcpyrlag_prcp_tmaxyrlag", "prcpyrlag_prcp_vpd", "prcpyrlag_prcp_tminyrlag", "prcpyrlag_tmaxyrlag_vpd")
 
