@@ -366,7 +366,7 @@ model_list[[3]] <- tv_tv_tv_model
 model_list[[4]] <- tv_tv_tv_model
 
 # setting task id for cluster runs:
-task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+#task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
 
 # model data object for missing data (all models in this run):
 model_data <- list(y = recov_data,
