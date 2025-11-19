@@ -408,7 +408,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s, t-1] + beta[3]*cov_three[s, t-1] + beta[4]*cov_four[s, t-1]
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s, t-1] + beta[3]*cov_three[s, t-1] + beta[4]*cov_four[s, t-1] + beta[5]*cov_five[s, t-1]
     mu[s,t] <- R[s,t] * x[s,t-1]
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -427,6 +427,7 @@ beta[1] ~ dnorm(b0, Vb) #initial beta
 beta[2] ~ dnorm(b00, Vbb) #initial beta 2
 beta[3] ~ dnorm(b000, Vbbb) #initial beta 3
 beta[4] ~dnorm(b0000, Vbbbb) #initial beta 4
+beta[5] ~ dnorm(b00000, Vbbbbb) # initial beta 5
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
@@ -435,14 +436,15 @@ tautime ~ dgamma(0.001, 0.001)
 "
 
 # model names:
-model_name <- c("prcpyrlag_prcp_tmaxyrlag_vpd")
+model_name <- c("prcpyrlag_prcp_tmaxyrlag_vpd_tminyrlag")
 
 # model data lists:
 input_data_list <- list()
 input_data_list[[1]] <- list(cov_one = model_covariates$prcp_year_lag,
                              cov_two = model_covariates$prcp,
                              cov_three = model_covariates$tmax_year_lag,
-                             cov_four = model_covariates$vpd)
+                             cov_four = model_covariates$vpd,
+                             cov_five = model_covariates$tmin_year_lag)
 
 # models:
 model_list <- list()
@@ -458,6 +460,7 @@ model_data <- list(y = recov_data,
                    cov_two = input_data_list[[task_id]]$cov_two,
                    cov_three = input_data_list[[task_id]]$cov_three,
                    cov_four = input_data_list[[task_id]]$cov_four,
+                   cov_five = input_data_list[[task_id]]$cov_five,
                    nt = length(time),
                    sites = sites,
                    t_obs = 0.001, a_obs = 0.001,
@@ -467,7 +470,8 @@ model_data <- list(y = recov_data,
                    b0 = 0, Vb = 0.001,
                    b00 = 0, Vbb = 0.001,
                    b000 = 0, Vbbb = 0.001,
-                   b0000 = 0, Vbbbb = 0.001)
+                   b0000 = 0, Vbbbb = 0.001,
+                   b00000 = 0, Vbbbbb = 0.001)
 # # missing data:
 # model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
 # model_data$mis_s = mean(dmag_data$steady, na.rm = T)
