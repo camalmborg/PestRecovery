@@ -13,9 +13,9 @@ setwd(dir)
 #model_params <- read.csv("2025_07_31_all_base_uni_recov_models_param_means.csv")
 #load("2025_07_31_recov_models_outputs_list.RData")  # object is called model_outputs
 # model files:
-models <- list.files(paste0(dir, "model_runs/Run_3/"))[grep("RData", list.files(paste0(dir, "model_runs/Run_3")))]
+models <- list.files(paste0(dir, "model_runs/"))[grep("RData", list.files(paste0(dir, "model_runs/")))]
 # best model:
-dic_sort <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_10_06_all_recov_models_dics.csv")
+dic_sort <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_11_17_multi_recov_models_dics.csv")
 
 ## Make sample time series for selected models:
 # base = dic_sort[which(dic_sort$covariate == "base"),]
@@ -30,7 +30,7 @@ best = models[m_num]
 #m_num <-  # change this when changing models
 model_pick <- models[m_num]
 # load model_info object
-load(paste0(dir, "model_runs/Run_3/", model_pick))
+load(paste0(dir, "model_runs/", model_pick))
 model_inputs <- model_info$metadata$model_data
 # model parameters:
 out <- as.matrix(model_info$jags_out)
@@ -98,8 +98,8 @@ plot(as.Date(names(obs), format = "%Y"), obs)
 
 ## Making Time Series
 # prepare model data:
-plot_data <- data.frame(date = as.numeric(names(obs))[-7],
-                        obs = as.numeric(obs)[-7],
+plot_data <- data.frame(date = as.numeric(names(obs)),
+                        obs = as.numeric(obs),
                         y_low = as.numeric(y_ci[1,]),
                         y_med = as.numeric(y_ci[2,]),
                         y_high = as.numeric(y_ci[3,]))
