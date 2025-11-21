@@ -9,7 +9,7 @@ library(coda)
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
 # load model performance information:
-dic_sort <- read.csv("2025_10_06_all_recov_models_dics.csv", row.names = 1)
+dic_sort <- read.csv("2025_11_21_all_recov_models_dics.csv", row.names = 1)
 # load model params:
 load("Recovery_Forecasts/model_params_list.RData")
 # data.frame of model jobs:
@@ -95,23 +95,16 @@ run_forecast_3_var <- function(start, end, ns, n_ens, params, yr){
       # betas:
       betas <- params[n_ens, c(grep("beta", colnames(params)))]
       # taus - convert to SD from 1/precision:
-      tau_obs <- 1/params[n_ens, c(grep("obs", colnames(params)))]
-      tau_add <- 1/params[n_ens, c(grep("add", colnames(params)))]
-      a_time <- c(0, 1/params[n_ens, c(grep("atime", colnames(params)))])
-      a_time[is.infinite(a_time)] <- 0  # fix Inf value from conversion to SD from precisions
+      tau_obs <- sqrt(1/params[n_ens, c(grep("obs", colnames(params)))])
+      tau_add <- sqrt(1/params[n_ens, c(grep("add", colnames(params)))])
+      a_time <- c(params[n_ens, c(grep("atime", colnames(params)))])
       # r0:
       r <- params[n_ens, c(grep("r", colnames(params)))]
       
       ## Run the forecast
       c_one = cov_one[s,]
       c_two = cov_two[s,]
-      c_three = cov_three[s]
-      
-      # deal with missing data:
-      if(is.na(c_three)){
-        # fill in missing data:
-        c_three <- rnorm(1, mean = model_info$metadata$model_data$mis_s, sd = model_info$metadata$model_data$mis_t)
-      }
+      c_three = cov_three[s,]
       
       # x_ic:
       x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(params))
@@ -119,7 +112,7 @@ run_forecast_3_var <- function(start, end, ns, n_ens, params, yr){
       
       # loop over time:
       for (t in 2:ncol(N)){
-        big_R <- r + a_time[t-1] + (betas[1]*c_one[,t-1]) + (betas[2]*c_two[,t-1]) + betas[3]*c_three
+        big_R <- r + a_time[t-1] + (betas[1]*c_one[,t-1]) + (betas[2]*c_two[,t-1]) + betas[3]*c_three[,t-1]
         N[i,t] <- rnorm(1, mean = N[i,t-1]*big_R, sd = tau_add)
       }
     }
@@ -148,10 +141,9 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
       # betas:
       betas <- params[n_ens, c(grep("beta", colnames(params)))]
       # taus - convert to SD from 1/precision:
-      tau_obs <- 1/params[n_ens, c(grep("obs", colnames(params)))]
-      tau_add <- 1/params[n_ens, c(grep("add", colnames(params)))]
-      a_time <- c(0, 1/params[n_ens, c(grep("atime", colnames(params)))])
-      a_time[is.infinite(a_time)] <- 0  # fix Inf value from conversion to SD from precisions
+      tau_obs <- sqrt(1/params[n_ens, c(grep("obs", colnames(params)))])
+      tau_add <- sqrt(1/params[n_ens, c(grep("add", colnames(params)))])
+      a_time <- c(params[n_ens, c(grep("atime", colnames(params)))])
       # r0:
       r <- params[n_ens, c(grep("r", colnames(params)))]
       
@@ -159,13 +151,7 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
       c_one = cov_one[s,]
       c_two = cov_two[s,]
       c_three = cov_three[s,]
-      c_four = cov_four[s]
-      
-      # deal with missing data:
-      if(is.na(c_four)){
-        # missing data:
-        c_four <- rnorm(1, mean = model_info$metadata$model_data$mis_s, sd = model_info$metadata$model_data$mis_t)
-      }
+      c_four = cov_four[s,]
       
       # x_ic:
       x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(ens_params))
@@ -173,7 +159,56 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
       
       # loop over time:
       for (t in 2:ncol(N)){
-        big_R <- r + a_time[t-1] + (betas[1]*c_one[,t-1]) + (betas[2]*c_two[,t-1]) + (betas[3]*c_three[,t-1]) + betas[4]*c_four
+        big_R <- r + a_time[t-1] + (betas[1]*c_one[,t-1]) + (betas[2]*c_two[,t-1]) + (betas[3]*c_three[,t-1]) + betas[4]*c_four[,t-1]
+        N[i,t] <- rnorm(1, mean = N[i,t-1]*big_R, sd = tau_add)
+      }
+    }
+    forecast_result[[s]] <- as.data.frame(N)
+    print(s)
+  }
+  # bind together:
+  forecast_result <- bind_rows(forecast_result, .id = "site")
+  return(forecast_result)
+}
+
+
+## For models with 4 variables (3 time-varying, one static) - e.g. model 2
+run_forecast_5_var <- function(start, end, ns, n_ens, params, yr){
+  # time steps:
+  nt = 1:(end-start)
+  # empty list to hold result:
+  forecast_result <- list()
+  # loop over sites:
+  for (s in 1:ns){
+    # matrix to hold results:
+    N <- matrix(NA, nrow = n_ens, ncol = length(nt)+1)
+    # loop over ensemble members:
+    for (i in 1:n_ens){
+      ## Prep params and inputs
+      # model parameters:
+      # betas:
+      betas <- params[n_ens, c(grep("beta", colnames(params)))]
+      # taus - convert to SD from 1/precision:
+      tau_obs <- sqrt(1/params[n_ens, c(grep("obs", colnames(params)))])
+      tau_add <- sqrt(1/params[n_ens, c(grep("add", colnames(params)))])
+      a_time <- c(params[n_ens, c(grep("atime", colnames(params)))])
+      # r0:
+      r <- params[n_ens, c(grep("r", colnames(params)))]
+      
+      ## Run the forecast
+      c_one = cov_one[s,]
+      c_two = cov_two[s,]
+      c_three = cov_three[s,]
+      c_four = cov_four[s,]
+      c_five = cov_five[s,]
+      
+      # x_ic:
+      x_ic <- grep(paste0("^x\\[[0-9]+,", yr, "\\]$"), colnames(ens_params))
+      N[,1] <- params[n_ens, x_ic][s]
+      
+      # loop over time:
+      for (t in 2:ncol(N)){
+        big_R <- r + a_time[t-1] + (betas[1]*c_one[,t-1]) + (betas[2]*c_two[,t-1]) + (betas[3]*c_three[,t-1]) + betas[4]*c_four[,t-1] + betas[5]*c_five[,t-1]
         N[i,t] <- rnorm(1, mean = N[i,t-1]*big_R, sd = tau_add)
       }
     }
@@ -203,7 +238,7 @@ n_yr <- 1:(length(years)-1)
 i = model_jobs$year_run[task_id]
 
 # making list for results from every year being "re-forecast":
-if (model_num != 2){
+if (length(cov_list) == 3){
   reforecast <- run_forecast_3_var(start = years[i], 
                                    end = last(years), 
                                    ns = ns, 
@@ -216,7 +251,7 @@ if (model_num != 2){
                                  "_start_year_", as.character(years[i]),
                                  "_reforecast_result.csv"),
             row.names = FALSE)
-} else if (model_num == 2){
+} else if (length(cov_list) == 4){
   reforecast <- run_forecast_4_var(start = years[i], 
                                    end = last(years), 
                                    ns = ns, 
@@ -228,6 +263,19 @@ if (model_num != 2){
                                  "_model_", as.character(model_num), 
                                  "_start_year_", as.character(years[i]),
                                  "_reforecast_result.csv"),
+            row.names = FALSE)
+} else if (length(cov_list) == 5){
+  reforecast <- run_forecast_5_var(start = years[i], 
+                                   end = last(years), 
+                                   ns = ns, 
+                                   n_ens = n_ens, 
+                                   params = ens_params, 
+                                   yr = i)
+  write.csv(reforecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
+                                      "_ens_", as.character(n_ens),
+                                      "_model_", as.character(model_num), 
+                                      "_start_year_", as.character(years[i]),
+                                      "_reforecast_result.csv"),
             row.names = FALSE)
 }
 

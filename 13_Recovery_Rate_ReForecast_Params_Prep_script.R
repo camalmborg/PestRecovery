@@ -9,7 +9,7 @@ library(coda)
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
 # load model performance information:
-dic_sort <- read.csv("2025_10_06_all_recov_models_dics.csv", row.names = 1)
+dic_sort <- read.csv("2025_11_21_all_recov_models_dics.csv", row.names = 1)
 
 ## Get model
 # model files:
