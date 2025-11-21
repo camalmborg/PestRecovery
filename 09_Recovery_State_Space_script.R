@@ -5,7 +5,8 @@ setwd(dir)
 
 # load environment if needed:
 #load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_12_environment.RData")
-load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_29_environment.RData")
+#load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_06_29_environment.RData")
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_11_21_environment.RData")
 
 # libraries:
 librarian::shelf(rjags, coda)
@@ -16,7 +17,6 @@ tcg <- tcg_ts
 # make the disturbance magnitude version:
 start <- grep("^2013", names(tcg))
 end <- grep("^2015", names(tcg))
-steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
 
 # data for model:

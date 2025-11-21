@@ -63,7 +63,12 @@ coords <- get_lat_lon(tcg_raw)
 tcg <- tcg_raw %>%
   select(starts_with("X")) %>%
   rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
-  mutate(site = 1:nrow(tcg_raw), .before = 1) %>%
+  # get baseline value 2010-2015:
+  mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
+  # create anomalies from baseline:
+  mutate(across(!baseline, ~ baseline - .x)) %>%
+  # add site and site and lat lon:
+  mutate(site = 1:nrow(tcg), .before = 1) %>% 
   mutate(longitude = coords$lon, .before = 2) %>%
   mutate(latitude = coords$lat, .before = 3)
 
@@ -81,4 +86,4 @@ rm("scores_raw", "tcg_raw", "sd_tcg_raw")
 # time series plots
 # just get the time series from the scores and tcg:
 scores_ts <- scores[, c(grep("^2", names(scores)))]
-tcg_ts <- tcg[,c(grep("^2", names(scores)))]
+tcg_ts <- tcg[,c(grep("^2", names(tcg)))]
