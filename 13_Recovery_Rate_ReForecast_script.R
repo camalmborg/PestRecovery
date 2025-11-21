@@ -78,7 +78,7 @@ get_params <- function(model_info, n_ens){
 #'@param params = matrix/df, sampled parameters from get_params function
 #'@param yr = numeric, year starting place of forecast: e.g. 2017 = 1, 2018 = 2, etc
 
-# for models with 3 variables (2 time-varying, 1 static) - e.g. models 1, 3 (also 5)
+# for models with 3 variables (3 time-varying) - e.g. model 2
 run_forecast_3_var <- function(start, end, ns, n_ens, params, yr){
   # time steps:
   nt = 1:(end-start)
@@ -124,7 +124,7 @@ run_forecast_3_var <- function(start, end, ns, n_ens, params, yr){
   return(forecast_result)
 }
 
-## For models with 4 variables (3 time-varying, one static) - e.g. model 2
+## For models with 4 variables (4 time-varying variables - e.g. model 1)
 run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
   # time steps:
   nt = 1:(end-start)
@@ -172,7 +172,7 @@ run_forecast_4_var <- function(start, end, ns, n_ens, params, yr){
 }
 
 
-## For models with 4 variables (3 time-varying, one static) - e.g. model 2
+## For models with 5 variables (5 time-varying) - e.g. model 3
 run_forecast_5_var <- function(start, end, ns, n_ens, params, yr){
   # time steps:
   nt = 1:(end-start)
