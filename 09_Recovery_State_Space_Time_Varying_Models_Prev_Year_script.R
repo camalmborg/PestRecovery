@@ -24,7 +24,6 @@ tcg <- tcg_ts
 # make the disturbance magnitude version:
 start <- grep("^2013", names(tcg))
 end <- grep("^2015", names(tcg))
-steady_state <- apply(tcg[,start:end], 1, mean)
 dist <- grep("^2017", names(tcg))
 
 # data for model:
