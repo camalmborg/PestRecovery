@@ -88,10 +88,15 @@ for (t in 2:nt){
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
+# ### Random Effects:
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
+
 ### Random Effects:
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
 }
 
 ### Priors:
@@ -99,8 +104,8 @@ r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta ~ dnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-#tausite ~ dgamma(0.001, 0.001)
-tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+#tautime ~ dgamma(0.001, 0.001)
 }
 "
 
@@ -122,10 +127,15 @@ for (t in 2:nt){
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
+# ### Random Effects:
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
+
 ### Random Effects:
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
 }
 
 ### Priors:
@@ -133,8 +143,8 @@ r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta ~ dnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-#tausite ~ dgamma(0.001, 0.001)
-tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+#tautime ~ dgamma(0.001, 0.001)
 # missing data:
 for (s in miss){
  cov[s] ~ dnorm(mis_s, mis_t)
@@ -160,10 +170,15 @@ for (t in 2:nt){
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
+# ### Random Effects:
+# atime[1] = 0                   # option 2: indexing for atime[0]
+# for (t in 2:(nt-1)){
+#   atime[t] ~ dnorm(0, tautime)
+# }
+
 ### Random Effects:
-atime[1] = 0                   # option 2: indexing for atime[0]
-for (t in 2:(nt-1)){
-  atime[t] ~ dnorm(0, tautime)
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
 }
 
 ### Priors:
@@ -171,8 +186,8 @@ r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta ~ dmnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
-#tausite ~ dgamma(0.001, 0.001)
-tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+#tautime ~ dgamma(0.001, 0.001)
 }
 "
 
@@ -234,7 +249,7 @@ state_space_model_run <- function(cov_df, model_num){
   jags_out <- coda.samples(jags_model,
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
-                                              "r0", "atime", "tautime",
+                                              "r0", "asite", "tausite",
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
