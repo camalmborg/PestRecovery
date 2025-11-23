@@ -81,19 +81,18 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    #R[s,t] <- r0 + beta*cov[s] + atime[t-1] 
-    R[s,t] <- r0 + beta*cov[s] + asite[s] 
+    R[s,t] <- r0 + beta*cov[s] + asite[s] + atime[t-1] 
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
-# ### Random Effects:
-# atime[1] = 0                   # option 2: indexing for atime[0]
-# for (t in 2:(nt-1)){
-#   atime[t] ~ dnorm(0, tautime)
-# }
+### Random Effects:
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
 
 ### Random Effects:
 for (s in sites){
@@ -106,7 +105,7 @@ beta ~ dnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tausite ~ dgamma(0.001, 0.001)
-#tautime ~ dgamma(0.001, 0.001)
+tautime ~ dgamma(0.001, 0.001)
 }
 "
 
@@ -122,18 +121,18 @@ for (s in sites){
 ### Process Model:
 for (t in 2:nt){
     #R[s,t] <- r0 + beta*cov[s] + atime[t-1]
-    R[s,t] <- r0 + beta*cov[s] + asite[s]
+    R[s,t] <- r0 + beta*cov[s] + asite[s] + atime[t-1]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
-# ### Random Effects:
-# atime[1] = 0                   # option 2: indexing for atime[0]
-# for (t in 2:(nt-1)){
-#   atime[t] ~ dnorm(0, tautime)
-# }
+### Random Effects:
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
 
 ### Random Effects:
 for (s in sites){
@@ -146,7 +145,7 @@ beta ~ dnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tausite ~ dgamma(0.001, 0.001)
-#tautime ~ dgamma(0.001, 0.001)
+tautime ~ dgamma(0.001, 0.001)
 # missing data:
 for (s in miss){
  cov[s] ~ dnorm(mis_s, mis_t)
@@ -165,19 +164,18 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    #R[s,t] <- r0 + inprod(beta[], cov[s,]) + atime[t-1] ##+ asite[s]
-    R[s,t] <- r0 + inprod(beta[], cov[s,]) + asite[s]
+    R[s,t] <- r0 + inprod(beta[], cov[s,]) + atime[t-1] + asite[s]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
   x[s,1] ~ dnorm(x_ic[s], t_ic[s])
 }
 
-# ### Random Effects:
-# atime[1] = 0                   # option 2: indexing for atime[0]
-# for (t in 2:(nt-1)){
-#   atime[t] ~ dnorm(0, tautime)
-# }
+### Random Effects:
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
 
 ### Random Effects:
 for (s in sites){
@@ -190,7 +188,7 @@ beta ~ dmnorm(b0, Vb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tausite ~ dgamma(0.001, 0.001)
-#tautime ~ dgamma(0.001, 0.001)
+tautime ~ dgamma(0.001, 0.001)
 }
 "
 
@@ -253,6 +251,7 @@ state_space_model_run <- function(cov_df, model_num){
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
                                               "r0", "asite", "tausite",
+                                              "atime", "tautime",
                                               "beta"),
                            n.iter = 150000,
                            adapt = 50000,
