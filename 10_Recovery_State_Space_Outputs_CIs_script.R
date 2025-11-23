@@ -179,7 +179,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   # set limit x-axis:
-  xlim(c(-0.069, 0.04)) + # for all + post-dist
+  #xlim(c(-0.069, 0.04)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +
