@@ -22,7 +22,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s,t-1]
+    R[s,t] <- r0 + atime[t-1] + asite[s] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s,t-1]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -35,6 +35,11 @@ for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
 }
 
+### Random Effects:
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
+}
+
 ### Priors:
 r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta[1] ~ dnorm(b0, Vb) #initial beta
@@ -42,6 +47,7 @@ beta[2] ~ dnorm(b00, Vbb)
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
 }"
 
 # one time varying covariate and one static covariate with missing data:
@@ -55,7 +61,7 @@ for (s in sites){
 
 ### Process Model:
 for (t in 2:nt){
-    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
+    R[s,t] <- r0 + atime[t-1] + asite[s] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
     mu[s,t] <- R[s,t] * x[s,t-1]  
     x[s,t] ~ dnorm(mu[s,t], tau_add)
   }
@@ -68,6 +74,11 @@ for (t in 2:(nt-1)){
   atime[t] ~ dnorm(0, tautime)
 }
 
+### Random Effects:
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
+}
+
 ### Priors:
 r0 ~ dnorm(r_ic, r_prec)  # initial condition r
 beta[1] ~ dnorm(b0, Vb) #initial beta
@@ -75,11 +86,97 @@ beta[2] ~ dnorm(b00, Vbb) #initial beta
 tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+
 # missing data:
 for (s in miss){
  cov_two[s] ~ dnorm(mis_s, mis_t)
   }
 }"
+
+# one time varying covariate and one static covariate without missing data:
+tv_stat_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + asite[s] + beta[1]*cov_one[s,t-1] + beta[2]*cov_two[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]  
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
+}
+
+### Random Effects:
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Random Effects:
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb) #initial beta
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+"
+
+# two static covariates with one having missing data:
+stat_miss_model <- "model{
+for (s in sites){
+
+### Data Model:
+  for (t in 1:nt){
+    y[s,t] ~ dnorm(x[s,t], tau_obs)
+  }
+
+### Process Model:
+for (t in 2:nt){
+    R[s,t] <- r0 + atime[t-1] + beta[1]*cov_one[s] + beta[2]*cov_two[s]
+    mu[s,t] <- R[s,t] * x[s,t-1]
+    x[s,t] ~ dnorm(mu[s,t], tau_add)
+  }
+  x[s,1] ~ dnorm(x_ic[s], t_ic[s])
+}
+
+### Random Effects:
+atime[1] = 0                   # option 2: indexing for atime[0]
+for (t in 2:(nt-1)){
+  atime[t] ~ dnorm(0, tautime)
+}
+
+### Random Effects:
+for (s in sites){
+  asite[s] ~ dnorm(0, tausite)
+}
+
+### Priors:
+r0 ~ dnorm(r_ic, r_prec)  # initial condition r
+beta[1] ~ dnorm(b0, Vb) #initial beta
+beta[2] ~ dnorm(b00, Vbb) #initial beta
+tau_obs ~ dgamma(t_obs, a_obs)
+tau_add ~ dgamma(t_add, a_add)
+tautime ~ dgamma(0.001, 0.001)
+tausite ~ dgamma(0.001, 0.001)
+
+# missing data:
+for (s in miss){
+ cov_two[s] ~ dnorm(mis_s, mis_t)
+  }
+}"
+
 
 ## Prepare data for models
 # time series data:
@@ -113,18 +210,19 @@ x_prec[which(x_prec == Inf)] <- 1/x_prec_miss
 pre_dist_covs <- data.frame(#lat = coords$lat, lon = coords$lon,
   # adding disturbance history:
   dmags_tcg_y2 = dist_hist_tcg$`2017-05-01`,
-  dmag_tcg_sum = dist_hist_tcg$dist_2_yrs) %>%
+  dmag_tcg_sum = dist_hist_tcg$dist_2_yrs,
+  tmax_2015 = covs$temp_mx_2015) %>%
   # adding environmental variables:
   #precip_2015 = static_daym$prcp[which(static_daym$year == 2015)]) %>%
   # z-score normalizing (value-mean/sd): 
   mutate(across(-(grep("^cat_", colnames(covs))), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE)))
   
 post_dist_covs <- time_daym %>%
-  select(-c(tmax, tmin)) %>%
+  select(-c(tmax, prcp)) %>%
   # z-score normalizing (value-mean/sd): 
   mutate(across(-any_of(c("site", "year")), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE))) %>%
   # pivot variables to make a variable column:
-  pivot_longer(cols = c(prcp, vp),
+  pivot_longer(cols = c(tmin, vp),
                names_to = "variable",
                values_to = "value") %>%
   # pivot wide to make time series for each row
@@ -135,26 +233,26 @@ post_dist_covs <- time_daym %>%
   # select 2017 onwards:
   select(-c("2016", "2017"))
 
-# year lag covariates:
-year_lag_covs <- time_daym %>%
-  #select(-c(tmax)) %>%
-  rename(., vpd_year_lag = vp) %>%
-  rename(., tmax_year_lag = tmax) %>%
-  rename(., tmin_year_lag = tmin) %>%
-  rename(., prcp_year_lag = prcp) %>%
-  # z-score normalizing (value-mean/sd): 
-  mutate(across(-any_of(c("site", "year")), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE))) %>%
-  # pivot variables to make a variable column:
-  pivot_longer(cols = c(vpd_year_lag, tmax_year_lag, tmin_year_lag, prcp_year_lag),
-               names_to = "variable",
-               values_to = "value") %>%
-  # pivot wide to make time series for each row
-  pivot_wider(names_from = year,
-              values_from = value) %>%
-  # arrange by variable:
-  arrange(variable, site) %>%
-  # select 2017 onwards:
-  select(-c("2016", "2023"))
+# # year lag covariates:
+# year_lag_covs <- time_daym %>%
+#   #select(-c(tmax)) %>%
+#   rename(., vpd_year_lag = vp) %>%
+#   rename(., tmax_year_lag = tmax) %>%
+#   rename(., tmin_year_lag = tmin) %>%
+#   rename(., prcp_year_lag = prcp) %>%
+#   # z-score normalizing (value-mean/sd): 
+#   mutate(across(-any_of(c("site", "year")), ~ (. - mean(., na.rm = TRUE))/sd(., na.rm = TRUE))) %>%
+#   # pivot variables to make a variable column:
+#   pivot_longer(cols = c(vpd_year_lag, tmax_year_lag, tmin_year_lag, prcp_year_lag),
+#                names_to = "variable",
+#                values_to = "value") %>%
+#   # pivot wide to make time series for each row
+#   pivot_wider(names_from = year,
+#               values_from = value) %>%
+#   # arrange by variable:
+#   arrange(variable, site) %>%
+#   # select 2017 onwards:
+#   select(-c("2016", "2023"))
 
 
 # choosing time-varying variable time series function:
@@ -168,7 +266,7 @@ choose_covs <- function(cov_df, var){
 }
 # time-varying variables:
 tv_vars <- unique(post_dist_covs$variable)  # 1 = prcp, 2 = tmax, 3 = vp
-tv_yl_vars <- unique(year_lag_covs$variable)
+#tv_yl_vars <- unique(year_lag_covs$variable)
 
 
 ## Making function for running models
@@ -222,96 +320,84 @@ state_space_model_run <- function(model_data, model, model_name){
 
 ## Model runs:
 # covariate lists:
-model_covariates <- list(prcp_year_lag = choose_covs(year_lag_covs, tv_yl_vars[1]),
-                         tmax_year_lag = choose_covs(year_lag_covs, tv_yl_vars[2]),
-                         tmin_year_lag = choose_covs(year_lag_covs, tv_yl_vars[3]),
-                         vpd_year_lag = choose_covs(year_lag_covs, tv_yl_vars[4]),
-                         prcp = choose_covs(post_dist_covs, tv_vars[1]),
+model_covariates <- list(tmin = choose_covs(post_dist_covs, tv_vars[1]),
                          vpd = choose_covs(post_dist_covs, tv_vars[2]),
                          dmagy2 = pre_dist_covs$dmags_tcg_y2,
-                         dmagsum = pre_dist_covs$dmag_tcg_sum)
-# # model names:
-# model_name <- c("prcpyrlag_tmaxyrlag", "prcpyrlag_vpd", "prcpyrlag_tminyrlag", "prcpyrlag_prcp", 
-#                 "prcpyrlag_dmagy2", "prcpyrlag_dmagsum", "prcpyrlag_vpdyrlag", "tmaxyrlay_prcp", 
-#                 "tmaxyrlag_dmagy2", "tmaxyrlag_vpd", "tmaxyrlag_dmagsum", "tmaxyrlag_vpdyrlag",
-#                 "tmaxyrlag_tminyrlag")
-# 
-# # model data lists:
-# input_data_list <- list()
-# input_data_list[[1]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$tmax_year_lag)
-# input_data_list[[2]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$vpd)
-# input_data_list[[3]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$tmin_year_lag)
-# input_data_list[[4]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$prcp)
-# input_data_list[[5]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$dmagy2)
-# input_data_list[[6]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$dmagsum)
-# input_data_list[[7]] <- list(cov_one = model_covariates$prcp_year_lag, cov_two = model_covariates$vpd_year_lag)
-# input_data_list[[8]] <- list(cov_one = model_covariates$tmax_year_lag, cov_two = model_covariates$prcp)
-# input_data_list[[9]] <- list(cov_one = model_covariates$tmax_year_lag, cov_two = model_covariates$dmagy2)
-# input_data_list[[10]] <- list(cov_one = model_covariates$tmax_year_lag, cov_two = model_covariates$vpd)
-# input_data_list[[11]] <- list(cov_one = model_covariates$tmax_year_lag, cov_two = model_covariates$dmagsum)
-# input_data_list[[12]] <- list(cov_one = model_covariates$tmax_year_lag, cov_two = model_covariates$vpd_year_lag)
-# input_data_list[[13]] <- list(cov_one = model_covariates$tmax_year_lag, cov_two = model_covariates$tmin_year_lag)
-# 
-# # missing data models:
-# missing <- c(5, 6, 9, 11)
-# 
-# # models:
-# model_list <- list()
-# model_list[[1]] <- tv_model
-# model_list[[2]] <- tv_model
-# model_list[[3]] <- tv_model
-# model_list[[4]] <- tv_model
-# model_list[[5]] <- tv_stat_miss_model
-# model_list[[6]] <- tv_stat_miss_model
-# model_list[[7]] <- tv_model
-# model_list[[8]] <- tv_model
-# model_list[[9]] <- tv_stat_miss_model
-# model_list[[10]] <- tv_model
-# model_list[[11]] <- tv_stat_miss_model
-# model_list[[12]] <- tv_model
-# model_list[[13]] <- tv_model
-# 
-# # setting task id for cluster runs:
-# task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
-# 
-# # model data object:
-# if (task_id %in% missing) {
-#   # model data object for missing data:
-#   model_data <- list(y = recov_data,
-#                      cov_one = input_data_list[[task_id]]$cov_one,
-#                      cov_two = input_data_list[[task_id]]$cov_two,
-#                      nt = length(time),
-#                      sites = sites,
-#                      t_obs = 0.001, a_obs = 0.001,
-#                      t_add = 0.001, a_add = 0.001,
-#                      r_ic = 1, r_prec = 0.001,
-#                      x_ic = x1, t_ic = x_prec,
-#                      b0 = 0, Vb = 0.001,
-#                      b00 = 0, Vbb = 0.001)
-#   # missing data:
-#   model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
-#   model_data$mis_s = mean(dmag_data$steady, na.rm = T)
-#   model_data$mis_t = 0.01
-# } else {
-#   model_data <- list(y = recov_data,
-#                      cov_one = input_data_list[[task_id]]$cov_one,
-#                      cov_two = input_data_list[[task_id]]$cov_two,
-#                      nt = length(time),
-#                      sites = sites,
-#                      t_obs = 0.001, a_obs = 0.001,
-#                      t_add = 0.001, a_add = 0.001,
-#                      r_ic = 1, r_prec = 0.001,
-#                      x_ic = x1, t_ic = x_prec,
-#                      b0 = 0, Vb = 0.001,
-#                      b00 = 0, Vbb = 0.001)
-# }
+                         dmagsum = pre_dist_covs$dmag_tcg_sum,
+                         tmax_2015 = pre_dist_covs$tmax_2015)
+# model names:
+model_name <- c("vpd_dmagy2", "tmin_dmagy2", "tmax2015_dmagy2", 
+                "vpd_dmagsum", "tmin_dmagsum", "tmax2015_dmagsum",
+                "vpd_tmin", "vpd_tmax2015", "tmin_tmax2015")
 
-# jags_run <- model_list[[task_id]]
-# 
-# # run the models according to task_id:
-# state_space_model_run(model_data = model_data,
-#                       model = jags_run,
-#                       model_name = model_name[task_id])
+# model data lists:
+input_data_list <- list()
+input_data_list[[1]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$dmagy2)
+input_data_list[[2]] <- list(cov_one = model_covariates$tmin, cov_two = model_covariates$dmagy2)
+input_data_list[[3]] <- list(cov_one = model_covariates$tmax_2015, cov_two = model_covariates$dmagy2)
+input_data_list[[4]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$dmagsum)
+input_data_list[[5]] <- list(cov_one = model_covariates$tmin, cov_two = model_covariates$dmagsum)
+input_data_list[[6]] <- list(cov_one = model_covariates$tmax_2015, cov_two = model_covariates$dmagsum)
+input_data_list[[7]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$tmin)
+input_data_list[[8]] <- list(cov_one = model_covariates$vpd, cov_two = model_covariates$tmax_2015)
+input_data_list[[9]] <- list(cov_one = model_covariates$tmin, cov_two = model_covariates$tmax_2015)
+
+# missing data models:
+missing <- c(1:6)
+
+# models:
+model_list <- list()
+model_list[[1]] <- tv_stat_miss_model
+model_list[[2]] <- tv_stat_miss_model
+model_list[[3]] <- stat_miss_model
+model_list[[4]] <- tv_stat_miss_model
+model_list[[5]] <- tv_stat_miss_model
+model_list[[6]] <- stat_miss_model
+model_list[[7]] <- tv_model
+model_list[[8]] <- tv_model
+model_list[[9]] <- tv_stat_model
+
+# setting task id for cluster runs:
+task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+
+# model data object:
+if (task_id %in% missing) {
+  # model data object for missing data:
+  model_data <- list(y = recov_data,
+                     cov_one = input_data_list[[task_id]]$cov_one,
+                     cov_two = input_data_list[[task_id]]$cov_two,
+                     nt = length(time),
+                     sites = sites,
+                     t_obs = 0.001, a_obs = 0.001,
+                     t_add = 0.001, a_add = 0.001,
+                     r_ic = 1, r_prec = 0.001,
+                     x_ic = x1, t_ic = x_prec,
+                     b0 = 0, Vb = 0.001,
+                     b00 = 0, Vbb = 0.001)
+  # missing data:
+  model_data$miss <- which(is.na(pre_dist_covs$dmags_tcg_y2))
+  model_data$mis_s = mean(steady_state, na.rm = T)
+  model_data$mis_t = 0.01
+} else {
+  model_data <- list(y = recov_data,
+                     cov_one = input_data_list[[task_id]]$cov_one,
+                     cov_two = input_data_list[[task_id]]$cov_two,
+                     nt = length(time),
+                     sites = sites,
+                     t_obs = 0.001, a_obs = 0.001,
+                     t_add = 0.001, a_add = 0.001,
+                     r_ic = 1, r_prec = 0.001,
+                     x_ic = x1, t_ic = x_prec,
+                     b0 = 0, Vb = 0.001,
+                     b00 = 0, Vbb = 0.001)
+}
+
+jags_run <- model_list[[task_id]]
+
+# run the models according to task_id:
+state_space_model_run(model_data = model_data,
+                      model = jags_run,
+                      model_name = model_name[task_id])
 
 
 # ### Run a 3-variable multivariate run:
