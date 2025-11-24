@@ -89,7 +89,7 @@ model_results_CIs <- model_results_CIs %>%
 rm(model_results_CIs_cat)
 rm(model_results_CIs_multi)
 # save:
-write.csv(model_results_CIs, "2025_11_21_all_model_results_CIs.csv")
+write.csv(model_results_CIs, "2025_11_24_all_model_results_CIs.csv")
 
 
 ## Ridge Plot for betas
@@ -192,7 +192,7 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-ggsave("2025_11_12_ridges_uni_vars.png",
+ggsave("2025_11_24_ridges_uni_vars.png",
        plot = beta_ridge_plot,
        height = 8,
        width = 6,
@@ -208,6 +208,6 @@ model_beta_result <- data.frame(model = unique(beta_ridges_long$model), means = 
 model_beta_result <- model_beta_result[order(abs(model_beta_result$means), decreasing = TRUE),]
 model_beta_result$perform <- 1:nrow(model_beta_result)
 # print to plots tab:
-png("2025_11_12_model_beta_results_uni_vars.png")
+png("2025_11_24_model_beta_results_uni_vars.png")
 grid.table(model_beta_result)
 dev.off()
