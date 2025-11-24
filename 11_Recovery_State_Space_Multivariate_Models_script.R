@@ -354,7 +354,7 @@ model_list[[4]] <- tv_stat_miss_model
 model_list[[5]] <- tv_stat_miss_model
 model_list[[6]] <- stat_miss_model
 model_list[[7]] <- tv_model
-model_list[[8]] <- tv_model
+model_list[[8]] <- tv_stat_model
 model_list[[9]] <- tv_stat_model
 
 # setting task id for cluster runs:
