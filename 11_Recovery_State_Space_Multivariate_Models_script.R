@@ -131,6 +131,7 @@ tau_obs ~ dgamma(t_obs, a_obs)
 tau_add ~ dgamma(t_add, a_add)
 tautime ~ dgamma(0.001, 0.001)
 tausite ~ dgamma(0.001, 0.001)
+}
 "
 
 # two static covariates with one having missing data:
@@ -284,9 +285,10 @@ state_space_model_run <- function(model_data, model, model_name){
                            variable.names = c("x", "R",
                                               "tau_obs", "tau_add",
                                               "r0", "atime", "tautime", 
+                                              "asite", "tausite",
                                               "beta"),
                            n.iter = 200000,
-                           adapt = 75000,
+                           adapt = 7500,
                            thin = 100)
   
   # run DIC
@@ -327,7 +329,7 @@ model_covariates <- list(tmin = choose_covs(post_dist_covs, tv_vars[1]),
                          tmax_2015 = pre_dist_covs$tmax_2015)
 # model names:
 model_name <- c("vpd_dmagy2", "tmin_dmagy2", "tmax2015_dmagy2", 
-                "vpd_dmagsum", "tmin_dmagsum", "tmax2015_dmagsum",
+                "vpd_dmagsum", "tmin_dmagsum", "dmagsum_tmax2015",
                 "vpd_tmin", "vpd_tmax2015", "tmin_tmax2015")
 
 # model data lists:
