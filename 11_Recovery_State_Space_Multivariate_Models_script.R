@@ -289,7 +289,7 @@ state_space_model_run <- function(model_data, model, model_name){
                                               "beta"),
                            n.iter = 200000,
                            adapt = 7500,
-                           thin = 100)
+                           thin = 110)
   
   # run DIC
   DIC <- dic.samples(jags_model, n.iter = 50000)
