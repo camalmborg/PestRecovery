@@ -41,7 +41,7 @@ dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], de
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 dic_sort$perform <- 1:nrow(dic_sort)
 # save:
-write.csv(dic_sort, "2025_11_27_multi_recov_models_dics.csv")
+write.csv(dic_sort, "2025_11_28_multi_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
