@@ -9,7 +9,7 @@ library(coda)
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
 # load model performance information:
-dic_sort <- read.csv("2025_11_21_all_recov_models_dics.csv", row.names = 1)
+dic_sort <- read.csv("2025_11_30_all_recov_models_dics.csv", row.names = 1)
 
 ## Get model
 # model files:
@@ -40,9 +40,10 @@ get_ens_params <- function(model_num, n_ens){
   taus <- grep("tau", colnames(posterior))
   r <- grep("r0", colnames(posterior))
   tau_time <- grep("at", colnames(posterior))
+  tau_site <- grep("as", colnames(posterior))
   x_ic <- grep("^x", colnames(posterior))
   # group them:
-  params <- cbind(posterior[,beta_params], posterior[,taus], posterior[,tau_time], r = posterior[,r], posterior[,x_ic])
+  params <- cbind(posterior[,beta_params], posterior[,taus], posterior[,tau_time], posterior[,tau_site], r = posterior[,r], posterior[,x_ic])
   # sample:
   params <- cbind(col_num = sample, params[sample,])
   return(params)
