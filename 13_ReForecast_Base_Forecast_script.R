@@ -40,7 +40,7 @@ run_base_forecast <- function(start, end, ns, n_ens, xs, xprec, yr){
       N[,1] <- x_ic
       
       # tau_add:
-      tau_add <- xprec[]
+      tau_add <- sqrt(1/xprec[s,])
       
       # loop over time:
       for (t in 2:ncol(N)){
