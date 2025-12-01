@@ -9,19 +9,16 @@ librarian::shelf(ggplot2, hrbrthemes)
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
 
+# load environment if needed:
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_07_07_environment.RData")
+
 ## pull in model output files if not in the environment already
-#model_params <- read.csv("2025_07_31_all_base_uni_recov_models_param_means.csv")
-#load("2025_07_31_recov_models_outputs_list.RData")  # object is called model_outputs
 # model files:
 models <- list.files(paste0(dir, "model_runs/"))[grep("RData", list.files(paste0(dir, "model_runs/")))]
 # best model:
-dic_sort <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_11_17_multi_recov_models_dics.csv")
+dic_sort <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_11_30_all_recov_models_dics.csv")
 
 ## Make sample time series for selected models:
-# base = dic_sort[which(dic_sort$covariate == "base"),]
-# base = base$model_number
-# base = models[base]
-# base with time random effect = models[4]
 best = dic_sort[which(dic_sort$perform == 1),]
 m_num = best$model_number
 best = models[m_num]
@@ -33,38 +30,60 @@ model_pick <- models[m_num]
 load(paste0(dir, "model_runs/", model_pick))
 model_inputs <- model_info$metadata$model_data
 # model parameters:
-out <- as.matrix(model_info$jags_out)
+jags_out <- model_info$jags_out
+# remove burn in:
+burn_in = 50000
+jags_burn <- window(jags_out, start = burn_in) 
+# get parameters from model output:
+out <- as.matrix(jags_burn)
 # separate out specific params:
 x_params <- grep("^x", colnames(out))
 beta_params <- grep("^b",colnames(out))
 taus <- grep("tau", colnames(out))
+a_time <- grep("at", colnames(out))
+a_site <- grep("as", colnames(out))
 r <- grep("r0", colnames(out))
 
-## Load forecasts
-# set working directory:
-dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/"
-setwd(dir)
+# ## Load forecasts
+# # set working directory:
+# dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/"
+# setwd(dir)
+# 
+# # load model forecast files:
+# files <- list.files(pattern = "result.csv$")
+# #model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
+# model_num = 1
+# # get years of analysis:
+# start_year <- as.numeric(stringr::str_extract(files[model_num], "(?<=start_year_)\\d+"))
+# years <- start_year:2023
+# # loading predicted forecast values file:
+# model_out <- read.csv(files[model_num])
+# pred <- model_out %>%
+#   # rename columns with years:
+#   rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
 
-# load model forecast files:
-files <- list.files(pattern = "result.csv$")
-#model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
-model_num = 1
-# get years of analysis:
-start_year <- as.numeric(stringr::str_extract(files[model_num], "(?<=start_year_)\\d+"))
-years <- start_year:2023
-# loading predicted forecast values file:
-model_out <- read.csv(files[model_num])
-pred <- model_out %>%
-  # rename columns with years:
-  rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
 
+years <- 2017:2023
 # load observation data:
-tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
-  # select columns with observations for 2017-2023:
-  select(matches(as.character(years))) %>%
-  # rename columns for years:
-  rename_with(~ as.character(years)[seq_along(.)])
+tcg_bs <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  select(starts_with("X")) %>%
+  rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
+  # get baseline value 2010-2015:
+  mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
+  # create anomalies from baseline:
+  mutate(across(!baseline, ~ baseline - .x)) %>%
+  # add site and site and lat lon:
+  mutate(site = 1:nrow(tcg), .before = 1) %>% 
+  mutate(longitude = coords$lon, .before = 2) %>%
+  mutate(latitude = coords$lat, .before = 3)
 
+tcg_obs <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  select(starts_with("X")) %>%
+  rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
+  rename_with(~ str_replace_all(., "-.*", "")) %>%
+  # select 2017-2023:
+  select(c(`2017`:`2023`))
+  
 
 # making time series:
 a <- sample(1:5000, 1)
@@ -75,25 +94,18 @@ xs <- out[,x_params]
 x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
 y_ci <- apply(x_samp, 2, quantile, c(0.05, 0.5, 0.95))
 
-# # sampling:
-# test <- pred[pred$`2017` < 0.15,]
+# baseline of sample:
+obs_base <- tcg$baseline[sample]
+y_ci_samp <- obs_base - y_ci
 
-# a <- sample(unique(test$site), 1)
+# observation:
+obs <- tcg_obs[sample,]
 
-# #y <- as.matrix(model_inputs$y)
-# y <- pred %>%
-#   # select sample site:
-#   filter(site == sample) %>%
-#   # get only tcg values:
-#   select(-c(site))
-# y_ci <- apply(y, 2, quantile, c(0.05, 0.5, 0.95))
-
-# observations:
-# example sites: 77**, 346*, 4706*, 4911*, 4859**, 
-# 4584*, 4466**, 4178**, 4367, 3754**, 3223**, 4473, 3818
-obs <- tcg[sample,]
 # test plot:
-plot(as.Date(names(obs), format = "%Y"), obs)
+plot(1:7, obs)
+lines(1:7, y_ci_samp[2,])
+lines(1:7, y_ci_samp[1,], col = "red")
+lines(1:7, y_ci_samp[3,], col = "blue")
 #plot(as.Date(names(obs)), x_ci[2,])
 
 ## Making Time Series
