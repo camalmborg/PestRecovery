@@ -18,10 +18,16 @@ models <- list.files(paste0(dir, "model_runs/"))[grep("RData", list.files(paste0
 # best model:
 dic_sort <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_11_30_all_recov_models_dics.csv")
 
-## Make sample time series for selected models:
-best = dic_sort[which(dic_sort$perform == 1),]
-m_num = best$model_number
-best = models[m_num]
+## Load Best Model
+# all model files:
+models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
+# best model:
+best <- dic_sort$model_number[1]
+best_model <- models[best] 
+# load model:
+load(paste0(dir, "model_runs/", best_model))
+# load model_params:
+model_params <- read.csv(file = "2025_11_30_all_recov_models_param_means.csv")
 
 # choose model:
 #m_num <-  # change this when changing models
@@ -38,52 +44,63 @@ jags_burn <- window(jags_out, start = burn_in)
 out <- as.matrix(jags_burn)
 # separate out specific params:
 x_params <- grep("^x", colnames(out))
-beta_params <- grep("^b",colnames(out))
-taus <- grep("tau", colnames(out))
-a_time <- grep("at", colnames(out))
-a_site <- grep("as", colnames(out))
-r <- grep("r0", colnames(out))
 
-# ## Load forecasts
-# # set working directory:
-# dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/"
-# setwd(dir)
-# 
-# # load model forecast files:
-# files <- list.files(pattern = "result.csv$")
-# #model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
-# model_num = 1
-# # get years of analysis:
-# start_year <- as.numeric(stringr::str_extract(files[model_num], "(?<=start_year_)\\d+"))
-# years <- start_year:2023
-# # loading predicted forecast values file:
-# model_out <- read.csv(files[model_num])
-# pred <- model_out %>%
-#   # rename columns with years:
-#   rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
+## Get Model Information and Data
+# get parameter values:
+best_params <- model_params[best,]
+name = best_model
+# model name:
+model_name <- best_model
+if (grepl("cov", name) == TRUE){
+  model_name <- str_match(name, "cov_(.*?)_data")[,2]
+} else {
+  model_name <- str_match(name, "_(.*?)_model")[,2]
+}
+# load model inputs:
+model_inputs <- model_info$metadata$model_data
 
-
-years <- 2017:2023
-# load observation data:
-tcg_bs <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
-  select(starts_with("X")) %>%
-  rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
-  # get baseline value 2010-2015:
+# get baselines:
+tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # get baseline for anomolies:
   mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
   # create anomalies from baseline:
-  mutate(across(!baseline, ~ baseline - .x)) %>%
-  # add site and site and lat lon:
-  mutate(site = 1:nrow(tcg), .before = 1) %>% 
-  mutate(longitude = coords$lon, .before = 2) %>%
-  mutate(latitude = coords$lat, .before = 3)
+  mutate(across(!baseline, ~ baseline - .x))
 
-tcg_obs <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
-  select(starts_with("X")) %>%
-  rename_with(~ str_replace_all(., c("X|_tcg_mean" = "", "\\." = "-"))) %>%
-  rename_with(~ str_replace_all(., "-.*", "")) %>%
-  # select 2017-2023:
-  select(c(`2017`:`2023`))
+# forecast time period:
+years <- 2017:2023
+# observations:
+tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # select years:
+  select(`2017-05-01`:`2023-05-01`) %>%
+  # rename with just years:
+  rename_with(~ sub("-.*", "", .x))
+
+## Load forecast result
+forecast <- read.csv("Recovery_Forecasts/2025-12-03_ens_1500_model_1_start_year_2017_reforecast_result.csv")
+# prepare for residual calculation:
+y_pred <- forecast %>%
+  # add baseline to predictions:
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  # ensemble means:
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.50), na.rm = TRUE)))
+y_upper <- forecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.90), na.rm = TRUE))) 
+y_lower <- forecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.10), na.rm = TRUE)))
   
+
 
 # making time series:
 a <- sample(1:5000, 1)
@@ -92,21 +109,14 @@ sample <- a
 # from model outputs:
 xs <- out[,x_params]
 x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
-y_ci <- apply(x_samp, 2, quantile, c(0.05, 0.5, 0.95))
+y_ci <- apply(x_samp, 2, quantile, c(0.10, 0.5, 0.90))
+y_ci <- tcg_base$baseline[sample] - y_ci
 
-# baseline of sample:
-obs_base <- tcg$baseline[sample]
-y_ci_samp <- obs_base - y_ci
+# from forecast outputs:
+f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,])
 
 # observation:
-obs <- tcg_obs[sample,]
-
-# test plot:
-plot(1:7, obs)
-lines(1:7, y_ci_samp[2,])
-lines(1:7, y_ci_samp[1,], col = "red")
-lines(1:7, y_ci_samp[3,], col = "blue")
-#plot(as.Date(names(obs)), x_ci[2,])
+obs <- tcg[sample,]
 
 ## Making Time Series
 # prepare model data:
@@ -114,7 +124,10 @@ plot_data <- data.frame(date = as.numeric(names(obs)),
                         obs = as.numeric(obs),
                         y_low = as.numeric(y_ci[1,]),
                         y_med = as.numeric(y_ci[2,]),
-                        y_high = as.numeric(y_ci[3,]))
+                        y_high = as.numeric(y_ci[3,]),
+                        x_low = as.numeric(f_ci[3, -1]),
+                        x_med = as.numeric(f_ci[2, -1]),
+                        x_high = as.numeric(f_ci[1, -1]))
 
 plot_name <- sub(".*multi_(.*?)_data.*", "\\1", model_pick)
 
@@ -131,13 +144,13 @@ time_series <- ggplot(data = plot_data) +
   # add confidence intervals:
   geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high),
               fill = "red", alpha = 0.25) +
-  # # add base model for compare:
-  # geom_point(data = base_model_data, aes(x = date, y = x_med),
-  #            color = "navy", size = 1) +
-  # geom_line(data = base_model_data, aes(x = date, y = x_med),
-  #           color = "navy", linetype = "dashed", linewidth = 0.5) +
-  # geom_ribbon(data = base_model_data, aes(x = date, ymin = x_low, ymax = x_high),
-  #             fill = "navy", alpha = 0.15) +
+  # add base model for compare:
+  geom_point(aes(x = date, y = x_med),
+             color = "navy", size = 1) +
+  geom_line(aes(x = date, y = x_med),
+            color = "navy", linetype = "dashed", linewidth = 0.5) +
+  geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high),
+              fill = "navy", alpha = 0.15) +
   # set the axis limits:
   #ylim(c(-1, 1)) +
   # seeing plot closer to time series:
@@ -160,6 +173,13 @@ time_series
 # 
 # 
 # test_plot <- ggplot(data = testing) +
+
+# # test plot:
+# plot(1:7, obs, ylim = c(min(y_ci[,-1]), max(y_ci[,-1])))
+# lines(1:7, y_ci[2,-1])
+# lines(1:7, y_ci[1,-1], col = "red")
+# lines(1:7, y_ci[3,-1], col = "blue")
+# #plot(as.Date(names(obs)), x_ci[2,])
   
 
 
