@@ -83,6 +83,11 @@ for (i in 1:ncol(resids)){
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/RMSE_Bias/"
 # select information from model name to match file names from forecasts:
 model <- stringr::str_extract(files[model_num], "(?<=model_)\\d+")
+# is base?
+if (grepl("base", files[model_num]) == TRUE){
+  # add base to model name:
+  model <- paste0("base_", model)
+}
 # file name and save:
 write.csv(resids, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_resids_raw_all_sites.csv"))
 write.csv(resid_result, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_rmse_mae_bias.csv"))

@@ -76,6 +76,11 @@ crps_means <- as.data.frame(crps_scores) %>%
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/CRPS/"
 # select information from model name to match file names from forecasts:
 model <- stringr::str_extract(files[model_num], "(?<=model_)\\d+")
+# is base?
+if (grepl("base", files[model_num]) == TRUE){
+  # add base to model name:
+  model <- paste0("base_", model)
+}
 # file name and save:
 write.csv(crps_scores, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_crps_result_all_sites.csv"))
 write.csv(crps_means, paste0(save_dir, Sys.Date(), "_model_", model, "_start_year_", as.character(start_year), "_crps_result_across_site_means.csv"))
