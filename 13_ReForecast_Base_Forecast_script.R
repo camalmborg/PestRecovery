@@ -51,8 +51,12 @@ run_base_forecast <- function(start, end, ns, n_ens, means, sds, yr){
 
 ## Running for different models
 # data.frame of model jobs:
-model_jobs <- data.frame(task_id = 1:18, 
-                         year_run = rep(c(1:6), 3))
+model_jobs <- data.frame(task_id = 1:6, 
+                         year_run = rep(c(1:6)))
+
+# setting task id for cluster runs:
+task_id <- as.numeric(Sys.getenv("SGE_TASK_ID"))
+
 # preparing inputs:
 # number of sites:
 ns = 5000
@@ -74,7 +78,7 @@ base_forecast <- run_base_forecast(start = years[y],
                                    yr = y)
 write.csv(base_forecast, file = paste0("Recovery_Forecasts/", Sys.Date(),
                                     "_ens_", as.character(n_ens),
-                                    "_base_model_", 
+                                    "_base_model_", as.character(task_id),
                                     "_start_year_", as.character(years[y]),
                                     "_reforecast_result.csv"),
           row.names = FALSE)
