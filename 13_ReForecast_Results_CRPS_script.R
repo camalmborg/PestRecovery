@@ -11,7 +11,7 @@ library(scoringRules)
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/"
 setwd(dir)
   
-# load model forecast files:
+## Load model forecast files:
 files <- list.files(pattern = "result.csv$")
 model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
 # get years of analysis:
@@ -23,12 +23,26 @@ pred <- model_out %>%
   # rename columns with years:
   rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
 
+## Add to baselines to get TCG predictions
+# get baselines:
+tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # get baseline for anomolies:
+  mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
+  # create anomalies from baseline:
+  mutate(across(!baseline, ~ baseline - .x))
+# add to predictions:
+pred <- pred %>%
+  mutate(across(-site, ~ .x + tcg_base$baseline[site]))
+
 # load observation data:
 tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
   # select columns with observations for 2017-2023:
   select(matches(as.character(years))) %>%
   # rename columns for years:
   rename_with(~ as.character(years)[seq_along(.)])
+
 
 ## Get CRPS scores for ensemble model
 # make matrix to hold scores:

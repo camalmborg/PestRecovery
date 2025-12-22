@@ -11,7 +11,7 @@ library(scoringRules)
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/"
 setwd(dir)
 
-# load model forecast files:
+## Load model forecast files:
 files <- list.files(pattern = "result.csv$")
 model_num = as.numeric(Sys.getenv("SGE_TASK_ID"))
 # get years of analysis:
@@ -19,9 +19,21 @@ start_year <- as.numeric(stringr::str_extract(files[model_num], "(?<=start_year_
 years <- start_year:2023
 # loading predicted forecast values file:
 model_out <- read.csv(files[model_num])
+
+# get baselines:
+tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # get baseline for anomolies:
+  mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
+  # create anomalies from baseline:
+  mutate(across(!baseline, ~ baseline - .x))
+
 pred <- model_out %>%
   # rename columns with years:
   rename_with(~ as.character(years)[seq_along(.)], .cols = -1) %>%
+  # add baseline to predictions:
+  mutate(across(-site, ~ .x + tcg_base$baseline[site])) %>%
   # ensemble means across sites:
   group_by(site) %>% summarise_all(., mean, na.rm = TRUE)
 
