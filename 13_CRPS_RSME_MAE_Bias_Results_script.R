@@ -124,9 +124,9 @@ bias_all$Metric <- "Bias"
 get_plot_data <- function(test, starts){
   result <- test %>%
     # add column for model number for indexing:
-    mutate(model_num = as.numeric(substr(result$Model, start = 1, stop = 1)), .after = 1)
+    mutate(model_num = if_else(str_detect(Model, "^base_"), "base", str_extract(Model, "\\d+")), .after = 1)
   # make empty matrix to fill with diagonals:
-  plots <- matrix(NA, nrow = length(starts)*3, ncol = length(starts))
+  plots <- matrix(NA, nrow = nrow(result), ncol = length(starts))
   for (i in 1:nrow(plots)){
     model_num <- result$model_num[i]
     get_years <- result[i, grep("2", colnames(result))]
@@ -146,10 +146,10 @@ get_plot_data <- function(test, starts){
     mutate(diag_mean = rowMeans(select(., -1), na.rm = TRUE))
   # which have all years:
   nums <- which(complete.cases(plot_data))
-  plot_data$yr_one_lag <- c(plots[nums[1],], plots[nums[2],], plots[nums[3],])
+  plot_data$yr_one_lag <- c(plots[nums[1],], plots[nums[2],], plots[nums[3],], plots[nums[4],])
   # years for each:
-  n_years <- rep(1:length(starts), 3)
-  cast_years <- rep(starts, 3)
+  n_years <- rep(1:length(starts), 4)
+  cast_years <- rep(starts, 4)
   plot_data$year <- n_years
   plot_data$cast_year <- cast_years
   # make plot data:
@@ -167,22 +167,22 @@ bias_plot_data <- get_plot_data(bias_all, starts)
 ## Making Plots
 # diagonal means (metric vs lead time):
 crps_plot <- ggplot(crps_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(size = 0.5) +
+  geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
 rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(size = 0.5) +
+  geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
 mae_plot <- ggplot(mae_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(size = 0.5) +
+  geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
 bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(size = 0.5) +
+  geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 

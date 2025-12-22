@@ -10,13 +10,13 @@ library(ggplot2)
 library(tigris)
 
 # load environment if needed:
-#load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_07_07_environment.RData")
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_07_07_environment.RData")
 
 ## set working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
 # load model performance information:
-dic_sort <- read.csv("2025_10_06_all_recov_models_dics.csv", row.names = 1)
+dic_sort <- read.csv("2025_11_30_all_recov_models_dics.csv", row.names = 1)
 
 ## Load Best Model
 # all model files:
@@ -27,7 +27,7 @@ best_model <- models[best]
 # load model:
 load(paste0(dir, "model_runs/", best_model))
 # load model_params:
-model_params <- read.csv(file = "2025_10_06_all_recov_models_param_means.csv")
+model_params <- read.csv(file = "2025_11_30_all_recov_models_param_means.csv")
 
 ## Get Model Information and Data
 # get parameter values:
@@ -43,10 +43,27 @@ if (grepl("cov", name) == TRUE){
 # load model inputs:
 model_inputs <- model_info$metadata$model_data
 
+# get baselines:
+tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # get baseline for anomolies:
+  mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
+  # create anomalies from baseline:
+  mutate(across(!baseline, ~ baseline - .x))
+
+tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+
+  
 ## Load forecast result
-forecast <- read.csv("Recovery_Forecasts/2025-10-23_ens_1500_model_1_start_year_2017_reforecast_result.csv")
+forecast <- read.csv("Recovery_Forecasts/2025-12-03_ens_1500_model_1_start_year_2017_reforecast_result.csv")
 # prepare for residual calculation:
 y_pred <- forecast %>%
+  # add baseline to predictions:
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  # ensemble means:
   mutate(site = as.factor(site)) %>%
   group_by(site) %>%
   summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>%
