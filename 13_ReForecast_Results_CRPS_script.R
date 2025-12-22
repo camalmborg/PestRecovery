@@ -25,19 +25,13 @@ pred <- model_out %>%
 
 ## Add to baselines to get TCG predictions
 # get baselines:
-tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
   # rename:
   rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
   # get baseline for anomolies:
   mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
   # create anomalies from baseline:
-  mutate(across(!baseline, ~ baseline - .x))
-# add to predictions:
-pred <- pred %>%
-  mutate(across(-site, ~ .x + tcg_base$baseline[site]))
-
-# load observation data:
-tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  mutate(across(!baseline, ~ baseline - .x)) %>%
   # select columns with observations for 2017-2023:
   select(matches(as.character(years))) %>%
   # rename columns for years:

@@ -21,28 +21,23 @@ years <- start_year:2023
 model_out <- read.csv(files[model_num])
 
 # get baselines:
-tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
   # rename:
   rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
   # get baseline for anomolies:
   mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
   # create anomalies from baseline:
-  mutate(across(!baseline, ~ baseline - .x))
-
-pred <- model_out %>%
-  # rename columns with years:
-  rename_with(~ as.character(years)[seq_along(.)], .cols = -1) %>%
-  # add baseline to predictions:
-  mutate(across(-site, ~ .x + tcg_base$baseline[site])) %>%
-  # ensemble means across sites:
-  group_by(site) %>% summarise_all(., mean, na.rm = TRUE)
-
-# load observation data:
-tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  mutate(across(!baseline, ~ baseline - .x)) %>%
   # select columns with observations for 2017-2023:
   select(matches(as.character(years))) %>%
   # rename columns for years:
   rename_with(~ as.character(years)[seq_along(.)])
+
+pred <- model_out %>%
+  # rename columns with years:
+  rename_with(~ as.character(years)[seq_along(.)], .cols = -1) %>%
+  # ensemble means across sites:
+  group_by(site) %>% summarise_all(., mean, na.rm = TRUE)
 
 ## Get RMSE, Mean Absolute Error (MAE) and bias for each model
 # calculate model residuals:
