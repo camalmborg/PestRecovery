@@ -54,7 +54,7 @@ tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5k
 
 tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
   # rename:
-  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) #%>%
 
   
 ## Load forecast result
@@ -62,7 +62,7 @@ forecast <- read.csv("Recovery_Forecasts/2025-12-03_ens_1500_model_1_start_year_
 # prepare for residual calculation:
 y_pred <- forecast %>%
   # add baseline to predictions:
-  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(across(!site, ~ tcg_base$baseline - .x)) %>%
   # ensemble means:
   mutate(site = as.factor(site)) %>%
   group_by(site) %>%
@@ -111,10 +111,19 @@ mapping_residuals <- function(resid_col, resid_sf){
             color = "black", shape = 21, stroke = 0.1) +
     scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
     theme_bw() +
-    labs(#title = "Mean Annual Recovery Rates",
+    labs(title = paste0("Residuals: Predicted vs Observed TCG, Year ", as.character(resid_col)),
       fill = "Residual") +
     theme_bw() +
     theme(panel.grid = element_blank())
+  
+  #save the map:
+  # plot save location:
+  save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/"
+  # Save the plot to a PNG file:
+  ggsave(paste0(save_dir, Sys.Date(), "_", "Year_", as.character(resid_col), "_residuals_map.png"),
+         plot = residual_map,
+         width = 10, height = 6,
+         dpi = 600)
 }
 
 
