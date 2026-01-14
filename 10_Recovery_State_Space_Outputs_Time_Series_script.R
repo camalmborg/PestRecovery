@@ -103,7 +103,7 @@ y_lower <- forecast %>%
 
 
 # making time series:
-a <- sample(1:5000, 1)
+a <- sample(3000:5000, 1)
 sample <- a
 
 # from model outputs:
@@ -148,7 +148,7 @@ time_series <- ggplot(data = plot_data) +
   geom_point(aes(x = date, y = x_med),
              color = "navy", size = 1) +
   geom_line(aes(x = date, y = x_med),
-            color = "navy", linetype = "dashed", linewidth = 0.5) +
+            color = "navy", linetype = "dotdash", linewidth = 0.5) +
   geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high),
               fill = "navy", alpha = 0.15) +
   # set the axis limits:
@@ -164,7 +164,7 @@ time_series <- ggplot(data = plot_data) +
   theme(legend.position = "right")
 
 time_series
-
+sample
 
 # # playing around:
 # sites <- sample(1:5000, size = 10, replace = FALSE)
