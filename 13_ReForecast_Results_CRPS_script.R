@@ -19,23 +19,52 @@ start_year <- as.numeric(stringr::str_extract(files[model_num], "(?<=start_year_
 years <- start_year:2023
 # loading predicted forecast values file:
 model_out <- read.csv(files[model_num])
-pred <- model_out %>%
-  # rename columns with years:
-  rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
+# pred <- model_out %>%
+#   # rename columns with years:
+#   rename_with(~ as.character(years)[seq_along(.)], .cols = -1)
+# 
+# ## Add to baselines to get TCG predictions
+# # get baselines:
+# tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+#   # rename:
+#   rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+#   # get baseline for anomolies:
+#   mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
+#   # create anomalies from baseline:
+#   mutate(across(!baseline, ~ baseline - .x)) %>%
+#   # select columns with observations for 2017-2023:
+#   select(matches(as.character(years))) %>%
+#   # rename columns for years:
+#   rename_with(~ as.character(years)[seq_along(.)])
 
-## Add to baselines to get TCG predictions
-# get baselines:
-tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+tcg_base <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
   # rename:
   rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
   # get baseline for anomolies:
   mutate(baseline = rowMeans(select(., `2010-05-01`:`2015-05-01`), na.rm = TRUE), .before = 1) %>%
   # create anomalies from baseline:
-  mutate(across(!baseline, ~ baseline - .x)) %>%
-  # select columns with observations for 2017-2023:
+  mutate(across(!baseline, ~ baseline - .x))
+
+tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # select forecast years:
   select(matches(as.character(years))) %>%
   # rename columns for years:
   rename_with(~ as.character(years)[seq_along(.)])
+
+# prepare for residual calculation:
+pred <- model_out %>%
+  # add baseline to predictions:
+  mutate(across(!site, ~ tcg_base$baseline - .x)) %>%
+  # ensemble means:
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>%
+  select(-c(site)) %>%
+  # rename columns for years:
+  rename_with(~ as.character(years)[seq_along(.)]) %>%
+  mutate(site = unique(model_out$site), .before = 1)
 
 
 ## Get CRPS scores for ensemble model
@@ -49,7 +78,7 @@ for (s in site){
     # get observation:
     obs <- tcg[s, as.character(i)]
     # get ensemble for each site:
-    ens <- pred[pred$site == s, as.character(i)]
+    ens <- as.numeric(pred[pred$site == s, as.character(i)])
     # if NA:0
     if (is.na(obs)|any(is.na(ens))){
       crps_scores[s, as.character(i)] <- NA
