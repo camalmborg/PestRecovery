@@ -142,7 +142,7 @@ ggsave(plot = hist_mort_obs,
 # 
 # densities of mortality across hotspots:
 ggsave(plot = density,
-       filename = paste0(save_dir, "/2025_01_14_hist_pdba_density.png"),
+       filename = paste0(save_dir, "/2026_01_14_hist_pdba_density.png"),
        width = 8,
        height = 6)
 
