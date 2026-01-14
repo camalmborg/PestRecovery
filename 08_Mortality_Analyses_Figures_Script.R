@@ -14,53 +14,78 @@ librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes,
 # setwd(dir)
 #load("Environments/2025_05_08_environment.RData")
 #load("Environments/2025_04_07_environment.RData")
-load("Envrionments/2025_05_15_environment.RData")
+load("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Environments/2025_05_15_environment.RData")
 
 ## plotting percent dead basal area observed and predicted
 # make the data set:
 plot_data <- data.frame(
   x = 1:nrow(data_sort),
-  y_obs = data_sort$pdba,
-  y_pred = apply(ypred, 2, mean),
+  y_obs = (data_sort$pdba * 100),
+  y_pred = (apply(ypred, 2, mean) * 100),
   hot = data_sort$hotspot,
   lat = data_sort$lat,
   lon = data_sort$lon,
   plot = data_sort$plot
 )
+
 # making plot:
 pdba_pred_obs <- ggplot(plot_data, aes(x = x, y = y_obs)) +
-  geom_ribbon(aes(ymin = ci[1,], ymax = ci[3,]), 
+  geom_ribbon(aes(ymin = (ci[1,] * 100), ymax = (ci[3,] * 100)), 
               fill = "dodgerblue2", alpha = 0.25) +
   geom_point() +
   geom_point(aes(x = x, y = y_pred),
              col = "dodgerblue2") +
   ggtitle("Mortality Observed (black) and Predicted (blue)") +
   xlab("Plots (sorted)") +
-  ylab("Percent dead basal area in plot") +
-  theme_classic()
+  ylab("Percent Dead Basal Area in Plot") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 16),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
 pdba_pred_obs
 
 # predicted vs observed plot
 pred_obs_compare <- ggplot(plot_data, aes(x = y_pred, y = y_obs)) +
-  geom_point() +
-  xlab("Predicted percent dead basal area in plot") +
-  ylab("Observed percent dead basal area in plot") +
-  xlim(0,0.87) +
-  ylim(0,0.87) +
-  geom_abline (intercept = 0, slope=1, linetype = "dashed", color = "firebrick1") +
-  theme_bw()
+  geom_point(size = 1.5) +
+  ggtitle("Mortality Predicted vs. Observed") +
+  xlab("Predicted Percent Dead Basal Area in Plot") +
+  ylab("Observed Percent Dead Basal Area in Plot") +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline (intercept = 0, slope = 1, linewidth = 1, linetype = "dashed", color = "firebrick1") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 16),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
 pred_obs_compare
 
 ### Histograms and density plots
 # mortality across all plots
-hist_mort_obs <- ggplot(data_sort, aes(x = pdba)) +
-  geom_histogram(binwidth = 0.01, bins = 50,
-                 color = "dodgerblue4", fill = "dodgerblue2") +
-  xlim(0, 0.9) +
+hist_mort_obs <- ggplot(data_sort, aes(x = (pdba * 100))) +
+  geom_histogram(binwidth = 1, bins = 25,
+                 fill = "dodgerblue2") +
+  xlim(0, 100) +
   ylim(0, 6.5) +
-  xlab("Percent dead basal area across plots") +
-  theme_bw()
+  ggtitle("Percent Dead Basal Area Density") +
+  xlab("Percent Dead Basal Area across Plots") +
+  ylab("Count") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 16),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
 hist_mort_obs
+
+density <- ggplot(data_sort, aes(x = (pdba * 100), y = (after_stat(density)))) +
+  geom_density(color = "dodgerblue", fill = "dodgerblue", alpha = 0.35) +
+  ggtitle("Percent Dead Basal Area Density across Plots") +
+  xlab("Percent Dead Basal Area") +
+  ylab("Density") +
+  xlim(0, 100) +
+  theme_bw() +
+  theme(plot.title = element_text(size = 16),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+density
 
 # mortality by hotspot ridge plot:
 ridge_across_hotspots <- ggplot(data_sort, aes(x = pdba, y = fct_rev(as.factor(hotspot)), 
@@ -77,7 +102,7 @@ ridge_across_hotspots <- ggplot(data_sort, aes(x = pdba, y = fct_rev(as.factor(h
 ridge_across_hotspots
 
 # mortality by hotspot density plot:
-density_across_hotspots <- ggplot(data_sort, aes(x = pdba,fill = as.factor(hotspot))) +
+density_across_hotspots <- ggplot(data_sort, aes(x = pdba, fill = as.factor(hotspot))) +
   geom_density(alpha = 0.35) +
   scale_fill_manual(values=c("sienna1", "deeppink", "forestgreen", "darkorchid4", "khaki1", "cornflowerblue"),
                     name = "Hotspot") +
@@ -93,31 +118,31 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures"
 
 # predicted and observed with confidence interval:
 ggsave(plot = pdba_pred_obs,
-       filename= paste0(save_dir, "/2025_05_15_pred_obs_ci_plot.png"),
+       filename= paste0(save_dir, "/2026_01_14_pred_obs_ci_plot.png"),
        width=8,
        height=6)
 
 # predicted vs observed plot:
 ggsave(plot = pred_obs_compare,
-       filename= paste0(save_dir, "/2025_05_15_pred_obs_compare_plot.png"),
+       filename= paste0(save_dir, "/2026_01_14_pred_obs_compare_plot.png"),
        width=6,
        height=6)
 
 # histogram of percent dead basal area across plots:
 ggsave(plot = hist_mort_obs,
-       filename = paste0(save_dir, "/2025_05_15_hist_pdba_across_plots.png"),
+       filename = paste0(save_dir, "/2026_01_14_hist_pdba_across_plots.png"),
        width = 8,
        height = 6)
 
-# ridgeline plot of mortality across hotspots:
-ggsave(plot = ridge_across_hotspots,
-       filename = paste0(save_dir, "/2025_05_15_hist_pdba_ridges_hotspots.png"),
-       width = 8,
-       height = 6)
-
+# # ridgeline plot of mortality across hotspots:
+# ggsave(plot = ridge_across_hotspots,
+#        filename = paste0(save_dir, "/2025_05_15_hist_pdba_ridges_hotspots.png"),
+#        width = 8,
+#        height = 6)
+# 
 # densities of mortality across hotspots:
-ggsave(plot = density_across_hotspots,
-       filename = paste0(save_dir, "/2025_05_15_hist_pdba_density_hotspots.png"),
+ggsave(plot = density,
+       filename = paste0(save_dir, "/2025_01_14_hist_pdba_density.png"),
        width = 8,
        height = 6)
 
