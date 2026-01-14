@@ -166,17 +166,17 @@ bias_plot_data <- get_plot_data(bias_all, starts)
 
 ## Making Plots
 # diagonal means (metric vs lead time):
-crps_plot <- ggplot(crps_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
+crps_plot <- ggplot(crps_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
-rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
+rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()
 
-mae_plot <- ggplot(mae_plot_data, aes(x = year, y = log10(diag_mean), color = as.factor(model_num), group = as.factor(model_num))) +
+mae_plot <- ggplot(mae_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
   geom_line(linewidth = 0.5) +
   geom_point(size = 1.5) +
   theme_bw()

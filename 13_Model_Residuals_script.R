@@ -111,7 +111,7 @@ mapping_residuals <- function(resid_col, resid_sf){
             color = "black", shape = 21, stroke = 0.1) +
     scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
     theme_bw() +
-    labs(title = paste0("Residuals: Predicted vs Observed TCG, Year ", as.character(resid_col)),
+    labs(title = paste0("Residuals: Predicted - Observed TCG, Year ", as.character(resid_col)),
       fill = "Residual") +
     theme_bw() +
     theme(panel.grid = element_blank())
@@ -187,7 +187,7 @@ t_minus_one <- as.vector(c(resid[,2], resid[,3], resid[,4], resid[,5], resid[,6]
 # ask the correlation between these:
 lag_one_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 # do stats::cor.test for significance:
-cor_test <- stats::cor.test(t_one, t_minus_one)
+cor_test <- stats::cor.test(t_one, t_minus_one, method = "pearson")
 cor_lag_one_test <- cor_test$p.value
 plot(t_one, t_minus_one)
 
@@ -199,7 +199,7 @@ t_minus_one <- as.vector(c(resid[,3], resid[,4], resid[,5], resid[,6]))
 # ask the correlation between these:
 lag_two_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 # do stats::cor.test for significance:
-cor_test <- stats::cor.test(t_one, t_minus_one)
+cor_test <- stats::cor.test(t_one, t_minus_one, method = "pearson")
 cor_lag_two_test <- cor_test$p.value
 plot(t_one, t_minus_one)
 
@@ -211,7 +211,7 @@ t_minus_one <- as.vector(c(resid[,4], resid[,5], resid[,6]))
 # ask the correlation between these:
 lag_three_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 # do stats::cor.test for significance:
-cor_test <- stats::cor.test(t_one, t_minus_one)
+cor_test <- stats::cor.test(t_one, t_minus_one, method = "pearson")
 cor_lag_three_test <- cor_test$p.value
 plot(t_one, t_minus_one)
 
@@ -223,7 +223,7 @@ t_minus_one <- as.vector(c(resid[,5], resid[,6]))
 # ask the correlation between these:
 lag_four_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 # do stats::cor.test for significance:
-cor_test <- stats::cor.test(t_one, t_minus_one)
+cor_test <- stats::cor.test(t_one, t_minus_one, method = "pearson")
 cor_lag_four_test <- cor_test$p.value
 plot(t_one, t_minus_one)
 
@@ -235,7 +235,7 @@ t_minus_one <- as.vector(c(resid[,6]))
 # ask the correlation between these:
 lag_five_cor <- round(cor(t_one, t_minus_one, use = "complete.obs"), 4)
 # do stats::cor.test for significance:
-cor_test <- stats::cor.test(t_one, t_minus_one)
+cor_test <- stats::cor.test(t_one, t_minus_one, method = "pearson")
 cor_lag_five_test <- cor_test$p.value
 plot(t_one, t_minus_one)
 
