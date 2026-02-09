@@ -114,7 +114,9 @@ mapping_residuals <- function(resid_col, resid_sf){
     labs(title = paste0("Residuals: Predicted - Observed TCG, Year ", as.character(resid_col)),
       fill = "Residual") +
     theme_bw() +
-    theme(panel.grid = element_blank())
+    theme(panel.grid = element_blank(),
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12))
   
   #save the map:
   # plot save location:
@@ -144,7 +146,9 @@ spatial_ac <- function(resid, resid_col){
   vg_plot <- ggplot(data = vg_data, aes(x = xp, y = yp)) +
     geom_point() +
     labs(title = paste0("Variogram: Year ", as.character(resid_col))) +
-    theme_bw() 
+    theme_bw() +
+    theme(axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12))
   #vg_plot
   # plot save location:
   save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/"
