@@ -7,7 +7,7 @@
 #install.packages("gt")
 #install.packages("gtExtras)
 librarian::shelf(tidyverse, dplyr, ggplot2, RColorBrewer, hrbrthemes, 
-                 ggridges, gt, gtExtras, webshot)
+                 ggridges, gt, gtExtras, webshot2)
 
 # # navigate to folder:
 # dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/"
@@ -39,9 +39,9 @@ pdba_pred_obs <- ggplot(plot_data, aes(x = x, y = y_obs)) +
   xlab("Plots (sorted)") +
   ylab("Percent Dead Basal Area in Plot") +
   theme_bw() +
-  theme(plot.title = element_text(size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12))
+  theme(plot.title = element_text(size = 15),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
 pdba_pred_obs
 
 # predicted vs observed plot
@@ -55,8 +55,8 @@ pred_obs_compare <- ggplot(plot_data, aes(x = y_pred, y = y_obs)) +
   geom_abline (intercept = 0, slope = 1, linewidth = 1, linetype = "dashed", color = "firebrick1") +
   theme_bw() +
   theme(plot.title = element_text(size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12))
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
 pred_obs_compare
 
 ### Histograms and density plots
@@ -71,8 +71,8 @@ hist_mort_obs <- ggplot(data_sort, aes(x = (pdba * 100))) +
   ylab("Count") +
   theme_bw() +
   theme(plot.title = element_text(size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12))
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
 hist_mort_obs
 
 density <- ggplot(data_sort, aes(x = (pdba * 100), y = (after_stat(density)))) +
@@ -83,8 +83,8 @@ density <- ggplot(data_sort, aes(x = (pdba * 100), y = (after_stat(density)))) +
   xlim(0, 100) +
   theme_bw() +
   theme(plot.title = element_text(size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12))
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
 density
 
 # mortality by hotspot ridge plot:
@@ -98,7 +98,12 @@ ridge_across_hotspots <- ggplot(data_sort, aes(x = pdba, y = fct_rev(as.factor(h
   ylab("Hotspot") +
   ggtitle("Dead basal area by hotspot") +
   xlim(0, 1) +
-  theme_bw()
+  theme_bw() +
+  theme(plot.title = element_text(size = 16),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14))
 ridge_across_hotspots
 
 # mortality by hotspot density plot:
@@ -118,31 +123,31 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures"
 
 # predicted and observed with confidence interval:
 ggsave(plot = pdba_pred_obs,
-       filename= paste0(save_dir, "/2026_01_14_pred_obs_ci_plot.png"),
-       width=8,
+       filename= paste0(save_dir, "/2026_02_09_pred_obs_ci_plot_square.png"),
+       width=6,
        height=6)
 
 # predicted vs observed plot:
 ggsave(plot = pred_obs_compare,
-       filename= paste0(save_dir, "/2026_01_14_pred_obs_compare_plot.png"),
+       filename= paste0(save_dir, "/2026_02_09_pred_obs_compare_plot.png"),
        width=6,
        height=6)
 
 # histogram of percent dead basal area across plots:
 ggsave(plot = hist_mort_obs,
-       filename = paste0(save_dir, "/2026_01_14_hist_pdba_across_plots.png"),
+       filename = paste0(save_dir, "/2026_02_09_hist_pdba_across_plots.png"),
        width = 8,
        height = 6)
 
-# # ridgeline plot of mortality across hotspots:
-# ggsave(plot = ridge_across_hotspots,
-#        filename = paste0(save_dir, "/2025_05_15_hist_pdba_ridges_hotspots.png"),
-#        width = 8,
-#        height = 6)
-# 
+# ridgeline plot of mortality across hotspots:
+ggsave(plot = ridge_across_hotspots,
+       filename = paste0(save_dir, "/2026_02_09_hist_pdba_ridges_hotspots.png"),
+       width = 8,
+       height = 6)
+
 # densities of mortality across hotspots:
 ggsave(plot = density,
-       filename = paste0(save_dir, "/2026_01_14_hist_pdba_density.png"),
+       filename = paste0(save_dir, "/2026_01_09_hist_pdba_density.png"),
        width = 8,
        height = 6)
 
@@ -151,7 +156,7 @@ ggsave(plot = density,
 # make a data frame with top model information:
 top_models <-data.frame(Rank = 1:5, 
                         Variables = c("PBA oak, DMag Y1", "PBA oak, DMag CS Y1 + Y2", "PBA oak, DMag Y1 + Y2", "PBA oak, DMag CS Y1", "PBA oak"),
-                        deltaDIC = round(all_dics$delDIC[1:5], 3))
+                        "ΔDIC" = round(all_dics$delDIC[1:5], 3))
 best_models <- multi_results$results[c(11, 1, 10, 12),]
 best_uni <- uni_results$results[3,]
 best_results <- rbind(best_models, best_uni)
@@ -164,12 +169,17 @@ top_models$b2 <- round(as.numeric(best_results[, "beta_2"]), 3)
 results_table <- gt(top_models) %>%
   tab_spanner(
     label = "Model Performance",
-    columns = c(Rank, Variables, deltaDIC)) %>%
+    columns = c(Rank, Variables, "ΔDIC")) %>%
   tab_spanner(
     label = "Parameter Estimates",
     columns = c(int, b1, b2)) %>%
-  gt_theme_538()
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_spanners()) %>%
+  tab_options(table.font.size = 16) #%>%
+  #gt_theme_538()
 results_table
 # save table
 gtsave(results_table,
-       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/mortality_results_table_for_EFI.png")
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_mortality_results_table.rtf")
+
