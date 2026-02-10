@@ -22,12 +22,12 @@ dic_sort <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_St
 # all model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
 # best model:
-best <- dic_sort$model_number[1]
+best <- as.numeric(dic_sort$model_number[1])
 best_model <- models[best] 
 # load model:
 load(paste0(dir, "model_runs/", best_model))
 # load model_params:
-model_params <- read.csv(file = "2025_11_30_all_recov_models_param_means.csv")
+#model_params <- read.csv(file = "2025_11_30_all_recov_models_param_means.csv")
 
 # choose model:
 #m_num <-  # change this when changing models
@@ -99,12 +99,23 @@ y_lower <- forecast %>%
   mutate(site = as.factor(site)) %>%
   group_by(site) %>%
   summarise(across(where(is.numeric), ~ quantile(.x, c(0.10), na.rm = TRUE)))
+y_up <- forecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.75), na.rm = TRUE))) 
+y_low <- forecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.25), na.rm = TRUE)))
   
 
 
 # making time series:
-a <- sample(3000:5000, 1)
-sample <- a
+#a <- sample(3000:5000, 1)
+#sample <- a
+sample <- 3372
 
 # from model outputs:
 xs <- out[,x_params]
@@ -113,7 +124,7 @@ y_ci <- apply(x_samp, 2, quantile, c(0.10, 0.5, 0.90))
 y_ci <- tcg_base$baseline[sample] - y_ci
 
 # from forecast outputs:
-f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,])
+f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,], y_up[sample,], y_low[sample,])
 
 # observation:
 obs <- tcg[sample,]
@@ -127,44 +138,67 @@ plot_data <- data.frame(date = as.numeric(names(obs)),
                         y_high = as.numeric(y_ci[3,]),
                         x_low = as.numeric(f_ci[3, -1]),
                         x_med = as.numeric(f_ci[2, -1]),
-                        x_high = as.numeric(f_ci[1, -1]))
+                        x_high = as.numeric(f_ci[1, -1]),
+                        x_low2 = as.numeric(f_ci[4, -1]),
+                        x_high2 = as.numeric(f_ci[5, -1]))
 
 plot_name <- sub(".*multi_(.*?)_data.*", "\\1", model_pick)
 
 # make the plot layering observation and model preds:
 time_series <- ggplot(data = plot_data) +
   # time series for observations:
-  geom_point(aes(x = date, y = obs), color = "black", size = 2) +
-  geom_line(aes(x = date, y = obs), color = "black", linetype = "solid") +
+  geom_point(aes(x = date, y = obs, color = "Observations"), size = 2.5) +
+  geom_line(aes(x = date, y = obs, color = "Observations"), linetype = "solid") +
   # time series for model:
-  geom_point(aes(x = date, y = y_med),
-             color = "red", size = 2) +
-  geom_line(aes(x = date, y = y_med),
-            color = "red", linetype = "dashed") +
+  geom_point(aes(x = date, y = y_med,
+             color = "Model"), size = 2) +
+  geom_line(aes(x = date, y = y_med,
+            color = "Model"), linetype = "dashed") +
   # add confidence intervals:
-  geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high),
-              fill = "red", alpha = 0.25) +
+  geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high,
+              fill = "Model 90% Interval"), alpha = 0.25) +
   # add base model for compare:
-  geom_point(aes(x = date, y = x_med),
-             color = "navy", size = 1) +
-  geom_line(aes(x = date, y = x_med),
-            color = "navy", linetype = "dotdash", linewidth = 0.5) +
-  geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high),
-              fill = "navy", alpha = 0.15) +
+  geom_point(aes(x = date, y = x_med,
+             color = "Forecast"), size = 2) +
+  geom_line(aes(x = date, y = x_med,
+            color = "Forecast"), linetype = "dotdash", linewidth = 0.5) +
+  geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high,
+              fill = "Forecast 90% Interval"), alpha = 0.10) +
+  geom_ribbon(aes(x = date, ymin = x_low2, ymax = x_high2,
+              fill = "Forecast 75% Interval"), alpha = 0.20) +
+  scale_x_continuous(breaks = sort(unique(plot_data$date))) +
+  # colors:
+  scale_color_manual(name = "Lines",
+                     breaks = c("Observations", "Model", "Forecast"),
+                     values = c("Observations" = "black", 
+                                "Model" = "red", 
+                                "Forecast" = "navy")) +
+  scale_fill_manual(name = "Confidence Intervals",
+                    breaks = c("Model 90% Interval",
+                               "Forecast 90% Interval",
+                               "Forecast 75% Interval"),
+                    values = c("Model 90% Interval" = "red",
+                               "Forecast 90% Interval" = "navy",
+                               "Forecast 75% Interval" = "navy")) +
+  guides(color = guide_legend(order = 1),
+         fill  = guide_legend(order = 2)) +
   # set the axis limits:
   #ylim(c(-1, 1)) +
   # seeing plot closer to time series:
   #coord_cartesian(ylim = c(min(obs, na.rm = T) - 0.005, max(obs, na.rm = T) + 0.01)) +
   # plot labels:
-  labs(title = "Sample Time Series",
+  labs(title = "Sample Time Series (single Landsat pixel)",
        y = "Tasseled Cap Greenness", 
        x = "Year") +
   #scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
   theme_bw() +
-  theme(legend.position = "right")
+  theme(legend.position = "right",
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
 
 time_series
-sample
+#sample
 
 # # playing around:
 # sites <- sample(1:5000, size = 10, replace = FALSE)

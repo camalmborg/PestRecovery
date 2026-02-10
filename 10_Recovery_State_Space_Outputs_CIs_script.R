@@ -12,7 +12,7 @@ setwd(dir)
 
 ## Load model output files
 #model_params <- read.csv("2025_10_06_all_recov_models_param_means.csv")
-load("2025_11_12_uni_recov_models_outputs_list.RData")  # object is called model_outputs
+load("2026_02_09_uni_recov_models_outputs_list.RData")  # object is called model_outputs
 
 
 ## Calculating CIs for all models
@@ -89,7 +89,7 @@ model_results_CIs <- model_results_CIs %>%
 rm(model_results_CIs_cat)
 rm(model_results_CIs_multi)
 # save:
-write.csv(model_results_CIs, "2025_11_24_all_model_results_CIs.csv")
+write.csv(model_results_CIs, "2026_02_09_all_model_results_CIs.csv")
 
 
 ## Ridge Plot for betas
@@ -100,8 +100,8 @@ library(viridis)
 library(hrbrthemes)
 
 # remove multis (fewer rows):
-#full_model_outputs <- model_outputs
-#model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
+full_model_outputs <- model_outputs
+model_outputs <- full_model_outputs[-c(grep("multi", names(full_model_outputs)))]
   
 # get the data together:
 beta_list <- list()
@@ -183,7 +183,9 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   #xlim(c(-0.055, 0.05)) + # for pre-dist
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 12))
 
 beta_ridge_plot
 
@@ -192,22 +194,48 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-ggsave("2025_11_24_ridges_uni_vars.png",
+ggsave("2026_02_09_ridges_uni_vars.png",
        plot = beta_ridge_plot,
-       height = 8,
-       width = 6,
+       height = 10,
+       width = 8,
        units = "in",
        dpi = 600)
 
 ## Make a quick table of results
 library(grid)
 library(gridExtra)
+library(gt)
+library(gtExtras) 
+
 # get model performance list:
-model_beta_result <- data.frame(model = unique(beta_ridges_long$model), means = unique(beta_ridges_long$mean_beta))
+model_beta_result <- data.frame(model = unique(beta_ridges_long$model), 
+                                means = unique(beta_ridges_long$mean_beta)) %>%
+  mutate(means = round(means, digits = 3))
 # sort by absolute value of beta mean:
 model_beta_result <- model_beta_result[order(abs(model_beta_result$means), decreasing = TRUE),]
-model_beta_result$perform <- 1:nrow(model_beta_result)
+model_beta_result$perform <- 1:nrow(model_beta_result) 
+
+# make the table:
+#colnames(model_beta_result) <- c("Model Covariate", "Parameter Mean", "Model Performance")
+uni_param_table <- gt(model_beta_result) |>
+  cols_label(
+    model = html("Model<br>Covariate"),
+    means = html("Parameter<br>Mean"),
+    perform = html("Model<br>Performance")) |>
+  tab_style(
+    style = cell_text(align = "center", weight = "bold"),
+    locations = cells_column_labels(columns = everything())) |>
+  cols_align(
+    align = "center",
+    columns = everything())
+  # tab_options(table.font.size = 16) #%>%
+uni_param_table
+
+# save table
+gtsave(uni_param_table,
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_uni_params_table.rtf")
+
 # print to plots tab:
-png("2025_11_24_model_beta_results_uni_vars.png")
-grid.table(model_beta_result)
-dev.off()
+# png("2026_02_09_model_beta_results_uni_vars.png")
+# grid.table(model_beta_result)
+# dev.off()

@@ -41,7 +41,7 @@ dic_sort <- as.data.frame(model_dics[order(as.numeric(model_dics[,"dic"])),], de
 dic_sort$del_dic <- as.numeric(dic_sort$dic) - min(as.numeric(dic_sort$dic)) 
 dic_sort$perform <- 1:nrow(dic_sort)
 # save:
-write.csv(dic_sort, "2025_11_30_all_recov_models_dics.csv")
+write.csv(dic_sort, "2026_02_09_all_recov_models_dics.csv")
 
 
 ### Getting beta parameters and calculating CIs
@@ -92,33 +92,59 @@ for (i in 1:length(models)){
 }
 
 # save:
-write.csv(model_params, "2025_11_30_all_recov_models_param_means.csv")
-save(model_outputs, file = "2025_11_30_all_recov_models_outputs_list.RData")
+write.csv(model_params, "2026_02_09_all_recov_models_param_means.csv")
+save(model_outputs, file = "2026_02_09_all_recov_models_outputs_list.RData")
 
 # remove things I don't need:
 rm(model_info, params, params_burn, params_out, jags_out, vars)
 
+## Full model results parameters table
+# sort in the dic_sort order:
+model_params_table <- model_params[dic_sort$model_number,]
+model_params_table <- model_params_table |>
+  select(-model_number) |>
+  # add performance:
+  mutate(perform = c(1:42), .before = 2)
+
+all_params_table <- gt(model_params_table) |>
+  cols_label(
+    covariate = html("Model Covariate"),
+    perform = html("Model Performance")) |>
+  tab_style(
+    style = cell_text(align = "center", weight = "bold"),
+    locations = cells_column_labels(columns = everything())) |>
+  cols_align(
+    align = "center",
+    columns = everything())
+all_params_table
+
+# save it:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# save in figures:
+gtsave(all_params_table,
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_all_recov_params_table.rtf")
 
 ### For model convergence checks and tests:
-# # load model
-load(paste0(dir, "model_runs/", models[18]))
-#
-# # load jags output:
-jags_out <- model_info$jags_out
-vars <- varnames(jags_out)
-params <- jags_out[,grep("r0|^tau", vars)]
-R_samp <- sample(vars[grep("R", vars)], 6)
-x_samp <- sample(vars[grep("x", vars)], 6)
-R_params <- jags_out[,R_samp]
-x_params <- jags_out[,x_samp]
-
-# for the random effects model
-atime_params <- jags_out[,grep("^at", vars)]
-asite_samp <- sample(vars[grep("^as", vars)], 6)
-asite_params <- jags_out[,asite_samp]
-
-# for betas (univariate):
-beta_params <- jags_out[,grep("^b", vars)]
+# # # load model
+# load(paste0(dir, "model_runs/", models[18]))
+# #
+# # # load jags output:
+# jags_out <- model_info$jags_out
+# vars <- varnames(jags_out)
+# params <- jags_out[,grep("r0|^tau", vars)]
+# R_samp <- sample(vars[grep("R", vars)], 6)
+# x_samp <- sample(vars[grep("x", vars)], 6)
+# R_params <- jags_out[,R_samp]
+# x_params <- jags_out[,x_samp]
+# 
+# # for the random effects model
+# atime_params <- jags_out[,grep("^at", vars)]
+# asite_samp <- sample(vars[grep("^as", vars)], 6)
+# asite_params <- jags_out[,asite_samp]
+# 
+# # for betas (univariate):
+# beta_params <- jags_out[,grep("^b", vars)]
 
 # testing convergence with plots
 # testing effective sizes
