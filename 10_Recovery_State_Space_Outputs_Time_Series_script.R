@@ -200,6 +200,17 @@ time_series <- ggplot(data = plot_data) +
 time_series
 #sample
 
+# save it:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# save:
+ggsave("2026_02_09_time_series_sample_point.png", 
+       plot = time_series, 
+       width = 14, 
+       height = 8, 
+       dpi = 600)
+
+
 # # playing around:
 # sites <- sample(1:5000, size = 10, replace = FALSE)
 # testing <- tcg[sites,] %>%
