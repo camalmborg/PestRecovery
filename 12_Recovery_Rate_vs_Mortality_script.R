@@ -101,10 +101,27 @@ hf_box <- ggplot(hf_tcg_box, aes(x = box_groups, y = recovery_rate, fill = box_g
         axis.title.y = element_text(size = 14))
 hf_box
 
+## Save plots:
+# set up directory path:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# recov vs pdba:
+ggsave(recov_mort_plot,
+       filename = paste0(save_dir, "2026_02_11_recov_rate_vs_pdba_hf_plots.png"),
+       height = 12,
+       width = 12,
+       dpi = 600)
+# boxplot:
+ggsave(hf_box,
+       filename = paste0(save_dir, "2026_02_11_recov_rate_boxplot_hf_plots.png"),
+       height = 12,
+       width = 12,
+       dpi = 600)
+
 # Tukey's Honest Significant Difference test
 tukey <- TukeyHSD(anova_box, conf.level = 0.95)
 tukey <- as.data.frame(tukey$`hf_tcg_box$box_groups`)
 
+library(gt)
 # make a table for supplement:
 tukey_table <- tukey |>
   # add group name to columns:
@@ -118,5 +135,18 @@ tukey_table <- tukey |>
   rename("p-value" = "p adj") |>
   # neater p-values:
   mutate("p-value" = ifelse(`p-value` < 0.001, "< 0.001", round(`p-value`, 3)))
+tukey_table <- gt(tukey_table) |>
+  # make column names bold:
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_column_labels()) |>
+  tab_style(style = cell_borders(sides = c("left", "right"),
+                                 color = "transparent",
+                                 weight = 16),
+            locations = cells_body()) |>
+  tab_options(table.font.size = 16,
+              data_row.padding = 10)
+tukey_table
 
-
+# save table
+gtsave(tukey_table,
+       file = paste0(save_dir, "2026_02_11_mortality_tukey_table.rtf"))
