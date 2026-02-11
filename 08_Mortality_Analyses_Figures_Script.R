@@ -181,5 +181,5 @@ results_table <- gt(top_models) %>%
 results_table
 # save table
 gtsave(results_table,
-       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_mortality_results_table.rtf")
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_mortality_results_table.html")
 
