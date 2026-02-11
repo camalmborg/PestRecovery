@@ -167,7 +167,7 @@ bias_plot_data <- get_plot_data(bias_all, starts)
 ## Making Plots
 # diagonal means (metric vs lead time):
 crps_plot <- ggplot(crps_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_continuous(breaks = 1:6) +
   labs(title = "CRPS",
@@ -176,11 +176,12 @@ crps_plot <- ggplot(crps_plot_data, aes(x = year, y = diag_mean, color = as.fact
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14),
+        axis.text.x = element_blank())
 
 rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_continuous(breaks = 1:6) +
   labs(title = "RMSE",
@@ -189,11 +190,12 @@ rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = diag_mean, color = as.fact
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14),
+        axis.text.x = element_blank())
 
 mae_plot <- ggplot(mae_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_continuous(breaks = 1:6) +
   labs(title = "MAE",
@@ -202,11 +204,12 @@ mae_plot <- ggplot(mae_plot_data, aes(x = year, y = diag_mean, color = as.factor
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14),
+        axis.text.x = element_blank())
 
 bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_continuous(breaks = 1:6) +
   labs(title = "Bias",
@@ -215,64 +218,89 @@ bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.fact
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14))
 
 # metric vs year logs:
 crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
   labs(x = NULL,
-       y = "CRPS Score",
+       y = NULL,
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14),
+        axis.text.x = element_blank())
 
 rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
   labs(x = NULL,
-       y = "Residual TCG",
+       y = NULL,
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14),
+        axis.text.x = element_blank())
 
 mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
   labs(x = NULL,
-       y = "Residual TCG",
+       y = NULL,
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14),
+        axis.text.x = element_blank())
 
 bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
-  geom_line(linewidth = 0.75) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
   labs(x = "Year",
-       y = "Residual TCG",
+       y = NULL,
        color = "Forecast Model") +
   theme_bw() +
   theme(plot.title = element_text(size = 14),
-        axis.title = element_text(size = 12),
-        axis.text  = element_text(size = 12))
+        axis.title = element_text(size = 14),
+        axis.text  = element_text(size = 14))
 
 # plot as a group:
 combine_plots <- ((crps_plot / rmse_plot / mae_plot / bias_plot) | (crps_yr_lag_plot / rmse_yr_lag_plot / mae_yr_lag_plot / bias_yr_lag_plot)) + 
   plot_layout(guides = "collect") +
   plot_annotation(title = "Forecast Performance Metrics",
-                  theme = theme(plot.title = element_text(size = 16))) & theme(legend.position = "bottom")
+                  theme = theme(plot.title = element_text(size = 16))) &
+  scale_color_manual(name = "Forecast Model:",
+                     values = c("1" = "#5778a4", 
+                                "2" = "#e49444",
+                                "3" = "#d1615d",
+                                "base" = "#85b6b2"),
+                     labels = c("1" = "Model 1",
+                                "2" = "Model 2",
+                                "3" = "Model 3",
+                                "base" = "Base")) &
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14))
 combine_plots
+
+# save them
+# set up directory path:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# save combine:
+ggsave(combine_plots,
+       filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
+       height = 15,
+       width = 14,
+       dpi = 600)
 
 ### ARCHIVE ###
 
@@ -291,3 +319,9 @@ combine_plots
 # for (i in 2:nrow(rmse_all)){
 #   lines(x, log10(rmse_all[i, 3:ncol(rmse_all)]))
 # }
+
+## Tableau 10 colors:
+# blue: #5778a4,
+#   orange: #e49444,
+#   red: #d1615d,
+#   teal: #85b6b2,
