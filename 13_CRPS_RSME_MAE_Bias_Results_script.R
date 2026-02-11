@@ -6,6 +6,7 @@ library(tidyverse)
 library(stringr)
 library(ggplot2)
 library(patchwork)
+library(gt)
 
 ## Loading CRPS and Bias run results
 # working directories:
@@ -121,7 +122,7 @@ bias_all$Metric <- "Bias"
 # function for getting results:
 #'@param test = crps/rmse/mae/bias data
 #'@param starts = character object with years being forecast 
-get_plot_data <- function(test, starts){
+get_plot_data <- function(test, starts, name){
   result <- test %>%
     # add column for model number for indexing:
     mutate(model_num = if_else(str_detect(Model, "^base_"), "base", str_extract(Model, "\\d+")), .after = 1)
@@ -154,15 +155,18 @@ get_plot_data <- function(test, starts){
   plot_data$cast_year <- cast_years
   # make plot data:
   plot_data <- plot_data[,-grep("2", colnames(plot_data))]
+  # add column for test type:
+  plot_data$Test <- name
+  return(plot_data)
 }
 
 # years of forecasts:
 starts <- as.character(2018:2023)
 # use function:
-crps_plot_data <- get_plot_data(crps_all, starts)
-rmse_plot_data <- get_plot_data(rmse_all, starts)
-mae_plot_data <- get_plot_data(mae_all, starts)
-bias_plot_data <- get_plot_data(bias_all, starts)
+crps_plot_data <- get_plot_data(crps_all, starts, "CRPS")
+rmse_plot_data <- get_plot_data(rmse_all, starts, "RMSE")
+mae_plot_data <- get_plot_data(mae_all, starts, "MAE")
+bias_plot_data <- get_plot_data(bias_all, starts, "Bias")
 
 ## Making Plots
 # diagonal means (metric vs lead time):
@@ -226,7 +230,8 @@ crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = cast_year, y = yr_one_lag, co
   geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
-  labs(x = NULL,
+  labs(title = "Year-Lag CRPS",
+       x = NULL,
        y = NULL,
        color = "Forecast Model") +
   theme_bw() +
@@ -239,7 +244,8 @@ rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = cast_year, y = yr_one_lag, co
   geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
-  labs(x = NULL,
+  labs(title = "Year-Lag RMSE",
+       x = NULL,
        y = NULL,
        color = "Forecast Model") +
   theme_bw() +
@@ -252,7 +258,8 @@ mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = cast_year, y = yr_one_lag, colo
   geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
-  labs(x = NULL,
+  labs(title = "Year-Lag MAE",
+       x = NULL,
        y = NULL,
        color = "Forecast Model") +
   theme_bw() +
@@ -265,7 +272,8 @@ bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = cast_year, y = yr_one_lag, co
   geom_line(linewidth = 1) +
   geom_point(size = 2.5) +
   scale_x_discrete(breaks = 2018:2023) +
-  labs(x = "Year",
+  labs(title = "Year-Lag Bias",
+       x = "Year",
        y = NULL,
        color = "Forecast Model") +
   theme_bw() +
@@ -301,6 +309,25 @@ ggsave(combine_plots,
        height = 15,
        width = 14,
        dpi = 600)
+
+## Making table of crps/rmse/mae/bias results
+all_forecast_perform <- rbind(crps_plot_data, rmse_plot_data, mae_plot_data, bias_plot_data) |>
+  select(model_num, diag_mean, year, yr_one_lag, cast_year, Test) |>
+  rename(Model = model_num) |>
+  rename(Score = diag_mean) |>
+  rename(`Year-Lag Score` = yr_one_lag) |>
+  rename(`Forecast Horizon Year` = year) |>
+  rename(`Forecast Start Year` = cast_year)
+afp_table <- gt(all_forecast_perform, groupname_col = "Test") |>
+  # make columns bold:
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_column_labels()) |>
+  tab_style(style = cell_text(style = "italic"),
+            locations = cells_row_groups()) |>
+  tab_style(style = cell_fill(color = "grey86"),
+            locations = cells_row_groups()) |>
+  tab_options(table.font.size = 16) 
+afp_table
 
 ### ARCHIVE ###
 
