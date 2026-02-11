@@ -46,15 +46,15 @@ recov_mort_plot <- ggplot(hf_tcg_pdba, aes(x = pdba, y = recovery_rate)) +
   geom_smooth(method=lm , color="red", se=FALSE) +
   stat_fit_glance(method = "lm", method.args = list(formula = y ~ x), 
                   aes(label = paste("P-value =", signif(after_stat(p.value), 3))), 
-                  label.x = 0.83, label.y = 0.90, size = 6) +
-  stat_regline_equation(label.x = 55, label.y = 0.02, size = 6) +
+                  label.x = 0.785, label.y = 0.90, size = 6) +
+  stat_regline_equation(label.x = 49, label.y = 0.02, size = 6) +
   labs(x = "Percent Dead Basal Area in Plot",
-       y = "Recovery Rate (Greenness per Year)") +
+       y = "Recovery Rate (TCG per Year)") +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        axis.title.x = element_text(size = 12),
-        axis.title.y = element_text(size = 12))
+  theme(axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14))
 recov_mort_plot
 
 
@@ -95,12 +95,28 @@ hf_box <- ggplot(hf_tcg_box, aes(x = box_groups, y = recovery_rate, fill = box_g
   theme_bw() +
   theme(panel.grid = element_blank(),
         legend.position = "none",
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        axis.title.x = element_text(size = 12),
-        axis.title.y = element_text(size = 12))
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14))
 hf_box
 
 # Tukey's Honest Significant Difference test
-TukeyHSD(anova_box)
+tukey <- TukeyHSD(anova_box, conf.level = 0.95)
+tukey <- as.data.frame(tukey$`hf_tcg_box$box_groups`)
+
+# make a table for supplement:
+tukey_table <- tukey |>
+  # add group name to columns:
+  mutate(Group = rownames(tukey), .before = 1) |>
+  # rounding:
+  mutate(across(where(is.numeric), function(x) round(x, 4))) |>
+  # renaming columns:
+  rename("Lower Hinge" = lwr) |>
+  rename("Upper Hinge" = upr) |>
+  rename("Diff" = diff) |>
+  rename("p-value" = "p adj") |>
+  # neater p-values:
+  mutate("p-value" = ifelse(`p-value` < 0.001, "< 0.001", round(`p-value`, 3)))
+
 
