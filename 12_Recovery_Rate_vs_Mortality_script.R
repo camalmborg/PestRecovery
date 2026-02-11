@@ -45,9 +45,9 @@ recov_mort_plot <- ggplot(hf_tcg_pdba, aes(x = pdba, y = recovery_rate)) +
   geom_point() +
   geom_smooth(method=lm , color="red", se=FALSE) +
   stat_fit_glance(method = "lm", method.args = list(formula = y ~ x), 
-                  aes(label = paste("P-value =", signif(after_stat(p.value), 3))), 
-                  label.x = 0.785, label.y = 0.90, size = 6) +
-  stat_regline_equation(label.x = 49, label.y = 0.02, size = 6) +
+                  aes(label = paste("p-value =", signif(after_stat(p.value), 3))), 
+                  label.x = 0.785, label.y = 0.90, size = 5) +
+  stat_regline_equation(label.x = 40, label.y = 0.02, size = 5) +
   labs(x = "Percent Dead Basal Area in Plot",
        y = "Recovery Rate (TCG per Year)") +
   theme_bw() +
@@ -85,7 +85,7 @@ p_value <- round(summary(anova_box)[[1]][["Pr(>F)"]][1], 9)
 # Boxplot
 hf_box <- ggplot(hf_tcg_box, aes(x = box_groups, y = recovery_rate, fill = box_groups)) +
   geom_boxplot() +
-  geom_jitter(width = 0.15, size = 0.75) +
+  geom_jitter(width = 0.15, size = 1.75) +
   scale_fill_manual(values = c("Timber Harvest" = "#F0E442", "Dead" = "#0072B2", "Live" = "#D55E00")) +
   labs(title = "Mortality Outcomes vs Recovery Rates",
        x = "Group",
@@ -105,17 +105,31 @@ hf_box
 # set up directory path:
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 # recov vs pdba:
-ggsave(recov_mort_plot,
-       filename = paste0(save_dir, "2026_02_11_recov_rate_vs_pdba_hf_plots.png"),
-       height = 12,
-       width = 12,
-       dpi = 600)
+png(filename = paste0(save_dir, "2026_02_11_recov_rate_vs_pdba_hf_plots.png"),
+    height = 6,
+    width = 6,
+    units = "in",
+    res = 600)
+recov_mort_plot
+dev.off()
+# ggsave(recov_mort_plot,
+#        filename = paste0(save_dir, "2026_02_11_recov_rate_vs_pdba_hf_plots.png"),
+#        height = 12,
+#        width = 12,
+#        dpi = 600)
 # boxplot:
-ggsave(hf_box,
-       filename = paste0(save_dir, "2026_02_11_recov_rate_boxplot_hf_plots.png"),
-       height = 12,
-       width = 12,
-       dpi = 600)
+png(filename = paste0(save_dir, "2026_02_11_recov_rate_boxplot_hf_plots.png"),
+    height = 6,
+    width = 6,
+    units = "in",
+    res = 600)
+hf_box
+dev.off()
+# ggsave(hf_box,
+#        filename = paste0(save_dir, "2026_02_11_recov_rate_boxplot_hf_plots.png"),
+#        height = 12,
+#        width = 12,
+#        dpi = 600)
 
 # Tukey's Honest Significant Difference test
 tukey <- TukeyHSD(anova_box, conf.level = 0.95)

@@ -185,7 +185,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   theme_bw() +
   theme(legend.position = "none",
         axis.title = element_text(size = 16),
-        axis.text = element_text(size = 12))
+        axis.text = element_text(size = 14))
 
 beta_ridge_plot
 
@@ -194,12 +194,19 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-ggsave("2026_02_09_ridges_uni_vars.png",
-       plot = beta_ridge_plot,
-       height = 10,
-       width = 8,
-       units = "in",
-       dpi = 600)
+png(filename = paste0(save_dir, "2026_02_09_ridges_uni_vars.png"),
+    height = 8,
+    width = 6,
+    units = "in",
+    res = 600)
+beta_ridge_plot
+dev.off()
+# ggsave("2026_02_09_ridges_uni_vars.png",
+#        plot = beta_ridge_plot,
+#        height = 10,
+#        width = 8,
+#        units = "in",
+#        dpi = 600)
 
 ## Make a quick table of results
 library(grid)

@@ -122,34 +122,69 @@ density_across_hotspots
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures"
 
 # predicted and observed with confidence interval:
-ggsave(plot = pdba_pred_obs,
-       filename= paste0(save_dir, "/2026_02_09_pred_obs_ci_plot_square.png"),
-       width=6,
-       height=6)
+png(filename = paste0(save_dir, "/2026_02_09_pred_obs_ci_plot_square.png"),
+    width = 6,
+    height = 6, 
+    units = "in",
+    res = 600)
+pdba_pred_obs
+dev.off()
+# ggsave(plot = pdba_pred_obs,
+#        filename= paste0(save_dir, "/2026_02_09_pred_obs_ci_plot_square.png"),
+#        width=6,
+#        height=6)
 
 # predicted vs observed plot:
-ggsave(plot = pred_obs_compare,
-       filename= paste0(save_dir, "/2026_02_09_pred_obs_compare_plot.png"),
-       width=6,
-       height=6)
+png(filename = paste0(save_dir, "/2026_02_09_pred_obs_compare_plot.png"),
+    width = 6,
+    height = 6, 
+    units = "in",
+    res = 600)
+pred_obs_compare
+dev.off()
+# ggsave(plot = pred_obs_compare,
+#        filename= paste0(save_dir, "/2026_02_09_pred_obs_compare_plot.png"),
+#        width=6,
+#        height=6)
 
 # histogram of percent dead basal area across plots:
-ggsave(plot = hist_mort_obs,
-       filename = paste0(save_dir, "/2026_02_09_hist_pdba_across_plots.png"),
-       width = 8,
-       height = 6)
+png(filename = paste0(save_dir, "/2026_02_09_hist_pdba_across_plots.png"),
+    width = 6,
+    height = 6, 
+    units = "in",
+    res = 600)
+hist_mort_obs
+dev.off()
+# ggsave(plot = hist_mort_obs,
+#        filename = paste0(save_dir, "/2026_02_09_hist_pdba_across_plots.png"),
+#        width = 8,
+#        height = 6)
 
 # ridgeline plot of mortality across hotspots:
-ggsave(plot = ridge_across_hotspots,
-       filename = paste0(save_dir, "/2026_02_09_hist_pdba_ridges_hotspots.png"),
-       width = 8,
-       height = 6)
+png(filename = paste0(save_dir, "/2026_02_09_hist_pdba_ridges_hotspots.png"),
+    width = 6,
+    height = 8, 
+    units = "in",
+    res = 600)
+ridge_across_hotspots
+dev.off()
+# ggsave(plot = ridge_across_hotspots,
+#        filename = paste0(save_dir, "/2026_02_09_hist_pdba_ridges_hotspots.png"),
+#        width = 8,
+#        height = 6)
 
 # densities of mortality across hotspots:
-ggsave(plot = density,
-       filename = paste0(save_dir, "/2026_01_09_hist_pdba_density.png"),
-       width = 8,
-       height = 6)
+png(filename = paste0(save_dir, "/2026_02_11_hist_pdba_density.png"),
+    width = 6,
+    height = 6, 
+    units = "in",
+    res = 600)
+density
+dev.off()
+# ggsave(plot = density,
+#        filename = paste0(save_dir, "/2026_01_09_hist_pdba_density.png"),
+#        width = 8,
+#        height = 6)
 
 
 ### Results Table and Heatmap

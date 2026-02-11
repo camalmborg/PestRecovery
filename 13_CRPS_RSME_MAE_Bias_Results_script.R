@@ -181,7 +181,7 @@ crps_plot <- ggplot(crps_plot_data, aes(x = year, y = diag_mean, color = as.fact
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14),
+        axis.text  = element_text(size = 12),
         axis.text.x = element_blank())
 
 rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -195,7 +195,7 @@ rmse_plot <- ggplot(rmse_plot_data, aes(x = year, y = diag_mean, color = as.fact
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14),
+        axis.text  = element_text(size = 12),
         axis.text.x = element_blank())
 
 mae_plot <- ggplot(mae_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -209,7 +209,7 @@ mae_plot <- ggplot(mae_plot_data, aes(x = year, y = diag_mean, color = as.factor
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14),
+        axis.text  = element_text(size = 12),
         axis.text.x = element_blank())
 
 bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -223,7 +223,7 @@ bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.fact
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14))
+        axis.text  = element_text(size = 12))
 
 # metric vs year logs:
 crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -237,7 +237,7 @@ crps_yr_lag_plot <- ggplot(crps_plot_data, aes(x = cast_year, y = yr_one_lag, co
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14),
+        axis.text  = element_text(size = 12),
         axis.text.x = element_blank())
 
 rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -251,7 +251,7 @@ rmse_yr_lag_plot <- ggplot(rmse_plot_data, aes(x = cast_year, y = yr_one_lag, co
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14),
+        axis.text  = element_text(size = 12),
         axis.text.x = element_blank())
 
 mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -265,7 +265,7 @@ mae_yr_lag_plot <- ggplot(mae_plot_data, aes(x = cast_year, y = yr_one_lag, colo
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14),
+        axis.text  = element_text(size = 12),
         axis.text.x = element_blank())
 
 bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = cast_year, y = yr_one_lag, color = as.factor(model_num), group = as.factor(model_num))) +
@@ -279,7 +279,7 @@ bias_yr_lag_plot <- ggplot(bias_plot_data, aes(x = cast_year, y = yr_one_lag, co
   theme_bw() +
   theme(plot.title = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text  = element_text(size = 14))
+        axis.text  = element_text(size = 12))
 
 # plot as a group:
 combine_plots <- ((crps_plot / rmse_plot / mae_plot / bias_plot) | (crps_yr_lag_plot / rmse_yr_lag_plot / mae_yr_lag_plot / bias_yr_lag_plot)) + 
@@ -304,11 +304,18 @@ combine_plots
 # set up directory path:
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 # save combine:
-ggsave(combine_plots,
-       filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
-       height = 15,
-       width = 14,
-       dpi = 600)
+png(filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
+    height = 10,
+    width = 9,
+    units = "in",
+    res = 600)
+combine_plots
+dev.off()
+# ggsave(combine_plots,
+#        filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
+#        height = 15,
+#        width = 14,
+#        dpi = 600)
 
 ## Making table of crps/rmse/mae/bias results
 all_forecast_perform <- rbind(crps_plot_data, rmse_plot_data, mae_plot_data, bias_plot_data) |>

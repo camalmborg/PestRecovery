@@ -204,11 +204,18 @@ time_series
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # save:
-ggsave("2026_02_09_time_series_sample_point.png", 
-       plot = time_series, 
-       width = 14, 
-       height = 8, 
-       dpi = 600)
+png(filename = paste0(save_dir, "2026_02_09_time_series_sample_point.png"),
+    height = 6,
+    width = 10,
+    units = "in",
+    res = 600)
+time_series
+dev.off()
+# ggsave("2026_02_09_time_series_sample_point.png", 
+#        plot = time_series, 
+#        width = 14, 
+#        height = 8, 
+#        dpi = 600)
 
 
 # # playing around:
