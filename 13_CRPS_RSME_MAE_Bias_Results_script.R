@@ -217,7 +217,7 @@ bias_plot <- ggplot(bias_plot_data, aes(x = year, y = diag_mean, color = as.fact
   geom_point(size = 2.5) +
   scale_x_continuous(breaks = 1:6) +
   labs(title = "Bias",
-       x = "Forecast Horizon (Years)",
+       x = "Lead Time (Forecast)",
        y = "Residual TCG",
        color = "Forecast Model") +
   theme_bw() +
@@ -312,22 +312,49 @@ ggsave(combine_plots,
 
 ## Making table of crps/rmse/mae/bias results
 all_forecast_perform <- rbind(crps_plot_data, rmse_plot_data, mae_plot_data, bias_plot_data) |>
-  select(model_num, diag_mean, year, yr_one_lag, cast_year, Test) |>
+  select(model_num, year, diag_mean, cast_year, yr_one_lag, Test) |>
   rename(Model = model_num) |>
   rename(Score = diag_mean) |>
   rename(`Year-Lag Score` = yr_one_lag) |>
-  rename(`Forecast Horizon Year` = year) |>
-  rename(`Forecast Start Year` = cast_year)
+  rename(`Lead Time Year` = year) |>
+  rename(`Forecast Start Year` = cast_year) |>
+  # rounding:
+  mutate(across(c(Score, `Year-Lag Score`), function(x) round(x, 3)))
 afp_table <- gt(all_forecast_perform, groupname_col = "Test") |>
+  # adding breaks for column labels:
+  cols_label(`Lead Time Year` = html("Lead Time<br>Year"),
+             `Year-Lag Score` = html("Year-Lag<br>Score"),
+             `Forecast Start Year` = html("Forecast<br>Start Year")) |>
   # make columns bold:
   tab_style(style = cell_text(weight = "bold"),
             locations = cells_column_labels()) |>
+  # add row spanners for tests:
   tab_style(style = cell_text(style = "italic"),
             locations = cells_row_groups()) |>
   tab_style(style = cell_fill(color = "grey86"),
             locations = cells_row_groups()) |>
+  # add lines to separate two analyses:
+  tab_style(style = cell_borders(sides = "right",
+                                 color = "grey86",
+                                 weight = px(3),
+                                 style = "solid"),
+            locations = list(cells_body(columns = c(Model, Score)),
+                             cells_column_labels(c(Model, Score)))) |>
+  # add thinner lines between other columns:
+  tab_style(style = cell_borders(sides = "right",
+                                 color = "grey86",
+                                 weight = px(1),
+                                 style = "solid"),
+            locations = list(cells_body(columns = c(`Lead Time Year`, `Forecast Start Year`)),
+                             cells_column_labels(c(`Lead Time Year`, `Forecast Start Year`)))) |>
   tab_options(table.font.size = 16) 
 afp_table
+
+# set up directory path:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# save table:
+gtsave(afp_table,
+       file = paste0(save_dir, "2026_02_11_forecast_crps_all_table.rtf"))
 
 ### ARCHIVE ###
 
