@@ -2,7 +2,7 @@
 
 ## Set up
 # load libraries:
-librarian::shelf(rjags, coda, dplyr, stringr)
+librarian::shelf(rjags, coda, dplyr, stringr, gt)
 
 # set correct working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
@@ -124,6 +124,27 @@ setwd(save_dir)
 # save in figures:
 gtsave(all_params_table,
        file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_all_recov_params_table.rtf")
+
+## Forecasted model params table
+# take top three models:
+best_models_table <- model_params_table |>
+  # select top three:
+  slice(1:3) |>
+  # select columns with model covariates:
+  select(`covariate`, `perform`,`r0`, `beta[1]`, `beta[2]`, `beta[3]`) |>
+  # clean up covariates column:
+  mutate(covariate = gsub("multi_", "", covariate)) |>
+  #mutate(covariate = gsub("_", " ", covariate)) |>
+  mutate(covariate = gsub("dmagy2", "disturbance magnitude 2017", covariate)) |>
+  mutate(covariate = gsub("tmax2015", "mean maximum temp 2015", covariate)) |>
+  mutate(covariate = gsub("tmin", "minimum temperature", covariate)) |>
+  rename(`Model Covariates` = covariate) |>
+  rename(Rank = perform) |>
+  rename(Intercept = r0) |>
+  rename(`Parameter 1` = `beta[1]`) |>
+  rename(`Parameter 2` = `beta[2]`) |>
+  rename(`Parameter 3` = `beta[3]`)
+best_models_table
 
 ### For model convergence checks and tests:
 # # # load model
