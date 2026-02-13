@@ -139,14 +139,15 @@ uni_results <- results_extract(dir, model_list)
 #save(uni_results, file = "2025_05_06_univar_model_results_list.RData")
 
 
+
 ### Visualizations and parsing outputs:
-# selecting model:
-dir = dir
-modelnum = 12
-log = TRUE
-# # load model and output:
-model <- mort_data(dir, modelnum, log)
-output <- mort_out(dir, modelnum, log)
+# # selecting model:
+# dir = dir
+# modelnum = 12
+# log = TRUE
+# # # load model and output:
+# model <- mort_data(dir, modelnum, log)
+# output <- mort_out(dir, modelnum, log)
 # 
 # # visual inspections:
 # jags_out <- model$jags_out

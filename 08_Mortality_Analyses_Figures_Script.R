@@ -218,3 +218,130 @@ results_table
 gtsave(results_table,
        file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_09_mortality_results_table.html")
 
+
+### Making univariate and multivariate mortality results tables:
+# univariate names:
+mort_models <- data.frame(covariates = c(1:13),
+                          names = c("tcg_2016", "tcg_2017", "dmag_tcg_2016", "dmag_tcg_2017",
+                                    "cs_2016", "cs_2017", "dmag_cs_2016", "dmag_cs_2017",
+                                    "tba_oak", "pba_oak", "base", "dmag_tcg_2016_2017", "dmag_cs_2016_2017"))
+unilookup <- setNames(mort_models$names, mort_models$covariates)
+
+# univariate table:
+uni_mort_results_no_log <- as.data.frame(uni_results$results[grep("nolog", uni_results$results[,2]),]) |>
+  # match names:
+  mutate(Model = gsub("_nolog", "", Model)) |>
+  mutate(Model = as.numeric(Model)) |>
+  arrange(Model) |>
+  mutate(covariate = mort_models$names[-c(11:13)], .after = Model) |>
+  # add log/no log:
+  mutate(Logit = "no logit", .after = covariate) |>
+  # select columns:
+  select(-c(beta_2, beta_3)) |>
+  # rename columns:
+  rename(Intercept = beta_int) |>
+  rename(Beta = beta_1)
+uni_mort_results_log <- as.data.frame(uni_results$results[-grep("nolog", uni_results$results[,2]),]) |>
+  # match names:
+  mutate(Model = gsub("_log", "", Model)) |>
+  mutate(Model = as.numeric(Model)) |>
+  arrange(Model) |>
+  mutate(covariate = mort_models$names, .after = Model) |>
+  # add log/no log:
+  mutate(Logit = "logit", .after = covariate) |>
+  # select columns:
+  select(-c(beta_2, beta_3)) |>
+  # rename columns:
+  rename(Intercept = beta_int) |>
+  rename(Beta = beta_1)
+# combine:
+all_uni_mort_models <- rbind(uni_mort_results_no_log, uni_mort_results_log) |>
+  mutate(Model = 1:nrow(all_uni_mort_models)) |>
+  # select only what we want:
+  select(-Run) |>
+  # convert columns to numeric
+  mutate(across(-c(Model, covariate, Logit), as.numeric)) |>
+  mutate(across(where(is.numeric), ~ round(.x, digits = 4)))
+
+uni_mort_final_table <- gt(all_uni_mort_models)
+gtsave(uni_mort_final_table,
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_12_uni_mortality_params_table.rtf")
+  
+# multivariate table:
+# multivariate names:
+mort_multi_models <- data.frame(covariates = c(1:6),
+                                names = c("pba_oak", "tba_oak", "dmag_cs_2016_2017", "dmag_tcg_2016_2017", "dmag_tcg_2016", "dmag_cs_2016"))
+# make a look up table:
+lookup <- setNames(mort_multi_models$names, mort_multi_models$covariates)
+
+# multivariate table:
+multi_mort_results <- as.data.frame(multi_results$results) |>
+  # matching to covariates:
+  mutate(Model = gsub(".*covs_", "", Model)) |>
+  separate(Model, into = c("covariate 1", "covariate 2", "covariate 3"), sep = "_") |>
+  # fill in with lookup table:
+  mutate(across(c(`covariate 1`, `covariate 2`, `covariate 3`), ~ lookup[.x])) |>
+  # remove the ones with overlapping covariates:
+  slice(-c(4:9, 13:15)) |>
+  # select columns:
+  select(-c(Run, `covariate 3`, beta_3)) |>
+  # rename columns:
+  rename(Intercept = beta_int) |>
+  mutate(Model = 1:nrow(multi_mort_results), .before = 1) |>
+  # convert columns to numeric
+  mutate(across(-c(`covariate 1`, `covariate 2`), as.numeric)) |>
+  mutate(across(where(is.numeric), ~ round(.x, digits = 4)))
+
+multi_mort_final_table <- gt(multi_mort_results)
+gtsave(multi_mort_final_table,
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_12_multi_mortality_params_table.rtf")
+
+
+## Fixing mortality dic table:
+all_dics_uni_log <- all_dics |>
+  filter(type == "uni", mod_info == "log") |>
+  # fill in with lookup table:
+  mutate(across(c(model), ~ unilookup[.x])) |>
+  rename(`covariate 1` = model) |>
+  # make logit column
+  mutate(logit = "logit", .after = `covariate 1`) |>
+  mutate(`covariate 2` = NA, .after = `covariate 1`) |>
+  # select columns we want:
+  select(-c(type, mod_info)) |>
+  # round DICs and delDIC:
+  mutate(across(where(is.numeric), ~ round(.x, digits = 4)))
+
+all_dics_uni_nolog <- all_dics |>
+  filter(type == "uni", mod_info == "nolog") |>
+  # fill in with lookup table:
+  mutate(across(c(model), ~ unilookup[.x])) |>
+  rename(`covariate 1` = model) |>
+  mutate(logit = "no logit", .after = `covariate 1`) |>
+  mutate(`covariate 2` = NA, .after = `covariate 1`) |>
+  # select columns we want:
+  select(-c(type, mod_info)) |>
+  # round DICs and delDIC:
+  mutate(across(where(is.numeric), ~ round(.x, digits = 4)))
+
+all_dics_multi <- all_dics |>
+  filter(type != "uni") |>
+  separate(mod_info, into = c("covariate 1", "covariate 2", "covariate 3"), sep = " ") |>
+  # fill in with lookup table:
+  mutate(across(c(`covariate 1`, `covariate 2`, `covariate 3`), ~ lookup[.x])) |>
+  # remove the ones with overlapping covariates:
+  slice(-c(5:7, 11:12, 14, 15:17)) |>
+  # select columns we want:
+  select(-c(model, type, `covariate 3`)) |>
+  mutate(logit = "logit", .after = `covariate 2`) |>
+  # round DICs and delDIC:
+  mutate(across(where(is.numeric), ~ round(.x, digits = 4)))
+
+# rebind them and sort:
+all_mort_dics_table <- rbind(all_dics_uni_log, all_dics_uni_nolog, all_dics_multi) |>
+  arrange(delDIC) |>
+  mutate(perform = 1:nrow(all_mort_dics_table))
+
+final_mort_dic_table <- gt(all_mort_dics_table)
+gtsave(final_mort_dic_table,
+       file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_12_all_mort_dic_table.rtf")
+

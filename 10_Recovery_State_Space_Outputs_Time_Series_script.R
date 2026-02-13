@@ -192,7 +192,7 @@ time_series <- ggplot(data = plot_data) +
        x = "Year") +
   #scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
   theme_bw() +
-  theme(legend.position = "right",
+  theme(legend.position = "bottom", legend.direction = "vertical",
         legend.text = element_text(size = 12),
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 14))
