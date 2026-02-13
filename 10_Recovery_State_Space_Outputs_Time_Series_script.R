@@ -206,7 +206,7 @@ setwd(save_dir)
 # save:
 png(filename = paste0(save_dir, "2026_02_09_time_series_sample_point.png"),
     height = 6,
-    width = 10,
+    width = 8,
     units = "in",
     res = 600)
 time_series
