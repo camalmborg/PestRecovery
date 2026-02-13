@@ -266,6 +266,7 @@ all_uni_mort_models <- rbind(uni_mort_results_no_log, uni_mort_results_log) |>
 uni_mort_final_table <- gt(all_uni_mort_models)
 gtsave(uni_mort_final_table,
        file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_12_uni_mortality_params_table.rtf")
+write.csv(all_uni_mort_models, file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/all_uni_mort_models.csv")
   
 # multivariate table:
 # multivariate names:
@@ -295,6 +296,7 @@ multi_mort_results <- as.data.frame(multi_results$results) |>
 multi_mort_final_table <- gt(multi_mort_results)
 gtsave(multi_mort_final_table,
        file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_12_multi_mortality_params_table.rtf")
+write.csv(multi_mort_results, file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/all_multi_mort_models.csv")
 
 
 ## Fixing mortality dic table:
@@ -344,4 +346,5 @@ all_mort_dics_table <- rbind(all_dics_uni_log, all_dics_uni_nolog, all_dics_mult
 final_mort_dic_table <- gt(all_mort_dics_table)
 gtsave(final_mort_dic_table,
        file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/2026_02_12_all_mort_dic_table.rtf")
+write.csv(all_mort_dics_table, file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Mortality_Model_Runs/all_mort_dics.csv")
 
