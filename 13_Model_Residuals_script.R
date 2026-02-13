@@ -73,7 +73,7 @@ y_pred <- forecast %>%
 ## Residual calculation
 # get the model input for y and covariates:
 y <- tcg %>% select(`2018-05-01`:`2023-05-01`)
-resid <- y_pred - y
+resid <- y - y_pred
 colnames(resid) <- paste0("year_", seq(1, ncol(resid), length.out = ncol(resid)))
 
 

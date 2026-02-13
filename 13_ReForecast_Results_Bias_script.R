@@ -66,7 +66,7 @@ for (s in site){
     if (is.na(obs)|any(is.na(ens))){
       diff <- NA
     } else {
-      diff <- ens - obs
+      diff <- obs - ens
     }
     # residuals:
     resids[s, as.character(i)] <- diff

@@ -310,7 +310,7 @@ png(filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
     units = "in",
     res = 600)
 combine_plots
-dev.off()
+#dev.off()
 # ggsave(combine_plots,
 #        filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
 #        height = 15,
@@ -362,6 +362,8 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 # save table:
 gtsave(afp_table,
        file = paste0(save_dir, "2026_02_11_forecast_crps_all_table.rtf"))
+# as csv
+write.csv(all_forecast_perform, "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/crps_rmse_mae_bias_table_all.csv")
 
 ### ARCHIVE ###
 
