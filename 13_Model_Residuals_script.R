@@ -110,8 +110,7 @@ mapping_residuals <- function(resid_col, resid_sf){
     geom_sf(aes(fill = resids), size = 1.5,
             color = "black", shape = 21, stroke = 0.1) +
     scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
-    theme_bw() +
-    labs(title = paste0("Residuals: Predicted - Observed TCG, Year ", as.character(resid_col)),
+    labs(title = paste0("Residuals: Observed - Predicted TCG, Year ", as.character(resid_col)),
       fill = "Residual") +
     theme_bw() +
     theme(panel.grid = element_blank(),
@@ -145,7 +144,9 @@ spatial_ac <- function(resid, resid_col){
   vg_data <- data.frame(xp = vg$x, yp = vg$y)
   vg_plot <- ggplot(data = vg_data, aes(x = xp, y = yp)) +
     geom_point() +
-    labs(title = paste0("Variogram: Year ", as.character(resid_col))) +
+    labs(title = paste0("Variogram: Year ", as.character(resid_col)),
+         x = "h (distance between samples)",
+         y = "Variance(h)") +
     theme_bw() +
     theme(axis.title = element_text(size = 14),
           axis.text = element_text(size = 12))
@@ -162,7 +163,9 @@ spatial_ac <- function(resid, resid_col){
   cg_data <- data.frame(xp = cg$x, yp = cg$y)
   cg_plot <- ggplot(data = cg_data, aes(x = xp, y = yp)) +
     geom_point() +
-    labs(title = paste0("Correlogram: Year ", as.character(resid_col))) +
+    labs(title = paste0("Correlogram: Year ", as.character(resid_col)),
+         x = "lag",
+         y = "autocorrelation at lag") +
     theme_bw()
   #cg_plot
   # plot save location:
@@ -249,6 +252,43 @@ cor_lags <- data.frame(lag = c(1:5),
                        p_val = c(cor_lag_one_test, cor_lag_two_test, cor_lag_three_test, cor_lag_four_test, cor_lag_five_test))
 
 plot(cor_lags$lag, cor_lags$cor)
+
+cor_lag_plot <- ggplot(cor_lags, mapping = aes(x = lag, y = cor)) +
+  geom_point(size = 2) +
+  labs(#title = "Correlation Lag Plot",
+       x = "Year Lag", 
+       y = " Pearson Correlation Coefficient") +
+  theme_bw() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14))
+cor_lag_plot
+
+png(filename = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/cor_lag_plot.png",
+    height = 4,
+    width = 6,
+    units = "in",
+    res = 600)
+cor_lag_plot
+dev.off()
+
+# make a table of results:
+cor_lags_table <- cor_lags |>
+  # round correlation coef:
+  mutate(cor = round(cor, digits = 3)) |>
+  # rename columns:
+  rename(`Lag Year` = lag) |>
+  rename(`Correlation Coefficient` = cor) |>
+  rename(`P-value` = p_val) 
+cor_lags_table_gt <- gt(cor_lags_table)
+cor_lags_table_gt
+
+# set up directory path:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# save table:
+gtsave(cor_lags_table_gt,
+       file = paste0(save_dir, "2026_02_16_cor_lags_table.rtf"))
+# as csv
+write.csv(cor_lags_table, "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/cor_lags_table.csv")
 
 ### ARCHIVE ###
 

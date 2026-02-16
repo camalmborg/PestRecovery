@@ -361,7 +361,7 @@ afp_table
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 # save table:
 gtsave(afp_table,
-       file = paste0(save_dir, "2026_02_11_forecast_crps_all_table.rtf"))
+       file = paste0(save_dir, "2026_02_11_forecast_crps_all_table.html"))
 # as csv
 write.csv(all_forecast_perform, "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Residuals/crps_rmse_mae_bias_table_all.csv")
 
