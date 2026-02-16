@@ -132,7 +132,7 @@ mapping_residuals <- function(resid_col, resid_sf){
 spatial_ac <- function(resid, resid_col){
   # make trend surface:
   surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,resid_col]))
-  # project matrix over region:
+  # # project matrix over region:
   # tr <- trmat(surf,
   #             min(resid$lon) , max(resid$lon),
   #             min(resid$lat), max(resid$lat),
@@ -156,7 +156,7 @@ spatial_ac <- function(resid, resid_col){
   # Save the plot to a PNG file:
   ggsave(paste0(save_dir, Sys.Date(), "_", "Year_", as.character(resid_col), "_variogram_plot.png"),
          plot = vg_plot,
-         width = 10, height = 6,
+         width = 8, height = 6,
          dpi = 600)
   
   # plot correlogram:
@@ -173,7 +173,7 @@ spatial_ac <- function(resid, resid_col){
   # Save the plot to a PNG file:
   ggsave(paste0(save_dir, Sys.Date(), "_", "Year_", as.character(resid_col), "_correlogram_plot.png"),
          plot = cg_plot,
-         width = 10, height = 6,
+         width = 8, height = 6,
          dpi = 600)
 }
 

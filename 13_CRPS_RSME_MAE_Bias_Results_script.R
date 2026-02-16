@@ -304,13 +304,13 @@ combine_plots
 # set up directory path:
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 # save combine:
-png(filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
+png(filename = paste0(save_dir, "2026_02_16_crps_rmse_mae_bias_plots.png"),
     height = 10,
     width = 9,
     units = "in",
     res = 600)
 combine_plots
-#dev.off()
+dev.off()
 # ggsave(combine_plots,
 #        filename = paste0(save_dir, "2026_02_11_crps_rmse_mae_bias_plots.png"),
 #        height = 15,
