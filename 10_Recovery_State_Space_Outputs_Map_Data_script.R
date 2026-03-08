@@ -58,17 +58,41 @@ for (i in 2:7){
   recov_rates_mx[,i-1] <- rr[rrs]
 }
 rm(rrs, rr)
+
 # get mean over time:
 r_means <- apply(recov_rates_mx, 1, mean)
-
 # recovery anomaly:
 recov_anom <- r_means - mean(r_means)
+
+# forecast recovery rates:
+## Load forecast result
+forecast <- read.csv("Recovery_Forecasts/2025-12-03_ens_1500_model_1_start_year_2017_reforecast_result.csv")
+# prepare for residual calculation:
+y_pred <- forecast %>%
+  # add baseline to predictions:
+  mutate(across(!site, ~ tcg_base$baseline - .x)) %>%
+  # ensemble means:
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>%
+  select(-c(site))
+# recovery slopes:
+recov_slopes <- c()
+time <- 1:7
+for (i in 1:nrow(y_pred)){
+  recov_y <- unlist(y_pred[i,])
+  slope <- lm(recov_y ~ time)
+  recov_slopes[i] <- slope$coefficients[2]
+}
+# recovery anomaly:
+recov_anom <- recov_slopes - mean(recov_slopes, na.rm = T)
+
 
 # join with coordinates:
 reg_recov <- data.frame(lon = coords$lon,
                         lat = coords$lat,
                         #recov = r_means
-                        recov_anom)
+                        recov_anom)[-which(is.na(recov_anom)),]
 
 ## Make a map
 # load terra library:
@@ -93,6 +117,8 @@ states <- st_as_sf(states)
 
 # make a nice ggmap:
 recov_map <- ggplot(recov_vec) +
+  # add the state outlines:
+  geom_sf(data = states, fill = "grey70") +
   # add the points:
   geom_sf(aes(fill = recov_anom), size = 1.75,
           color = "black", shape = 21, stroke = 0.1) +
@@ -101,10 +127,12 @@ recov_map <- ggplot(recov_vec) +
   # add the state outlines:
   geom_sf(data = states, fill = NA, color = "black", size = 0.5) +
   # add labels
-  labs(fill = "Predicted Recovery Rate\nAnomaly from Mean") +
+  labs(fill = "Forecasted Recovery\nRate (TCG/year)\nAnomaly from Mean") +
   theme_bw() +
   theme(panel.grid = element_line(linetype = "dashed"),
         axis.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
         legend.justification = c(0.5, 0))
 
 recov_map
@@ -147,7 +175,7 @@ print(final_map)
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # Save the plot to a PNG file
-png(filename = "2026_03_08_recov_rate_anom_map.png",
+png(filename = "2026_03_08_recov_rate_anom_map_FINAL.png",
     width = 10, height = 8, units = "in",
     res = 600)
 final_map
@@ -157,3 +185,41 @@ dev.off()
 #        plot = final_map,
 #        dpi = 600)
 
+
+
+# join with coordinates:
+disturb <- tcg[,1]
+disturb_anom <- tcg[,1] - mean(tcg[,1], na.rm = T)
+
+reg_disturb <- data.frame(lon = coords$lon,
+                        lat = coords$lat,
+                        disturb = disturb,
+                        disturb_anom = disturb_anom)
+# make it into a point vector:
+disturb_vec <- vect(reg_disturb, geom = c("lon", "lat"), crs = "EPSG:4326")
+# convert to sf for final plots:
+disturb_vec <- st_as_sf(disturb_vec)
+
+
+# make a nice ggmap:
+disturb_2017_map <- ggplot(disturb_vec) +
+  # add the state outlines:
+  geom_sf(data = states, fill = "grey70") +
+  # add the points:
+  geom_sf(aes(fill = disturb), size = 1.75,
+          color = "black", shape = 21, stroke = 0.1) +
+  # change colors:
+  scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", 
+                       midpoint = median(disturb_vec$disturb, na.rm = T)) +
+  # add the state outlines:
+  geom_sf(data = states, fill = NA, color = "black", size = 0.5) +
+  # add labels
+  labs(fill = "TCG 2017\nAnomaly from Mean") +
+  theme_bw() +
+  theme(panel.grid = element_line(linetype = "dashed"),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.justification = c(0.5, 0))
+
+disturb_2017_map

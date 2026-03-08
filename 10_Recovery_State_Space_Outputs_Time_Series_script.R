@@ -113,15 +113,15 @@ y_low <- forecast %>%
 
 
 # making time series:
-#a <- sample(3000:5000, 1)
-#sample <- a
-sample <- 3372
+a <- sample(top10percent, 1)
+sample <- a
+#sample <- 3372
 
 # from model outputs:
-xs <- out[,x_params]
-x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
-y_ci <- apply(x_samp, 2, quantile, c(0.10, 0.5, 0.90))
-y_ci <- tcg_base$baseline[sample] - y_ci
+# xs <- out[,x_params]
+# x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
+# y_ci <- apply(x_samp, 2, quantile, c(0.10, 0.5, 0.90))
+# y_ci <- tcg_base$baseline[sample] - y_ci
 
 # from forecast outputs:
 f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,], y_up[sample,], y_low[sample,])
@@ -133,9 +133,9 @@ obs <- tcg[sample,]
 # prepare model data:
 plot_data <- data.frame(date = as.numeric(names(obs)),
                         obs = as.numeric(obs),
-                        y_low = as.numeric(y_ci[1,]),
-                        y_med = as.numeric(y_ci[2,]),
-                        y_high = as.numeric(y_ci[3,]),
+                        # y_low = as.numeric(y_ci[1,]),
+                        # y_med = as.numeric(y_ci[2,]),
+                        # y_high = as.numeric(y_ci[3,]),
                         x_low = as.numeric(f_ci[3, -1]),
                         x_med = as.numeric(f_ci[2, -1]),
                         x_high = as.numeric(f_ci[1, -1]),
@@ -148,38 +148,39 @@ plot_name <- sub(".*multi_(.*?)_data.*", "\\1", model_pick)
 time_series <- ggplot(data = plot_data) +
   # time series for observations:
   geom_point(aes(x = date, y = obs, color = "Observations"), size = 2.5) +
-  geom_line(aes(x = date, y = obs, color = "Observations"), linetype = "solid") +
-  # time series for model:
-  geom_point(aes(x = date, y = y_med,
-             color = "Model"), size = 2) +
-  geom_line(aes(x = date, y = y_med,
-            color = "Model"), linetype = "dashed") +
-  # add confidence intervals:
-  geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high,
-              fill = "Model 90% Interval"), alpha = 0.25) +
+  geom_line(aes(x = date, y = obs, color = "Observations"), linetype = "dashed") +
+  # # time series for model:
+  # geom_point(aes(x = date, y = y_med,
+  #            color = "Model"), size = 2) +
+  # geom_line(aes(x = date, y = y_med,
+  #           color = "Model"), linetype = "dashed") +
+  # # add confidence intervals:
+  # geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high,
+  #             fill = "Model 90% Interval"), alpha = 0.25) +
   # add base model for compare:
   geom_point(aes(x = date, y = x_med,
              color = "Forecast"), size = 2) +
   geom_line(aes(x = date, y = x_med,
-            color = "Forecast"), linetype = "dotdash", linewidth = 0.5) +
+            color = "Forecast"), linetype = "solid", linewidth = 0.5) +
   geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high,
               fill = "Forecast 90% Interval"), alpha = 0.10) +
   geom_ribbon(aes(x = date, ymin = x_low2, ymax = x_high2,
               fill = "Forecast 75% Interval"), alpha = 0.20) +
+  # scaling dates:
   scale_x_continuous(breaks = sort(unique(plot_data$date))) +
   # colors:
   scale_color_manual(name = "Lines",
                      breaks = c("Observations", "Model", "Forecast"),
                      values = c("Observations" = "black", 
-                                "Model" = "red", 
-                                "Forecast" = "navy")) +
+                                #"Model" = "red", 
+                                "Forecast" = "firebrick3")) +
   scale_fill_manual(name = "Confidence Intervals",
-                    breaks = c("Model 90% Interval",
+                    breaks = c(#"Model 90% Interval",
                                "Forecast 90% Interval",
                                "Forecast 75% Interval"),
-                    values = c("Model 90% Interval" = "red",
-                               "Forecast 90% Interval" = "navy",
-                               "Forecast 75% Interval" = "navy")) +
+                    values = c(#"Model 90% Interval" = "red",
+                               "Forecast 90% Interval" = "firebrick1",
+                               "Forecast 75% Interval" = "firebrick1")) +
   guides(color = guide_legend(order = 1),
          fill  = guide_legend(order = 2)) +
   # set the axis limits:
@@ -204,13 +205,30 @@ time_series
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # save:
-png(filename = paste0(save_dir, "2026_02_09_time_series_sample_point.png"),
+png(filename = paste0(save_dir, "2026_03_08_time_series_sample_point_top10pc_5.png"),
     height = 6,
-    width = 8,
+    width = 7,
     units = "in",
     res = 600)
 time_series
 dev.off()
+
+
+## Figuring out several time series for multiple plots:
+# get RSME's:
+# load best model forecast residuals:
+forecast_resids <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/RMSE_Bias/2026-02-13_model_1_start_year_2017_resids_raw_all_sites.csv")[,-1]
+# calculate RMSE's:
+forecast_RMSE <- sqrt(rowMeans(forecast_resids^2, na.rm = TRUE))
+RMSEquants <- quantile(forecast_RMSE, c(0.01, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
+meanRMSE <- mean(forecast_RMSE, na.rm = T)
+RMSEanom <- forecast_RMSE - meanRMSE
+
+top10percent <- which(RMSEanom < quantile(RMSEanom, c(0.01), na.rm = T))
+top25percent <- which(quantile(RMSEanom, c(0.1), na.rm = T) < RMSEanom & RMSEanom < quantile(RMSEanom, c(0.25), na.rm = T))
+bottom25percent <- which(quantile(RMSEanom, c(0.75), na.rm = T) < RMSEanom & RMSEanom < quantile(RMSEanom, c(0.90), na.rm = T))
+bottom10percent <- which(RMSEanom > quantile(RMSEanom, c(0.90), na.rm = T))
+
 # ggsave("2026_02_09_time_series_sample_point.png", 
 #        plot = time_series, 
 #        width = 14, 
