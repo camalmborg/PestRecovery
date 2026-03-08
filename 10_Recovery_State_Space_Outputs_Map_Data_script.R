@@ -6,19 +6,34 @@ librarian::shelf(dplyr, tidyverse, rjags, coda)
 ## set working directory
 dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/"
 setwd(dir)
+# load model performance information:
+dic_sort <- read.csv("2025_11_30_all_recov_models_dics.csv", row.names = 1)
 
-## pull in model output files if not in the environment already
-model_params <- read.csv("2025_07_31_all_base_uni_recov_models_param_means.csv")
-load("2025_07_31_recov_models_outputs_list.RData")  # object is called model_outputs
-# model files:
+## Load Best Model
+# all model files:
 models <- list.files(paste0(dir, "model_runs"))[grep("RData", list.files(paste0(dir, "model_runs")))]
+# best model:
+best <- dic_sort$model_number[1]
+best_model <- models[best] 
+# load model:
+load(paste0(dir, "model_runs/", best_model))
+# load model_params:
+model_params <- read.csv(file = "2025_11_30_all_recov_models_param_means.csv")
 
-# choose model:
-m_num <- 8  # change this when changing models
-model_pick <- models[m_num]
-# load model_info object
-load(paste0(dir, "model_runs/", model_pick))
+## Get Model Information and Data
+# get parameter values:
+best_params <- model_params[best,]
+name = best_model
+# model name:
+model_name <- best_model
+if (grepl("cov", name) == TRUE){
+  model_name <- str_match(name, "cov_(.*?)_data")[,2]
+} else {
+  model_name <- str_match(name, "_(.*?)_model")[,2]
+}
+# load model inputs:
 model_inputs <- model_info$metadata$model_data
+
 # model parameters:
 out <- as.matrix(model_info$jags_out)
 # separate out specific params:
@@ -34,22 +49,26 @@ y <- as.matrix(model_inputs$y)
 # get R's from model results:
 recov_rates <- out[,big_r]
 # get means:
-rr <- as.data.frame(apply(recov_rates, 2, mean))
+rr <- apply(recov_rates, 2, mean)
 # organize by rowname:
-recov_rates <- matrix(NA, nrow = 5000, ncol = 5)
-colnames(recov_rates) <- colnames(y)[-1]
-for (i in 2:6){
-  rrs <- grep(paste0(",", i, "\\]"), rownames(rr))
-  recov_rates[,i-1] <- rr[rrs,]
+recov_rates_mx <- matrix(NA, nrow = 5000, ncol = 6)
+colnames(recov_rates_mx) <- colnames(y)[-1]
+for (i in 2:7){
+  rrs <- grep(paste0(",", i, "\\]"), names(rr))
+  recov_rates_mx[,i-1] <- rr[rrs]
 }
-rm(rrs)
+rm(rrs, rr)
 # get mean over time:
-r_means <- apply(recov_rates, 1, mean)
+r_means <- apply(recov_rates_mx, 1, mean)
+
+# recovery anomaly:
+recov_anom <- r_means - mean(r_means)
 
 # join with coordinates:
 reg_recov <- data.frame(lon = coords$lon,
                         lat = coords$lat,
-                        recov = r_means)
+                        #recov = r_means
+                        recov_anom)
 
 ## Make a map
 # load terra library:
@@ -75,17 +94,18 @@ states <- st_as_sf(states)
 # make a nice ggmap:
 recov_map <- ggplot(recov_vec) +
   # add the points:
-  geom_sf(aes(fill = r_means), size = 2,
+  geom_sf(aes(fill = recov_anom), size = 1.75,
           color = "black", shape = 21, stroke = 0.1) +
   # change colors:
-  scale_fill_gradient(low = "orange", high = "limegreen") +
+  scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
   # add the state outlines:
   geom_sf(data = states, fill = NA, color = "black", size = 0.5) +
   # add labels
-  labs(#title = "Mean Annual Recovery Rates",
-       fill = "Predicted Recovery Rates") +
-  theme_classic() +
-  theme(panel.grid = element_blank())
+  labs(fill = "Predicted Recovery Rate\nAnomaly from Mean") +
+  theme_bw() +
+  theme(panel.grid = element_line(linetype = "dashed"),
+        axis.text = element_text(size = 12),
+        legend.justification = c(0.5, 0))
 
 recov_map
 
@@ -103,8 +123,10 @@ inset_map <- ggplot() +
   annotate("rect",
            xmin = bbox$xmin, xmax = bbox$xmax,
            ymin = bbox$ymin, ymax = bbox$ymax,
-           fill = NA, color = "red", linewidth = 0.7) +
-  theme_void()
+           fill = NA, color = "red", linewidth = 0.5) +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        axis.text = element_blank())
 
 inset_map
 
@@ -115,8 +137,8 @@ inset_grob <- ggplotGrob(inset_map)
 
 # Combine the maps
 final_map <- ggdraw(recov_map) +
-  draw_plot(inset_grob, x = 0.7, y = 0.6, 
-            width = 0.25, height = 0.25) # Adjust x, y, width, height for placement and size
+  draw_plot(inset_grob, x = 0.68, y = 0.58, 
+            width = 0.3, height = 0.3) # Adjust x, y, width, height for placement and size
 
 print(final_map)
 
@@ -125,7 +147,13 @@ print(final_map)
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # Save the plot to a PNG file
-ggsave("2025_08_06_recov_rate_map_ESA.png", 
-       plot = final_map,
-       dpi = 600)
+png(filename = "2026_03_08_recov_rate_anom_map.png",
+    width = 10, height = 8, units = "in",
+    res = 600)
+final_map
+dev.off()
+
+# ggsave("2026_03_08_recov_rate_map_ESA.png", 
+#        plot = final_map,
+#        dpi = 600)
 
