@@ -1,4 +1,4 @@
-### Predictive Quantiles analysis
+### Predictive Quantiles analysis ###
 
 # load libraries
 librarian::shelf(dplyr, tidyverse, stringr, ggplot2)
@@ -54,6 +54,7 @@ tcg_f <- tcg[,c(names(fcast)[-1])]
 ## Get predictive quantiles
 # collecting quantiles:
 qsite <- matrix(data = NA, nrow = nrow(tcg_f), ncol = ncol(tcg_f))
+colnames(qsite) <- (as.character(fyears))
 ## Compare each ensemble member for each site
 for (i in 1:nrow(tcg_f)){
   for (j in 1:ncol(tcg_f)){
@@ -72,16 +73,36 @@ write.csv(qsite, file = paste0(save_dir, file_name, "_pred_quant.csv"))
 
 
 
+### For Making Summary Histograms ###
+
+# load some predictive quantiles
+pdqs <- list.files("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/Recovery_Forecasts/Predictive_Quantiles/")
+pdq <- read.csv(paste0("Recovery_Forecasts/Predictive_Quantiles/",pdqs[2]))[-1]
+
+# make histogram data:
+pdq_hist_data <- pdq |>
+  # # remote first column:
+  # select(-1) |>
+  # fix column names:
+  rename_with(~ str_replace_all(., c("X" = "", "\\." = "-"))) |>
+  # add site column:
+  mutate(site = 1:nrow(pdq), .before = 1) |>
+  # pivot:
+  pivot_longer(-site, names_to = "year", values_to = "quants")
+  
+# make histogram:
+pdq_hist <- ggplot(data = pdq_hist_data, aes(x = quants)) +
+  geom_histogram(bins = 20) +
+  facet_wrap(~year, nrow = 1) +
+  geom_vline(xintercept = 0.5, linetype = "dashed", color = "red") +
+  theme_bw()
+pdq_hist
+
+# save it:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/Predictive_Quantiles/"
+setwd(save_dir)
 
 
-# # where forecast > tcg values:
-# tf_df <- as.data.frame((y_pred[, -1] > tcg) * 1)
-# colnames(tf_df) <- c(as.character(2017:2023))
-# tf_sums <- colSums(tf_df, na.rm = T)
-# 
-# # save it:
-# save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
-# setwd(save_dir)
 # # save:
 # png(filename = paste0(save_dir, "2026_03_15_predictive_histogram_forecast_vs_tcg.png"),
 #     height = 6,
@@ -99,8 +120,8 @@ write.csv(qsite, file = paste0(save_dir, file_name, "_pred_quant.csv"))
 #   geom_col(position = position_dodge(width = 0.6), width = 0.55) +
 #   labs(x = "Year", y = "Count", fill = "Value") +
 #   theme_bw() +
-#   theme(axis.text = element_text(size = 14),      
-#         axis.title = element_text(size = 16), 
+#   theme(axis.text = element_text(size = 14),
+#         axis.title = element_text(size = 16),
 #         legend.text = element_text(size = 14),
 #         legend.title = element_blank())
 # dev.off()
