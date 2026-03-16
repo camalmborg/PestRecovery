@@ -109,22 +109,49 @@ y_low <- forecast %>%
   mutate(site = as.factor(site)) %>%
   group_by(site) %>%
   summarise(across(where(is.numeric), ~ quantile(.x, c(0.25), na.rm = TRUE)))
+
+
+## Load climatology (base) forecast result
+basecast <- read.csv("Recovery_Forecasts/2025-12-22_ens_1500_base_model_1_start_year_2017_reforecast_result.csv")
+# prepare for residual calculation:
+base_pred <- basecast %>%
+  # add baseline to predictions:
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  # ensemble means:
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.50), na.rm = TRUE)))
+base_upper <- basecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.90), na.rm = TRUE))) 
+base_lower <- basecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.10), na.rm = TRUE)))
+base_up <- basecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.75), na.rm = TRUE))) 
+base_low <- basecast %>%
+  mutate(across(-site, ~ tcg_base$baseline[site] - .x)) %>%
+  mutate(site = as.factor(site)) %>%
+  group_by(site) %>%
+  summarise(across(where(is.numeric), ~ quantile(.x, c(0.25), na.rm = TRUE)))
   
 
 
 # making time series:
-a <- sample(top10percent, 1)
+a <- sample(bottom10percent, 1)
 sample <- a
 #sample <- 3372
 
-# from model outputs:
-# xs <- out[,x_params]
-# x_samp <- xs[,grep(paste0("x\\[", as.character(sample),","), colnames(xs))]
-# y_ci <- apply(x_samp, 2, quantile, c(0.10, 0.5, 0.90))
-# y_ci <- tcg_base$baseline[sample] - y_ci
-
 # from forecast outputs:
 f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,], y_up[sample,], y_low[sample,])
+b_ci <- rbind(base_upper[sample,], base_pred[sample,], base_lower[sample,], base_up[sample,], base_low[sample,])
 
 # observation:
 obs <- tcg[sample,]
@@ -140,7 +167,10 @@ plot_data <- data.frame(date = as.numeric(names(obs)),
                         x_med = as.numeric(f_ci[2, -1]),
                         x_high = as.numeric(f_ci[1, -1]),
                         x_low2 = as.numeric(f_ci[4, -1]),
-                        x_high2 = as.numeric(f_ci[5, -1]))
+                        x_high2 = as.numeric(f_ci[5, -1]),
+                        b_low = as.numeric(b_ci[3, -1]),
+                        b_med = as.numeric(b_ci[2, -1]),
+                        b_high = as.numeric(b_ci[1, -1]))
 
 plot_name <- sub(".*multi_(.*?)_data.*", "\\1", model_pick)
 
@@ -157,7 +187,7 @@ time_series <- ggplot(data = plot_data) +
   # # add confidence intervals:
   # geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high,
   #             fill = "Model 90% Interval"), alpha = 0.25) +
-  # add base model for compare:
+  # add forecast:
   geom_point(aes(x = date, y = x_med,
              color = "Forecast"), size = 2) +
   geom_line(aes(x = date, y = x_med,
@@ -166,19 +196,28 @@ time_series <- ggplot(data = plot_data) +
               fill = "Forecast 90% Interval"), alpha = 0.10) +
   geom_ribbon(aes(x = date, ymin = x_low2, ymax = x_high2,
               fill = "Forecast 75% Interval"), alpha = 0.20) +
+  # add climatology forecast:
+  geom_point(aes(x = date, y = b_med,
+                 color = "Climatology"), size = 2) +
+  geom_line(aes(x = date, y = b_med,
+                color = "Climatology"), linetype = "dotdash", linewidth = 0.5) +
+  geom_ribbon(aes(x = date, ymin = b_low, ymax = b_high,
+                  fill = "Climatology 90% Interval"), alpha = 0.10) +
+  # geom_ribbon(aes(x = date, ymin = b_low2, ymax = b_high2,
+  #                 fill = "Forecast 75% Interval"), alpha = 0.20) +
   # scaling dates:
   scale_x_continuous(breaks = sort(unique(plot_data$date))) +
   # colors:
   scale_color_manual(name = "Lines",
-                     breaks = c("Observations", "Model", "Forecast"),
+                     breaks = c("Observations", "Climatology", "Forecast"),
                      values = c("Observations" = "black", 
-                                #"Model" = "red", 
+                                "Climatology" = "navy", 
                                 "Forecast" = "firebrick3")) +
   scale_fill_manual(name = "Confidence Intervals",
-                    breaks = c(#"Model 90% Interval",
-                               "Forecast 90% Interval",
+                    breaks = c("Climatology 90% Interval" = "navy",
+                               "Forecast 90% Interval" = "navy",
                                "Forecast 75% Interval"),
-                    values = c(#"Model 90% Interval" = "red",
+                    values = c("Climatology 90% Interval" = "navy",
                                "Forecast 90% Interval" = "firebrick1",
                                "Forecast 75% Interval" = "firebrick1")) +
   guides(color = guide_legend(order = 1),
@@ -205,7 +244,7 @@ time_series
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # save:
-png(filename = paste0(save_dir, "2026_03_08_time_series_sample_point_top10pc_5.png"),
+png(filename = paste0(save_dir, "2026_03_15_time_series_sample_point_", a, "_bottom10pc.png"),
     height = 6,
     width = 7,
     units = "in",
@@ -228,6 +267,39 @@ top10percent <- which(RMSEanom < quantile(RMSEanom, c(0.01), na.rm = T))
 top25percent <- which(quantile(RMSEanom, c(0.1), na.rm = T) < RMSEanom & RMSEanom < quantile(RMSEanom, c(0.25), na.rm = T))
 bottom25percent <- which(quantile(RMSEanom, c(0.75), na.rm = T) < RMSEanom & RMSEanom < quantile(RMSEanom, c(0.90), na.rm = T))
 bottom10percent <- which(RMSEanom > quantile(RMSEanom, c(0.90), na.rm = T))
+
+
+## Predictive Quantiles analysis
+# where forecast > tcg values:
+tf_df <- as.data.frame((y_pred[, -1] > tcg) * 1)
+colnames(tf_df) <- c(as.character(2017:2023))
+tf_sums <- colSums(tf_df, na.rm = T)
+
+# save it:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+setwd(save_dir)
+# save:
+png(filename = paste0(save_dir, "2026_03_15_predictive_histogram_forecast_vs_tcg.png"),
+    height = 6,
+    width = 8,
+    units = "in",
+    res = 600)
+
+tf_df |>
+  pivot_longer(everything(), names_to = "column", values_to = "value") |>
+  count(column, value) |>
+  filter(!is.na(value)) |>
+  ggplot(aes(x = column, y = n, fill = factor(value, levels = c(0,1),
+                                              labels = c("Underestimated","Overestimated")))) +
+  scale_fill_manual(values = c("Underestimated" = "skyblue1", "Overestimated" = "indianred1")) +
+  geom_col(position = position_dodge(width = 0.6), width = 0.55) +
+  labs(x = "Year", y = "Count", fill = "Value") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 14),      
+        axis.title = element_text(size = 16), 
+        legend.text = element_text(size = 14),
+        legend.title = element_blank())
+dev.off()
 
 # ggsave("2026_02_09_time_series_sample_point.png", 
 #        plot = time_series, 
