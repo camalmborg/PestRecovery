@@ -82,7 +82,7 @@ pdq <- read.csv(paste0("Recovery_Forecasts/Predictive_Quantiles/",pdqs[2]))[-1]
 # make histogram data:
 pdq_hist_data <- pdq |>
   # # remote first column:
-  # select(-1) |>
+  select(-1) |>
   # fix column names:
   rename_with(~ str_replace_all(., c("X" = "", "\\." = "-"))) |>
   # add site column:
@@ -92,10 +92,14 @@ pdq_hist_data <- pdq |>
   
 # make histogram:
 pdq_hist <- ggplot(data = pdq_hist_data, aes(x = quants)) +
-  geom_histogram(bins = 20) +
-  facet_wrap(~year, nrow = 1) +
+  geom_histogram(bins = 25, fill = "slategray2") +
+  facet_wrap(~year, nrow = 1, ncol = 2) +
   geom_vline(xintercept = 0.5, linetype = "dashed", color = "red") +
-  theme_bw()
+  labs(x = "Quantiles", y = "Count") +
+  theme_bw() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14),
+        strip.text = element_text(size = 14))
 pdq_hist
 
 # save it:
