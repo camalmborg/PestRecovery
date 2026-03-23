@@ -269,38 +269,6 @@ bottom25percent <- which(quantile(RMSEanom, c(0.75), na.rm = T) < RMSEanom & RMS
 bottom10percent <- which(RMSEanom > quantile(RMSEanom, c(0.90), na.rm = T))
 
 
-## Predictive Quantiles analysis
-# where forecast > tcg values:
-tf_df <- as.data.frame((y_pred[, -1] > tcg) * 1)
-colnames(tf_df) <- c(as.character(2017:2023))
-tf_sums <- colSums(tf_df, na.rm = T)
-
-# save it:
-save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
-setwd(save_dir)
-# save:
-png(filename = paste0(save_dir, "2026_03_15_predictive_histogram_forecast_vs_tcg.png"),
-    height = 6,
-    width = 8,
-    units = "in",
-    res = 600)
-
-tf_df |>
-  pivot_longer(everything(), names_to = "column", values_to = "value") |>
-  count(column, value) |>
-  filter(!is.na(value)) |>
-  ggplot(aes(x = column, y = n, fill = factor(value, levels = c(0,1),
-                                              labels = c("Underestimated","Overestimated")))) +
-  scale_fill_manual(values = c("Underestimated" = "skyblue1", "Overestimated" = "indianred1")) +
-  geom_col(position = position_dodge(width = 0.6), width = 0.55) +
-  labs(x = "Year", y = "Count", fill = "Value") +
-  theme_bw() +
-  theme(axis.text = element_text(size = 14),      
-        axis.title = element_text(size = 16), 
-        legend.text = element_text(size = 14),
-        legend.title = element_blank())
-dev.off()
-
 # ggsave("2026_02_09_time_series_sample_point.png", 
 #        plot = time_series, 
 #        width = 14, 
