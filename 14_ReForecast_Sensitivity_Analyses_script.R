@@ -161,6 +161,20 @@ ggsave(paste0(save_dir, Sys.Date(), "_spatial_random_effect_map.png"),
 
 
 ### Time series of temporal random effect ###
+time_re_plot <- ggplot(data = time_re_time_series, mapping = aes(x = year, y = time_re, group = 1))+
+  geom_point(size = 2.5, color = "navy") +
+  geom_line(color = "navy", linetype = "dashed") +
+  labs(x = "Year", y = "Temporal Random Effect") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14))
+time_re_plot
+# save the plot:
+ggsave(paste0(save_dir, Sys.Date(), "_temporal_random_effect_plot.png"),
+       plot = time_re_plot,
+       width = 7, height = 3,
+       dpi = 600)
+
 
 
 
