@@ -6,6 +6,7 @@ library(tidyverse)
 library(rjags)
 library(coda)
 library(ggplot2)
+library(sf)
 library(tigris)
 
 ## Loading TCG and TCG baselines:
@@ -55,10 +56,10 @@ burn_in = 25000
 site_params_burn <- window(site_params, start = burn_in)
 out_site <- as.matrix(site_params_burn)
 space_re <- apply(out_site, 2, mean, na.rm = T)
-# quickly attach to lat/lon for making a map later:
-space_re_map_data <- data.frame(lat = tcg$latitude, 
-                                lon = tcg$longitude,
-                                space_re = space_re)
+# make into spatial layer for map later:
+coords <- data.frame(lon = tcg$longitude,
+                     lat = tcg$latitude)
+space_re_map_data <- sp::SpatialPointsDataFrame(coords, data = as.data.frame(space_re))
 
 
 ## Get Model Information and Data:
@@ -105,7 +106,7 @@ for (i in 1:6){
       X <- c(rep(0, 7))
       X[1] <- dist_mag
       for(t in 2:7){
-        R <- r0 + betas[1] + betas[2]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
+        R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
         X[t] <- R*X[t-1]
       }
       sens_mx[s,] <- X
@@ -116,9 +117,56 @@ for (i in 1:6){
 }
 
 
-test <- sens_list[[1]]
+test <- sens_list[[3]]
 plot(test[1,], type = "l")
 for(i in 2:nrow(test)){
   lines(test[i,], col = i)
 }
 
+
+
+### Map of spatial random effects ###
+
+# get states for mapping:
+ma_ct_ri <- tigris::states(cb = TRUE) %>%
+  filter(NAME %in% c("Massachusetts", "Connecticut", "Rhode Island"))
+
+# convert spatial data points to points:
+space_re_map <- st_as_sf(space_re_map_data)
+# set crs to be same as states:
+space_re_map <- st_set_crs(space_re_map, st_crs(ma_ct_ri))
+
+# make the map:
+spatial_re_map <- ggplot(space_re_map) +
+  geom_sf(data = ma_ct_ri, fill = "grey", color = "black", size = 0.5) +
+  # add the points:
+  geom_sf(aes(fill = space_re), size = 1.5,
+          color = "black", shape = 21, stroke = 0.15) +
+  scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "Magnitude of Spatial Random Effect",
+       fill = "Spatial RE\nValue") +
+  theme_bw() +
+  theme(panel.grid = element_line(linewidth = 0.5),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+#spatial_re_map
+#save the map:
+# plot save location:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# Save the plot to a PNG file:
+ggsave(paste0(save_dir, Sys.Date(), "_spatial_random_effect_map.png"),
+       plot = spatial_re_map,
+       width = 10, height = 6,
+       dpi = 600)
+
+
+### Time series of temporal random effect ###
+
+
+
+### Archive ###
+
+# # quickly attach to lat/lon for making a map later:
+# space_re_map_data <- data.frame(lat = tcg$latitude, 
+#                                 lon = tcg$longitude,
+#                                 space_re = space_re)
