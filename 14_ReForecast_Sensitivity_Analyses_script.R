@@ -6,6 +6,7 @@ library(tidyverse)
 library(rjags)
 library(coda)
 library(ggplot2)
+library(patchwork)
 library(sf)
 library(tigris)
 
@@ -51,10 +52,13 @@ model_params <- read.csv(file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/
 jags_out <- model_info$jags_out
 vars <- varnames(jags_out)
 site_params <- jags_out[,grep("^as", vars)]
+time_params <- jags_out[,grep("^at", vars)]
 # remove burn in:
 burn_in = 25000
 site_params_burn <- window(site_params, start = burn_in)
+time_params_burn <- window(time_params, start = burn_in)
 out_site <- as.matrix(site_params_burn)
+out_time <- as.matrix(time_params_burn)
 space_re <- apply(out_site, 2, mean, na.rm = T)
 # make into spatial layer for map later:
 coords <- data.frame(lon = tcg$longitude,
@@ -65,11 +69,7 @@ space_re_map_data <- sp::SpatialPointsDataFrame(coords, data = as.data.frame(spa
 ## Get Model Information and Data:
 # get parameter values:
 best_params <- model_params[best,]
-# separate parameters for calling:
-time_re <- as.numeric(best_params[grep("atime", names(best_params))])
-# make data for time series plot later:
-time_re_time_series <- data.frame(year = as.character(c(2018:2023)),
-                                  time_re = time_re)
+
 # beta parameters:
 betas <- as.numeric(best_params[grep("beta", names(best_params))])
 betas <- betas[-which(is.na(betas))]
@@ -77,12 +77,12 @@ betas <- betas[-which(is.na(betas))]
 r0 <- as.numeric(best_params[grep("r0", names(best_params))])
 # taus:
 tau_add <- sqrt(1/as.numeric(best_params[grep("tau_add", names(best_params))]))
-tau_obs <- sqrt(1/as.numeric(best_params[grep("tau_obs", names(best_params))]))
 
 # get model inputs:
 model_in <- model_info$metadata$model_data
 # get X starting:
 start <- mean(tcg_base$`2017-05-01`, na.rm = T)
+start_sd <- sd(tcg_base$`2017-05-01`, na.rm = T)
 base_mean <- mean(tcg_base$baseline, na.rm = T)
 # get dist mag:
 dist_mag <- mean(model_in$cov_three, na.rm = T)
@@ -111,7 +111,7 @@ for (i in 1:3){
     Xo[i] <- sd_from_mean[s]
     # set up X for filling in time:
     X <- c(rep(0, 7))
-    X[1] <- start + dm*sd_from_mean[s]*dist_sd
+    X[1] <- start + dm*sd_from_mean[s]*start_sd
     for(t in 2:7){
       R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) #+ time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
       X[t] <- R*X[t-1]
@@ -122,50 +122,36 @@ for (i in 1:3){
 }
 
 ## Run sensitivity analyses for random effects and error terms (with MCMC)
-
 # sensitivity analyses list for random effects/erors:
-#sens_list <- list()
 for (i in 4:6){
   # set which Xo == sd from mean:
   Xo <- c(rep(0,6))
-  
+  Xo[i] = 1
   # matrix for collecting one run:
   sens_mx <- matrix(NA, nrow = 5000, ncol = 7)
   
-  for (d in 1:length(sd_from_mean)){
-    # set up for filling in Xo:
-    Xo[i] <- sd_from_mean[d]
     # run MCMC
-    for(s in 1:5000){
+    for(s in 1:5000){ 
       # set up X for filling in time:
       X <- c(rep(0, 7))
-      X[1] <- start #+ dm*sd_from_mean[s]*dist_sd
+      X[1] <- start 
+      alpha_t = out_time[sample.int(nrow(out_time),1),]
+      
       for(t in 2:7){
-        R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
+        epsilon = rnorm(1 ,0 ,tau_add)
+        R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + alpha_t[t-1]*Xo[4] + space_re[s]*Xo[5] + epsilon*Xo[6]
         X[t] <- R*X[t-1]
       }
       sens_mx[s,] <- base_mean - X
-      
-  }
-  # for(s in 1:5000){
-  #   # set up for filling in Xo:
-  #   Xo[i] <- sd_from_mean[s]
-  #   # set up X for filling in time:
-  #   X <- c(rep(0, 7))
-  #   X[1] <- start #+ dm*sd_from_mean[s]*dist_sd
-  #   for(t in 2:7){
-  #     R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
-  #     X[t] <- R*X[t-1]
-  #   }
-    sens_mx[s,] <- base_mean - X
-  }
-  sens_list[[i]] <- as.data.frame(sens_mx)
+    }
+  ci <- apply(sens_mx, 2, quantile, pnorm(sd_from_mean))
+  sens_list[[i]] <- as.data.frame(ci)
 }
 
 
-
 ## Making Plots:
-covs <- c("VPD", "Mean Max Temp 2015", "Disturbance Magnitude")
+covs <- c("VPD", "Mean Max Temp 2015", "Disturbance Magnitude", 
+          "Year Random Effect", "Spatial Random Effect", "Process Error")
 years <- c(2017:2023)
 
 #'@param sens_list = sensitivity analyses from loop
@@ -180,36 +166,54 @@ sens_plot_fx <- function(sens_list, param_num){
     # pivot for making plot data:
     pivot_longer(cols = -sfm,
                  names_to = "year",
-                 values_to = "value")
+                 values_to = "value") |>
+    mutate(year = as.numeric(year))
   
   # make plot:
   sens_plot <- ggplot(data = plot_data, aes(x = year, y = value, group = sfm, color = sfm)) +
     geom_line() +
-    scale_color_gradient(low = "blue", high = "red") +
+    scale_color_gradient(low = "blue", high = "red",
+                         guide = guide_colorbar(direction = "vertical", title.position = "top")) +
     labs(title = covs[[param_num]],
          x = "Year",
-         y = "",
+         y = "TCG",
          color = "SD from\nMean") +
     theme_bw() +
     theme(panel.grid = element_blank(),
           axis.title = element_text(size = 14),
           axis.text = element_text(size = 12),
+          plot.title = element_text(size = 14),
           legend.text = element_text(size = 12),
-          legend.position = c(0.9, 0.25),
-          legend.title = element_text(size = 12, margin = margin(b = 13))) 
+          legend.position = c(0.9, 0.25))#,
+          # legend.title = element_text(size = 12, margin = margin(b = 13))) 
   return(sens_plot)
 }
+
+## Combining plots into single figure
 # covariate plots:
-VPD_plot <- sens_plot_fx(sens_list, 1)
-temp_plot <- sens_plot_fx(sens_list, 2)
-distmag_plot <- sens_plot_fx(sens_list, 3)
+VPD_plot <- sens_plot_fx(sens_list, 1) + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+temp_plot <- sens_plot_fx(sens_list, 2) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
+distmag_plot <- sens_plot_fx(sens_list, 3) + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+year_re_plot <- sens_plot_fx(sens_list, 4) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
+space_re_plot <- sens_plot_fx(sens_list, 5)
+tau_add_plot <- sens_plot_fx(sens_list, 6) + theme(axis.title.y = element_blank())
 
+# combine plots:
+combined <- (VPD_plot + temp_plot + distmag_plot + year_re_plot + space_re_plot + tau_add_plot) + 
+  plot_layout(ncol = 2, guides = "collect") & 
+  theme(legend.position = "right")
+combined
 
-
+# save:
+# plot save location:
+save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+png(filename = paste0(save_dir, Sys.Date(), "_sensitivities_plots_combined.png"),
+    width = 10, height = 12, units = "in", res = 600)
+combined
+dev.off()
 
 
 ### Map of spatial random effects ###
-
 # get states for mapping:
 ma_ct_ri <- tigris::states(cb = TRUE) %>%
   filter(NAME %in% c("Massachusetts", "Connecticut", "Rhode Island"))
@@ -233,9 +237,8 @@ spatial_re_map <- ggplot(space_re_map) +
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12))
 #spatial_re_map
+
 #save the map:
-# plot save location:
-save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 # Save the plot to a PNG file:
 ggsave(paste0(save_dir, Sys.Date(), "_spatial_random_effect_map.png"),
        plot = spatial_re_map,
@@ -244,9 +247,20 @@ ggsave(paste0(save_dir, Sys.Date(), "_spatial_random_effect_map.png"),
 
 
 ### Time series of temporal random effect ###
+# time parameters:
+time_re <- apply(out_time, 2, mean, na.rm = T)
+time_re_upper <- apply(out_time, 2, quantile, c(0.025))
+time_re_lower <- apply(out_time, 2, quantile, c(0.925))
+# make data for time series plot later:
+time_re_time_series <- data.frame(year = as.character(c(2018:2023)),
+                                  time_re = time_re, 
+                                  upper = time_re_upper,
+                                  lower = time_re_lower)
+
 time_re_plot <- ggplot(data = time_re_time_series, mapping = aes(x = year, y = time_re, group = 1))+
   geom_point(size = 2.5, color = "navy") +
   geom_line(color = "navy", linetype = "dashed") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "navy", alpha = 0.15) +
   labs(x = "Year", y = "Temporal Random Effect") +
   theme_bw() +
   theme(axis.text = element_text(size = 12),
