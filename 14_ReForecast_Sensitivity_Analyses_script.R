@@ -48,7 +48,7 @@ load(paste0(dir, "model_runs/", best_model))
 # load model_params:
 model_params <- read.csv(file = "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Recovery_State_Space_Runs/2025_11_30_all_recov_models_param_means.csv")
 
-# collect site random effect model params:
+# collect site and time random effect model params:
 jags_out <- model_info$jags_out
 vars <- varnames(jags_out)
 site_params <- jags_out[,grep("^as", vars)]
@@ -59,6 +59,7 @@ site_params_burn <- window(site_params, start = burn_in)
 time_params_burn <- window(time_params, start = burn_in)
 out_site <- as.matrix(site_params_burn)
 out_time <- as.matrix(time_params_burn)
+# space random effects:
 space_re <- apply(out_site, 2, mean, na.rm = T)
 # make into spatial layer for map later:
 coords <- data.frame(lon = tcg$longitude,
@@ -82,11 +83,10 @@ tau_add <- sqrt(1/as.numeric(best_params[grep("tau_add", names(best_params))]))
 model_in <- model_info$metadata$model_data
 # get X starting:
 start <- mean(tcg_base$`2017-05-01`, na.rm = T)
+# standard deviation from start:
 start_sd <- sd(tcg_base$`2017-05-01`, na.rm = T)
+# mean baseline value:
 base_mean <- mean(tcg_base$baseline, na.rm = T)
-# get dist mag:
-dist_mag <- mean(model_in$cov_three, na.rm = T)
-dist_sd <- sd(model_in$cov_three, na.rm = T)
 
 ## Run Sensitivity Analyses for Parameters:
 # sd's from mean:
@@ -122,7 +122,7 @@ for (i in 1:3){
 }
 
 ## Run sensitivity analyses for random effects and error terms (with MCMC)
-# sensitivity analyses list for random effects/erors:
+# loop:
 for (i in 4:6){
   # set which Xo == sd from mean:
   Xo <- c(rep(0,6))
@@ -134,11 +134,12 @@ for (i in 4:6){
     for(s in 1:5000){ 
       # set up X for filling in time:
       X <- c(rep(0, 7))
-      X[1] <- start 
+      X[1] <- start
+      # sample time re params:
       alpha_t = out_time[sample.int(nrow(out_time),1),]
       
       for(t in 2:7){
-        epsilon = rnorm(1 ,0 ,tau_add)
+        epsilon = rnorm(1 , 0, tau_add)
         R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + alpha_t[t-1]*Xo[4] + space_re[s]*Xo[5] + epsilon*Xo[6]
         X[t] <- R*X[t-1]
       }
