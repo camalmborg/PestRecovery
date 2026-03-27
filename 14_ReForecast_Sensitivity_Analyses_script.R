@@ -81,47 +81,130 @@ tau_obs <- sqrt(1/as.numeric(best_params[grep("tau_obs", names(best_params))]))
 
 # get model inputs:
 model_in <- model_info$metadata$model_data
+# get X starting:
+start <- mean(tcg_base$`2017-05-01`, na.rm = T)
+base_mean <- mean(tcg_base$baseline, na.rm = T)
 # get dist mag:
 dist_mag <- mean(model_in$cov_three, na.rm = T)
+dist_sd <- sd(model_in$cov_three, na.rm = T)
 
-## Loops for computing sensitivities:
+## Run Sensitivity Analyses for Parameters:
 # sd's from mean:
 sd_from_mean <- c(-2, -1, 0, 1, 2)
 
-# sensitivity analyses list:
+# sensitivity analyses list for covariates:
 sens_list <- list()
-for (i in 1:6){
+for (i in 1:3){
+  # disturbance magnitude correction case:
   if(i == 3){
-    dm = dist_mag
+    dm = 1
   } else {
     dm = 0
   }
-  test_mx <- matrix(NA, nrow = length(sd_from_mean), ncol = 7)
-  for(d in 1:length(sd_from_mean)){
-    Xo <- c(rep(0,6))
-    Xo[i] <- dm + sd_from_mean[d] 
-    # run matrix for each site:
-    sens_mx <- matrix(NA, nrow = 5000, ncol = 7)
+  # set which Xo == sd from mean:
+  Xo <- c(rep(0,3))
+  
+  # matrix for collecting one run:
+  sens_mx <- matrix(NA, nrow = 5, ncol = 7)
+  for(s in 1:5){
+    # set up for filling in Xo:
+    Xo[i] <- sd_from_mean[s]
+    # set up X for filling in time:
+    X <- c(rep(0, 7))
+    X[1] <- start + dm*sd_from_mean[s]*dist_sd
+    for(t in 2:7){
+      R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) #+ time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
+      X[t] <- R*X[t-1]
+    }
+    sens_mx[s,] <- base_mean - X
+  }
+  sens_list[[i]] <- as.data.frame(sens_mx)
+}
+
+## Run sensitivity analyses for random effects and error terms (with MCMC)
+
+# sensitivity analyses list for random effects/erors:
+#sens_list <- list()
+for (i in 4:6){
+  # set which Xo == sd from mean:
+  Xo <- c(rep(0,6))
+  
+  # matrix for collecting one run:
+  sens_mx <- matrix(NA, nrow = 5000, ncol = 7)
+  
+  for (d in 1:length(sd_from_mean)){
+    # set up for filling in Xo:
+    Xo[i] <- sd_from_mean[d]
+    # run MCMC
     for(s in 1:5000){
+      # set up X for filling in time:
       X <- c(rep(0, 7))
-      X[1] <- dist_mag
+      X[1] <- start #+ dm*sd_from_mean[s]*dist_sd
       for(t in 2:7){
         R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
         X[t] <- R*X[t-1]
       }
-      sens_mx[s,] <- X
-    }
-    test_mx[d,] <- apply(sens_mx, 2, mean, na.rm = T)
+      sens_mx[s,] <- base_mean - X
+      
   }
-  sens_list[[i]] <- test_mx
+  # for(s in 1:5000){
+  #   # set up for filling in Xo:
+  #   Xo[i] <- sd_from_mean[s]
+  #   # set up X for filling in time:
+  #   X <- c(rep(0, 7))
+  #   X[1] <- start #+ dm*sd_from_mean[s]*dist_sd
+  #   for(t in 2:7){
+  #     R <- r0 + betas[1]*Xo[1] + betas[2]*Xo[2] + betas[3]*(Xo[3]) + time_re[t-1]*Xo[4] + space_re[s]*Xo[5] + tau_add*Xo[6]
+  #     X[t] <- R*X[t-1]
+  #   }
+    sens_mx[s,] <- base_mean - X
+  }
+  sens_list[[i]] <- as.data.frame(sens_mx)
 }
 
 
-test <- sens_list[[3]]
-plot(test[1,], type = "l")
-for(i in 2:nrow(test)){
-  lines(test[i,], col = i)
+
+## Making Plots:
+covs <- c("VPD", "Mean Max Temp 2015", "Disturbance Magnitude")
+years <- c(2017:2023)
+
+#'@param sens_list = sensitivity analyses from loop
+#'@param param_num = numeric; list member number
+sens_plot_fx <- function(sens_list, param_num){
+  # make plot data:
+  plot_data <- sens_list[[param_num]] |>
+    # rename columns with years:
+    setNames(as.character(years)) |>
+    # add column for covariate:
+    mutate(sfm = sd_from_mean, .before = 1) |>
+    # pivot for making plot data:
+    pivot_longer(cols = -sfm,
+                 names_to = "year",
+                 values_to = "value")
+  
+  # make plot:
+  sens_plot <- ggplot(data = plot_data, aes(x = year, y = value, group = sfm, color = sfm)) +
+    geom_line() +
+    scale_color_gradient(low = "blue", high = "red") +
+    labs(title = covs[[param_num]],
+         x = "Year",
+         y = "",
+         color = "SD from\nMean") +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12),
+          legend.text = element_text(size = 12),
+          legend.position = c(0.9, 0.25),
+          legend.title = element_text(size = 12, margin = margin(b = 13))) 
+  return(sens_plot)
 }
+# covariate plots:
+VPD_plot <- sens_plot_fx(sens_list, 1)
+temp_plot <- sens_plot_fx(sens_list, 2)
+distmag_plot <- sens_plot_fx(sens_list, 3)
+
+
 
 
 
@@ -184,3 +267,21 @@ ggsave(paste0(save_dir, Sys.Date(), "_temporal_random_effect_plot.png"),
 # space_re_map_data <- data.frame(lat = tcg$latitude, 
 #                                 lon = tcg$longitude,
 #                                 space_re = space_re)
+
+
+# test <- sens_list[[3]]
+# plot(test[1,], type = "l", ylim = c(min(test - 0.5), max(test)))
+# for(i in 2:nrow(test)){
+#   lines(test[i,], col = i)
+# }
+
+# test <- sens_list[[1]] |>
+#   # rename columns with years:
+#   setNames(as.character(years)) |>
+#   # add column for covariate:
+#   mutate(sfm = sd_from_mean, .before = 1) |>
+#   # pivot for making plot data:
+#   pivot_longer(cols = -sfm,
+#                names_to = "year",
+#                values_to = "value")
+
