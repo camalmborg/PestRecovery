@@ -12,8 +12,8 @@ setwd(dir)
 
 ## Load model output files
 #model_params <- read.csv("2025_10_06_all_recov_models_param_means.csv")
-load("2026_02_09_uni_recov_models_outputs_list.RData")  # object is called model_outputs
-
+#load("2026_02_09_uni_recov_models_outputs_list.RData")  # object is called model_outputs
+load("2026_02_09_all_recov_models_outputs_list.RData")
 
 ## Calculating CIs for all models
 # getting means, low CI (0.025 quantile), high CI (0.975 quantile):
@@ -143,11 +143,24 @@ beta_ridges_long <- beta_ridges %>%
   filter(!str_detect(model, "nlcd")) %>%
   # make the names better for plot:
   mutate(model = gsub("beta_1_uni_vp", "beta_1_uni_vpd", model)) %>%
+  mutate(model = gsub("tcg", "", model)) %>%
   mutate(model = gsub("_", " ", model)) %>%
   mutate(model = gsub("beta 1 uni ", "", model)) %>%
   mutate(model = gsub("mean", "2014-15 mean", model)) %>%
-  mutate(model = gsub("vpdd", "vpd", model)) %>%
-  mutate(model = gsub("prcp", "precip", model)) %>%
+  mutate(model = gsub("yrlag", "Year Lag", model)) %>%
+  mutate(model = gsub("vpdd", "VPD", model)) %>%
+  mutate(model = gsub("vpd", "VPD", model)) %>%
+  mutate(model = gsub("temp mx", "Maximum Temperature", model)) %>%
+  mutate(model = gsub("tmax", "Maximum Temperature", model)) %>%
+  mutate(model = gsub("temp min", "Minimum Temperature", model)) %>%
+  mutate(model = gsub("tmin", "Minimum Temperature", model)) %>%
+  mutate(model = gsub("prcp", "Precipitation", model)) %>%
+  mutate(model = gsub("precip", "Precipitation", model)) %>%
+  mutate(model = gsub("dmags", "Disturbance Magnitude", model)) %>%
+  mutate(model = gsub("dmag", "Disturbance Magnitude", model)) %>%
+  mutate(model = gsub("pct tree cov", "Percent Tree Cover", model)) %>%
+  mutate(model = gsub("y1", "2016", model)) %>%
+  mutate(model = gsub("y2", "2017", model)) %>%
   group_by(model) %>%
   # arrange by descending mean to make ridges look nice
   mutate(mean_beta = mean(beta_est)) %>% ungroup() %>%
@@ -184,8 +197,8 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   #xlim(c(-0.09, 0.001)) + # for dist hist
   theme_bw() +
   theme(legend.position = "none",
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 14))
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
 
 beta_ridge_plot
 
@@ -194,9 +207,9 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-png(filename = paste0(save_dir, "2026_02_09_ridges_uni_vars.png"),
-    height = 8,
-    width = 6,
+png(filename = paste0(save_dir, "2026_04_25_ridges_uni_vars.png"),
+    height = 9,
+    width = 8,
     units = "in",
     res = 600)
 beta_ridge_plot

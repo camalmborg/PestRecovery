@@ -131,7 +131,7 @@ mapping_residuals <- function(resid_col, resid_sf){
 ## Make variograms for each year
 spatial_ac <- function(resid, resid_col){
   # make trend surface:
-  surf <- surf.ls(0, resid$lon, resid$lat, na.omit(resid[,resid_col]))
+  surf <- surf.ls(2, resid$lon, resid$lat, na.omit(resid[,resid_col]))
   # # project matrix over region:
   # tr <- trmat(surf,
   #             min(resid$lon) , max(resid$lon),
