@@ -94,18 +94,57 @@ reg_recov <- data.frame(lon = coords$lon,
                         #recov = r_means
                         recov_anom)[-which(is.na(recov_anom)),]
 
+# attempting to make recovery rate observed at each point 06/24/2026
+# forecast time period:
+years <- 2017:2023
+# observations:
+tcg <- read.csv("/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Data/tcg_5ksamp_clean.csv")[-1] %>%
+  # rename:
+  rename_with(~ str_replace_all(.x, c("^\\s*X" = "", "\\." = "-"))) %>%
+  # select years:
+  select(`2017-05-01`:`2023-05-01`) %>%
+  # rename with just years:
+  rename_with(~ sub("-.*", "", .x))
+
+# find recovery rate for each
+# make slopes dataframe with lat lon:
+slopes <- as.matrix(data.frame(site = 1:nrow(tcg), 
+                               lon = coords$lon, 
+                               lat = coords$lat,
+                               slopes = NA))
+# find line between 2017-2023:
+for(i in 1:nrow(tcg)){
+  row <- tcg[i,] |>
+    pivot_longer(cols = everything(),
+                 names_to = "year",
+                 values_to = "value") |>
+    mutate(year = as.numeric(year))
+  slope <- coef(lm(value ~ year, data = row))[["year"]]
+  slopes[i,4] <- slope
+}
+# make data frame again:
+slopes <- as.data.frame(slopes)
+
 ## Make a map
 # load terra library:
 librarian::shelf(terra, sf, tigris, ggplot2)
 
 # make it into a point vector:
-recov_vec <- vect(reg_recov, geom = c("lon", "lat"), crs = "EPSG:4326")
+recov_vec <- vect(slopes, geom = c("lon", "lat"), crs = "EPSG:4326")
 
 # get states:
 states <- states(cb = TRUE) %>%
   filter(NAME %in% c("Massachusetts", "Connecticut", "Rhode Island"))
 states <- vect(states)
 states <- project(states, recov_vec)
+
+# state bounding box:
+bbox <- st_bbox(states)
+
+# all US states for background
+us_states <- states(cb = TRUE) |>
+  st_as_sf() |>
+  st_transform(st_crs(recov_vec))
 
 # test plots:
 plot(recov_vec)
@@ -117,6 +156,8 @@ states <- st_as_sf(states)
 
 # make a nice ggmap:
 recov_map <- ggplot(recov_vec) +
+  # add the US background
+  geom_sf(data = us_states, fill = "grey95", color = "grey40", linewidth = 0.2) +
   # add the state outlines:
   geom_sf(data = states, fill = "grey70") +
   # add the points:
@@ -126,10 +167,15 @@ recov_map <- ggplot(recov_vec) +
   scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "red", midpoint = 0) +
   # add the state outlines:
   geom_sf(data = states, fill = NA, color = "black", size = 0.5) +
+  # crop to MA/CT/RI:
+  coord_sf(xlim = c(bbox["xmin"] - 0.2, bbox["xmax"] + 0.2),
+           ylim = c(bbox["ymin"] - 0.2, bbox["ymax"] + 0.2),
+           expand = FALSE) +
   # add labels
-  labs(fill = "Forecasted Recovery\nRate (TCG/year)\nAnomaly from Mean") +
+  labs(fill = "Observed Recovery\nRate Slope (TCG/year)\nAnomaly from Mean") +
   theme_bw() +
   theme(panel.grid = element_line(linetype = "dashed"),
+        panel.background = element_rect(fill = "lightsteelblue1"),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 12),
         legend.text = element_text(size = 12),
@@ -175,7 +221,7 @@ print(final_map)
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # Save the plot to a PNG file
-png(filename = "2026_03_08_recov_rate_anom_map_FINAL.png",
+png(filename = "2026_06_24_recov_rate_anom_map_revised.png",
     width = 10, height = 8, units = "in",
     res = 600)
 final_map

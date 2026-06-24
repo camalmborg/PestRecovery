@@ -191,6 +191,12 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
     low = "blue", mid = "white", high = "red", midpoint = 0) +
   # add vertical line at 0:
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  expand_limits(y = 26) +
+  # add annotations:
+  annotate("text", x = -0.235, y = c(4:17 + 0.2), label = "NS", color = "red", size = 3) +
+  
+  annotate("text", x = -0.235, y = c(21:24 + 0.2), label = "MV", color = "navy", size = 3.5) +
+  annotate("text", x = -0.235, y = c(1 + 0.2), label = "MV", color = "navy", size = 3.5) +
   # set limit x-axis:
   #xlim(c(-0.069, 0.04)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist

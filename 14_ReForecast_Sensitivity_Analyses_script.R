@@ -200,7 +200,7 @@ space_re_plot <- sens_plot_fx(sens_list, 5)
 tau_add_plot <- sens_plot_fx(sens_list, 6) + theme(axis.title.y = element_blank())
 
 # combine plots:
-combined <- (VPD_plot + temp_plot + distmag_plot + year_re_plot + space_re_plot + tau_add_plot) + 
+combined <- (distmag_plot + space_re_plot + VPD_plot + year_re_plot + temp_plot + tau_add_plot) + 
   plot_layout(ncol = 2, guides = "collect") & 
   theme(legend.position = "right")
 combined
