@@ -143,116 +143,119 @@ base_low <- basecast %>%
   summarise(across(where(is.numeric), ~ quantile(.x, c(0.25), na.rm = TRUE)))
   
 
+## Make the time series plots:
+ts_plot_list <- list()
+# series samples:
+samples <- c(3866, 4360, 4841, 4384)
+titles <- c("Lowest 10% RMSE Sample Site",
+            "Lower 25% RMSE Sample Site",
+            "Upper 25% RMSE Sample Site",
+            "Highest 10% RMSE Sample Site")
 
-# making time series:
-a <- sample(bottom10percent, 1)
-sample <- a
-#sample <- 3372
+for (i in 1:4){
+  sample <- samples[i]
+  
+  # from forecast outputs:
+  f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,], y_up[sample,], y_low[sample,]) 
+  b_ci <- rbind(base_upper[sample,], base_pred[sample,], base_lower[sample,], base_up[sample,], base_low[sample,])
+  # set up so climatology is just used as a reference in the plot:
+  b_ci[, 2:7] <- NA
+  # observation:
+  obs <- tcg[sample,]
+  
+  ## Making Time Series
+  # prepare model data:
+  plot_data <- data.frame(date = as.numeric(names(obs)),
+                          obs = as.numeric(obs),
+                          x_low = as.numeric(f_ci[3, -1]),
+                          x_med = as.numeric(f_ci[2, -1]),
+                          x_high = as.numeric(f_ci[1, -1]),
+                          x_low2 = as.numeric(f_ci[4, -1]),
+                          x_high2 = as.numeric(f_ci[5, -1]),
+                          b_low = as.numeric(b_ci[3, -1]),
+                          b_med = as.numeric(b_ci[2, -1]),
+                          b_high = as.numeric(b_ci[1, -1]))
+  
+  plot_name <- sub(".*multi_(.*?)_data.*", "\\1", model_pick)
+  
+  # make the plot layering observation and model preds:
+  time_series <- ggplot(data = plot_data) +
+    # time series for observations:
+    geom_point(aes(x = date, y = obs, color = "Observations"), size = 2.5) +
+    geom_line(aes(x = date, y = obs, color = "Observations"), linetype = "dashed") +
+    # add forecast:
+    geom_point(aes(x = date, y = x_med,
+                   color = "Forecast"), size = 2) +
+    geom_line(aes(x = date, y = x_med,
+                  color = "Forecast"), linetype = "solid", linewidth = 0.5) +
+    geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high,
+                    fill = "Forecast 90% Interval"), alpha = 0.10) +
+    geom_ribbon(aes(x = date, ymin = x_low2, ymax = x_high2,
+                    fill = "Forecast 75% Interval"), alpha = 0.20) +
+    # add climatology forecast:
+    # geom_point(aes(x = date, y = b_med,
+    #                color = "Climatology"),shape = 95, size = 8) +
+    geom_segment(aes(x = date - 0.55, xend = date + 0.3, y = b_med, yend = b_med, color = "Climatology"),
+                 linewidth = 0.85, linetype = "dashed", show.legend = FALSE) +
+    geom_text(aes(x = date, y = b_med + 0.0075, label = "Climatology", color = "Climatology", size = 10),
+              nudge_x = -0.15, show.legend = FALSE) +
+    # scaling dates:
+    scale_x_continuous(breaks = sort(unique(plot_data$date))) +
+    # colors:
+    scale_color_manual(name = "Lines",
+                       breaks = c("Observations", "Forecast"),
+                       #breaks = c("Observations", "Climatology", "Forecast"),
+                       values = c("Observations" = "black", 
+                                  "Climatology" = "blue3", 
+                                  "Forecast" = "firebrick3")) +
+    scale_fill_manual(name = "Confidence Intervals",
+                      #breaks = c("Forecast 90% Interval","Forecast 75% Interval"),
+                      values = c("Forecast 90% Interval" = "firebrick1",
+                                 "Forecast 75% Interval" = "firebrick1")) +
+    guides(color = guide_legend(order = 1),
+           fill  = guide_legend(order = 2)) +
+    # set the axis limits:
+    #ylim(c(-1, 1)) +
+    # seeing plot closer to time series:
+    #coord_cartesian(ylim = c(min(obs, na.rm = T) - 0.005, max(obs, na.rm = T) + 0.01)) +
+    # plot labels:
+    labs(title = titles[i],
+         y = "Tasseled Cap Greenness", 
+         x = "Year") +
+    #scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+    theme_bw() +
+    theme(legend.position = "bottom", legend.direction = "vertical",
+          legend.text = element_text(size = 12),
+          axis.title = element_text(size = 16),
+          axis.text = element_text(size = 14))
+  
+  #time_series
+  # save in list:
+  ts_plot_list[[as.character(i)]] <- time_series
+}
 
-# from forecast outputs:
-f_ci <- rbind(y_upper[sample,], y_pred[sample,], y_lower[sample,], y_up[sample,], y_low[sample,])
-b_ci <- rbind(base_upper[sample,], base_pred[sample,], base_lower[sample,], base_up[sample,], base_low[sample,])
+## combine plots:
+# load library:
+library(patchwork)
+# combine:
+combined_plot <- (ts_plot_list[[1]] | ts_plot_list[[2]]) /
+  (ts_plot_list[[3]] | ts_plot_list[[4]]) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
 
-# observation:
-obs <- tcg[sample,]
-
-## Making Time Series
-# prepare model data:
-plot_data <- data.frame(date = as.numeric(names(obs)),
-                        obs = as.numeric(obs),
-                        # y_low = as.numeric(y_ci[1,]),
-                        # y_med = as.numeric(y_ci[2,]),
-                        # y_high = as.numeric(y_ci[3,]),
-                        x_low = as.numeric(f_ci[3, -1]),
-                        x_med = as.numeric(f_ci[2, -1]),
-                        x_high = as.numeric(f_ci[1, -1]),
-                        x_low2 = as.numeric(f_ci[4, -1]),
-                        x_high2 = as.numeric(f_ci[5, -1]),
-                        b_low = as.numeric(b_ci[3, -1]),
-                        b_med = as.numeric(b_ci[2, -1]),
-                        b_high = as.numeric(b_ci[1, -1]))
-
-plot_name <- sub(".*multi_(.*?)_data.*", "\\1", model_pick)
-
-# make the plot layering observation and model preds:
-time_series <- ggplot(data = plot_data) +
-  # time series for observations:
-  geom_point(aes(x = date, y = obs, color = "Observations"), size = 2.5) +
-  geom_line(aes(x = date, y = obs, color = "Observations"), linetype = "dashed") +
-  # # time series for model:
-  # geom_point(aes(x = date, y = y_med,
-  #            color = "Model"), size = 2) +
-  # geom_line(aes(x = date, y = y_med,
-  #           color = "Model"), linetype = "dashed") +
-  # # add confidence intervals:
-  # geom_ribbon(aes(x = date, ymin = y_low, ymax = y_high,
-  #             fill = "Model 90% Interval"), alpha = 0.25) +
-  # add forecast:
-  geom_point(aes(x = date, y = x_med,
-             color = "Forecast"), size = 2) +
-  geom_line(aes(x = date, y = x_med,
-            color = "Forecast"), linetype = "solid", linewidth = 0.5) +
-  geom_ribbon(aes(x = date, ymin = x_low, ymax = x_high,
-              fill = "Forecast 90% Interval"), alpha = 0.10) +
-  geom_ribbon(aes(x = date, ymin = x_low2, ymax = x_high2,
-              fill = "Forecast 75% Interval"), alpha = 0.20) +
-  # add climatology forecast:
-  geom_point(aes(x = date, y = b_med,
-                 color = "Climatology"), size = 2) +
-  geom_line(aes(x = date, y = b_med,
-                color = "Climatology"), linetype = "dotdash", linewidth = 0.5) +
-  geom_ribbon(aes(x = date, ymin = b_low, ymax = b_high,
-                  fill = "Climatology 90% Interval"), alpha = 0.10) +
-  # geom_ribbon(aes(x = date, ymin = b_low2, ymax = b_high2,
-  #                 fill = "Forecast 75% Interval"), alpha = 0.20) +
-  # scaling dates:
-  scale_x_continuous(breaks = sort(unique(plot_data$date))) +
-  # colors:
-  scale_color_manual(name = "Lines",
-                     breaks = c("Observations", "Climatology", "Forecast"),
-                     values = c("Observations" = "black", 
-                                "Climatology" = "navy", 
-                                "Forecast" = "firebrick3")) +
-  scale_fill_manual(name = "Confidence Intervals",
-                    breaks = c("Climatology 90% Interval" = "navy",
-                               "Forecast 90% Interval" = "navy",
-                               "Forecast 75% Interval"),
-                    values = c("Climatology 90% Interval" = "navy",
-                               "Forecast 90% Interval" = "firebrick1",
-                               "Forecast 75% Interval" = "firebrick1")) +
-  guides(color = guide_legend(order = 1),
-         fill  = guide_legend(order = 2)) +
-  # set the axis limits:
-  #ylim(c(-1, 1)) +
-  # seeing plot closer to time series:
-  #coord_cartesian(ylim = c(min(obs, na.rm = T) - 0.005, max(obs, na.rm = T) + 0.01)) +
-  # plot labels:
-  labs(title = "Sample Time Series (single Landsat pixel)",
-       y = "Tasseled Cap Greenness", 
-       x = "Year") +
-  #scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
-  theme_bw() +
-  theme(legend.position = "bottom", legend.direction = "vertical",
-        legend.text = element_text(size = 12),
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 14))
-
-time_series
-#sample
-
-# save it:
-save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
-setwd(save_dir)
+combined_plot
 # save:
-png(filename = paste0(save_dir, "2026_03_15_time_series_sample_point_", a, "_bottom10pc.png"),
-    height = 6,
-    width = 7,
-    units = "in",
-    res = 600)
-time_series
+png(filename = paste0(save_dir, "2026_07_23_time_series_sample_points_combined.png"),
+     height = 12,
+     width = 18,
+     units = "in",
+     res = 600)
+combined_plot
 dev.off()
 
 
+
+#### ARCHIVE ####
 ## Figuring out several time series for multiple plots:
 # get RSME's:
 # load best model forecast residuals:
@@ -267,6 +270,24 @@ top10percent <- which(RMSEanom < quantile(RMSEanom, c(0.01), na.rm = T))
 top25percent <- which(quantile(RMSEanom, c(0.1), na.rm = T) < RMSEanom & RMSEanom < quantile(RMSEanom, c(0.25), na.rm = T))
 bottom25percent <- which(quantile(RMSEanom, c(0.75), na.rm = T) < RMSEanom & RMSEanom < quantile(RMSEanom, c(0.90), na.rm = T))
 bottom10percent <- which(RMSEanom > quantile(RMSEanom, c(0.90), na.rm = T))
+
+
+
+# making time series:
+#a <- sample(bottom25percent, 1)
+#sample <- a
+
+# # save it:
+# save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
+# setwd(save_dir)
+# # save:
+# png(filename = paste0(save_dir, "2026_03_15_time_series_sample_point_", a, "_bottom10pc.png"),
+#     height = 6,
+#     width = 7,
+#     units = "in",
+#     res = 600)
+# time_series
+# dev.off()
 
 
 # ggsave("2026_02_09_time_series_sample_point.png", 

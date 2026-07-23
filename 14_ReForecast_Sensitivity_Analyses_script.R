@@ -193,10 +193,10 @@ sens_plot_fx <- function(sens_list, param_num){
 ## Combining plots into single figure
 # covariate plots:
 VPD_plot <- sens_plot_fx(sens_list, 1) + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
-temp_plot <- sens_plot_fx(sens_list, 2) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
+temp_plot <- sens_plot_fx(sens_list, 2) + theme(axis.title.x = element_blank())
 distmag_plot <- sens_plot_fx(sens_list, 3) + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 year_re_plot <- sens_plot_fx(sens_list, 4) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
-space_re_plot <- sens_plot_fx(sens_list, 5)
+space_re_plot <- sens_plot_fx(sens_list, 5) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 tau_add_plot <- sens_plot_fx(sens_list, 6) + theme(axis.title.y = element_blank())
 
 # combine plots:

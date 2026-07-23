@@ -146,6 +146,7 @@ best_models_table <- model_params_table |>
   rename(`Parameter 3` = `beta[3]`)
 best_models_table
 
+
 ### For model convergence checks and tests:
 # # # load model
 # load(paste0(dir, "model_runs/", models[18]))
