@@ -196,7 +196,7 @@ beta_ridge_plot <- ggplot(beta_ridges_long, aes(x = beta_est, y = model, fill = 
   annotate("text", x = -0.235, y = c(4:17 + 0.2), label = "NS", color = "red", size = 3) +
   
   annotate("text", x = -0.235, y = c(21:24 + 0.2), label = "MV", color = "navy", size = 3.5) +
-  annotate("text", x = -0.235, y = c(1 + 0.2), label = "MV", color = "navy", size = 3.5) +
+  annotate("text", x = -0.235, y = c(3 + 0.2), label = "MV", color = "navy", size = 3.5) +
   # set limit x-axis:
   #xlim(c(-0.069, 0.04)) + # for all + post-dist
   #xlim(c(-0.055, 0.05)) + # for pre-dist
@@ -213,7 +213,7 @@ save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 setwd(save_dir)
 # all vars:
 # Save the plot to a PNG file
-png(filename = paste0(save_dir, "2026_04_25_ridges_uni_vars.png"),
+png(filename = paste0(save_dir, "2026_07_23_ridges_uni_vars.png"),
     height = 9,
     width = 8,
     units = "in",
@@ -226,6 +226,36 @@ dev.off()
 #        width = 8,
 #        units = "in",
 #        dpi = 600)
+
+
+## Make a table of dics that matches the beta ridges:
+# remove multis from dics:
+no_multi_dic_sort <- dic_sort[-c(grep("multi|base|nlcd", dic_sort$covariate)),] |>
+  # rename with same names as beta params to match:
+  mutate(covariate = gsub("tcg", "", covariate)) |>
+  mutate(covariate = gsub("uni", "", covariate)) |>
+  mutate(covariate = gsub("_", " ", covariate)) |>   
+  mutate(covariate = gsub("mean", "2014-15 mean", covariate)) |>
+  mutate(covariate = gsub("yrlag", "Year Lag", covariate)) |>
+  mutate(covariate = gsub("vpdd", "VPD", covariate)) |>
+  mutate(covariate = gsub("vp", "VPD", covariate)) |>
+  mutate(covariate = gsub("vpd", "VPD", covariate)) |>
+  mutate(covariate = gsub("VPDd", "VPD", covariate)) |>
+  mutate(covariate = gsub("temp mx", "Maximum Temperature", covariate)) |>
+  mutate(covariate = gsub("tmax", "Maximum Temperature", covariate)) |>
+  mutate(covariate = gsub("temp min", "Minimum Temperature", covariate)) |>
+  mutate(covariate = gsub("tmin", "Minimum Temperature", covariate)) |>
+  mutate(covariate = gsub("prcp", "Precipitation", covariate)) |>
+  mutate(covariate = gsub("precip", "Precipitation", covariate)) |>
+  mutate(covariate = gsub("dmags", "Disturbance Magnitude", covariate)) |>
+  mutate(covariate = gsub("dmag", "Disturbance Magnitude", covariate)) |>
+  mutate(covariate = gsub("pct tree cov", "Percent Tree Cover", covariate)) |>
+  mutate(covariate = gsub("y1", "2016", covariate)) |>
+  mutate(covariate = gsub("y2", "2017", covariate)) |>
+  mutate(del_dic = min(dic)-dic)
+  
+
+
 
 ## Make a quick table of results
 library(grid)
