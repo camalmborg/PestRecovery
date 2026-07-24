@@ -172,7 +172,7 @@ sens_plot_fx <- function(sens_list, param_num){
   
   # make plot:
   sens_plot <- ggplot(data = plot_data, aes(x = year, y = value, group = sfm, color = sfm)) +
-    geom_line() +
+    geom_line(linewidth = 1) +
     scale_color_gradient(low = "blue", high = "red",
                          guide = guide_colorbar(direction = "vertical", title.position = "top")) +
     labs(title = covs[[param_num]],
@@ -181,10 +181,11 @@ sens_plot_fx <- function(sens_list, param_num){
          color = "SD from\nMean") +
     theme_bw() +
     theme(panel.grid = element_blank(),
-          axis.title = element_text(size = 14),
-          axis.text = element_text(size = 12),
-          plot.title = element_text(size = 14),
-          legend.text = element_text(size = 12),
+          axis.title = element_text(size = 18),
+          axis.text = element_text(size = 18),
+          plot.title = element_text(size = 18),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 16, margin = margin(b = 10)),
           legend.position = c(0.9, 0.25))#,
           # legend.title = element_text(size = 12, margin = margin(b = 13))) 
   return(sens_plot)
@@ -193,7 +194,7 @@ sens_plot_fx <- function(sens_list, param_num){
 ## Combining plots into single figure
 # covariate plots:
 VPD_plot <- sens_plot_fx(sens_list, 1) + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
-temp_plot <- sens_plot_fx(sens_list, 2) + theme(axis.title.x = element_blank())
+temp_plot <- sens_plot_fx(sens_list, 2)
 distmag_plot <- sens_plot_fx(sens_list, 3) + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 year_re_plot <- sens_plot_fx(sens_list, 4) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 space_re_plot <- sens_plot_fx(sens_list, 5) + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
@@ -209,7 +210,7 @@ combined
 # plot save location:
 save_dir <- "/projectnb/dietzelab/malmborg/Ch2_PestRecovery/Figures/"
 png(filename = paste0(save_dir, Sys.Date(), "_sensitivities_plots_combined.png"),
-    width = 10, height = 12, units = "in", res = 600)
+    width = 9, height = 11, units = "in", res = 600)
 combined
 dev.off()
 
