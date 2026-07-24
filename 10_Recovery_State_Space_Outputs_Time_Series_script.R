@@ -195,19 +195,19 @@ for (i in 1:4){
     # add climatology forecast:
     # geom_point(aes(x = date, y = b_med,
     #                color = "Climatology"),shape = 95, size = 8) +
-    geom_segment(aes(x = date - 0.55, xend = date + 0.3, y = b_med, yend = b_med, color = "Climatology"),
-                 linewidth = 0.85, linetype = "dashed", show.legend = FALSE) +
-    geom_text(aes(x = date, y = b_med + 0.0075, label = "Climatology", color = "Climatology", size = 10),
+    geom_segment(aes(x = date - 0.25, xend = date + 0.5, y = b_med, yend = b_med, color = "Return"),
+                 linewidth = 0.85, linetype = "41") +
+    geom_text(aes(x = date + 0.25, y = b_med + 0.01, label = "Return", color = "Return", size = 12),
               nudge_x = -0.15, show.legend = FALSE) +
     # scaling dates:
     scale_x_continuous(breaks = sort(unique(plot_data$date))) +
     # colors:
     scale_color_manual(name = "Lines",
-                       breaks = c("Observations", "Forecast"),
-                       #breaks = c("Observations", "Climatology", "Forecast"),
+                       #breaks = c("Observations", "Forecast"),
+                       breaks = c("Observations", "Forecast", "Return"),
                        values = c("Observations" = "black", 
-                                  "Climatology" = "blue3", 
-                                  "Forecast" = "firebrick3")) +
+                                  "Forecast" = "firebrick3",
+                                  "Return" = "blue3")) +
     scale_fill_manual(name = "Confidence Intervals",
                       #breaks = c("Forecast 90% Interval","Forecast 75% Interval"),
                       values = c("Forecast 90% Interval" = "firebrick1",
@@ -225,9 +225,11 @@ for (i in 1:4){
     #scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
     theme_bw() +
     theme(legend.position = "bottom", legend.direction = "vertical",
-          legend.text = element_text(size = 12),
-          axis.title = element_text(size = 16),
-          axis.text = element_text(size = 14))
+          legend.text = element_text(size = 14),
+          axis.title = element_text(size = 18),
+          axis.text = element_text(size = 16),
+          plot.title = element_text(size = 14),
+          legend.title = element_text(size = 16))
   
   #time_series
   # save in list:
@@ -237,17 +239,19 @@ for (i in 1:4){
 ## combine plots:
 # load library:
 library(patchwork)
-# combine:
-combined_plot <- (ts_plot_list[[1]] | ts_plot_list[[2]]) /
-  (ts_plot_list[[3]] | ts_plot_list[[4]]) +
+#combine:
+combined_plot <- (ts_plot_list[[1]] + theme(axis.title.x = element_blank(), axis.text.x  = element_blank()) | 
+  ts_plot_list[[2]] + theme(axis.title.y = element_blank(), axis.text.y  = element_blank(), axis.title.x = element_blank(), axis.text.x = element_blank())) /
+  (ts_plot_list[[3]] | 
+  ts_plot_list[[4]] + theme(axis.title.y = element_blank(), axis.text.y  = element_blank())) +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 
 combined_plot
 # save:
-png(filename = paste0(save_dir, "2026_07_23_time_series_sample_points_combined.png"),
-     height = 12,
-     width = 18,
+png(filename = paste0(save_dir, "2026_07_24_time_series_sample_points_combined.png"),
+     height = 10,
+     width = 14,
      units = "in",
      res = 600)
 combined_plot
